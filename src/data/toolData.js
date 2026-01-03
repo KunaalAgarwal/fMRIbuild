@@ -7,26 +7,26 @@
 export const toolsByLibrary = {
   FSL: {
     'Preprocessing': [
-      { name: 'bet', function: 'Removes non-brain tissue from structural and functional images using a surface model approach', typicalUse: 'First step in most preprocessing pipelines to isolate brain tissue', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET' },
-      { name: 'fast', function: 'Segments brain images into gray matter, white matter, and CSF with bias field correction', typicalUse: 'Tissue probability maps for normalization, VBM studies, or masking', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST' },
-      { name: 'mcflirt', function: 'Intra-modal motion correction for fMRI time series using rigid-body transformations', typicalUse: 'Correcting head motion in functional data; motion parameters used as nuisance regressors', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT' },
-      { name: 'flirt', function: 'Linear (affine) registration between images using 6, 9, or 12 degrees of freedom', typicalUse: 'EPI-to-structural alignment, structural-to-standard registration', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT' },
-      { name: 'fnirt', function: 'Non-linear registration using spline-based deformations for precise anatomical alignment', typicalUse: 'High-accuracy normalization to MNI space for group analyses', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT' },
-      { name: 'fugue', function: 'Corrects geometric distortions in EPI images using fieldmap data', typicalUse: 'Distortion correction when fieldmap data is available', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE' },
+      { name: 'bet', fullName: 'Brain Extraction Tool', function: 'Removes non-brain tissue from structural and functional images using a surface model approach', typicalUse: 'First step in most preprocessing pipelines to isolate brain tissue', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET' },
+      { name: 'fast', fullName: "FMRIB's Automated Segmentation Tool", function: 'Segments brain images into gray matter, white matter, and CSF with bias field correction', typicalUse: 'Tissue probability maps for normalization, VBM studies, or masking', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST' },
+      { name: 'mcflirt', fullName: 'Motion Correction FLIRT', function: 'Intra-modal motion correction for fMRI time series using rigid-body transformations', typicalUse: 'Correcting head motion in functional data; motion parameters used as nuisance regressors', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT' },
+      { name: 'flirt', fullName: "FMRIB's Linear Image Registration Tool", function: 'Linear (affine) registration between images using 6, 9, or 12 degrees of freedom', typicalUse: 'EPI-to-structural alignment, structural-to-standard registration', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT' },
+      { name: 'fnirt', fullName: "FMRIB's Non-linear Image Registration Tool", function: 'Non-linear registration using spline-based deformations for precise anatomical alignment', typicalUse: 'High-accuracy normalization to MNI space for group analyses', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT' },
+      { name: 'fugue', fullName: "FMRIB's Utility for Geometrically Unwarping EPIs", function: 'Corrects geometric distortions in EPI images using fieldmap data', typicalUse: 'Distortion correction when fieldmap data is available', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE' },
       { name: 'topup', function: 'Estimates and corrects susceptibility-induced distortions using reversed phase-encode images', typicalUse: 'Distortion correction using blip-up/blip-down acquisitions', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup' },
-      { name: 'susan', function: 'Edge-preserving noise reduction that smooths within tissue boundaries', typicalUse: 'Noise reduction while preserving structural boundaries', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN' },
+      { name: 'susan', fullName: 'Smallest Univalue Segment Assimilating Nucleus', function: 'Edge-preserving noise reduction that smooths within tissue boundaries', typicalUse: 'Noise reduction while preserving structural boundaries', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN' },
       { name: 'slicetimer', function: 'Corrects for differences in slice acquisition times within a volume', typicalUse: 'Temporal alignment of slices acquired at different times', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SliceTimer' },
       { name: 'fslreorient2std', function: 'Reorients images to match standard (MNI) orientation', typicalUse: 'Ensuring consistent orientation before processing', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Orientation%20Explained' },
       { name: 'fslsplit', function: 'Splits 4D time series into individual 3D volumes', typicalUse: 'Processing individual volumes separately, quality control', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' },
       { name: 'fslmerge', function: 'Concatenates multiple 3D volumes into a 4D time series', typicalUse: 'Combining processed volumes, concatenating runs', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' }
     ],
     'Statistical': [
-      { name: 'film_gls', function: 'Fits GLM to fMRI time series with autocorrelation correction', typicalUse: 'First-level statistical analysis within FEAT or standalone', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM' },
-      { name: 'flameo', function: 'Mixed-effects group analysis accounting for within and between-subject variance', typicalUse: 'Second-level group analyses with proper random effects', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME' },
+      { name: 'film_gls', fullName: "FMRIB's Improved Linear Model", function: 'Fits GLM to fMRI time series with autocorrelation correction', typicalUse: 'First-level statistical analysis within FEAT or standalone', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM' },
+      { name: 'flameo', fullName: "FMRIB's Local Analysis of Mixed Effects", function: 'Mixed-effects group analysis accounting for within and between-subject variance', typicalUse: 'Second-level group analyses with proper random effects', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME' },
       { name: 'randomise', function: 'Non-parametric permutation testing for statistical inference', typicalUse: 'Group-level inference with family-wise error correction', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise' }
     ],
     'ICA/Denoising': [
-      { name: 'melodic', function: 'Probabilistic ICA for separating fMRI signals into independent components', typicalUse: 'Data exploration, artifact identification, resting-state analysis', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC' },
+      { name: 'melodic', fullName: 'Multivariate Exploratory Linear Optimized Decomposition into Independent Components', function: 'Probabilistic ICA for separating fMRI signals into independent components', typicalUse: 'Data exploration, artifact identification, resting-state analysis', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC' },
       { name: 'dual_regression', function: 'Projects group ICA components onto individual subjects', typicalUse: 'Subject-level ICA-based connectivity analysis', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/DualRegression' }
     ],
     'Diffusion/Structural': [
@@ -154,7 +154,7 @@ export const toolsByLibrary = {
       { name: 'antsAtroposN4.sh', function: 'Combined bias correction and segmentation', typicalUse: 'Iterative N4 + segmentation for better results', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },
       { name: 'antsBrainExtraction.sh', function: 'Brain extraction using registration and templates', typicalUse: 'High-quality skull stripping', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsBrainExtraction-and-templates' },
       { name: 'antsCorticalThickness.sh', function: 'Complete cortical thickness estimation pipeline', typicalUse: 'DiReCT-based cortical thickness measurement', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' },
-      { name: 'KellyKapowski', function: 'Diffeomorphic Registration-based Cortical Thickness', typicalUse: 'Computing cortical thickness from segmentation', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' }
+      { name: 'KellyKapowski', fullName: 'DiReCT (Diffeomorphic Registration-based Cortical Thickness)', function: 'Diffeomorphic Registration-based Cortical Thickness', typicalUse: 'Computing cortical thickness from segmentation', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' }
     ],
     'Utilities': [
       { name: 'N4BiasFieldCorrection', function: 'Advanced bias field correction using N4 algorithm', typicalUse: 'Removing intensity inhomogeneity', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },

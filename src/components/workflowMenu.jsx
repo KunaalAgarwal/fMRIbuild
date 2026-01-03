@@ -66,6 +66,7 @@ function WorkflowMenu() {
                               key={`${library}-${subsection}-${index}`}
                               name={tool.name}
                               toolInfo={{
+                                fullName: tool.fullName,
                                 function: tool.function,
                                 typicalUse: tool.typicalUse,
                                 docUrl: tool.docUrl

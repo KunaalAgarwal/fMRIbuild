@@ -57,6 +57,11 @@ function WorkflowMenuItem({ name, toolInfo, onDragStart }) {
             transform: 'translateY(-50%)'
           }}
         >
+          {toolInfo.fullName && (
+            <div className="tooltip-section tooltip-fullname">
+              <span className="tooltip-text">{toolInfo.fullName}</span>
+            </div>
+          )}
           <div className="tooltip-section">
             <span className="tooltip-label">Function:</span>
             <span className="tooltip-text">{toolInfo.function}</span>

@@ -97,6 +97,16 @@ When working on specific areas, check these files:
 | Topic | File |
 |-------|------|
 | State management, hooks, component patterns | [docs/architectural_patterns.md](docs/architectural_patterns.md) |
+| Complete fMRI tools catalog (FSL, AFNI, SPM, FreeSurfer, ANTs) | [fmri_tools_reference.md](../fmri_tools_reference.md) |
+
+### Tool Reference Summary
+
+The `fmri_tools_reference.md` contains ~150 neuroimaging tools with CWL compatibility status:
+- **✅ Ready**: ~120 tools (FSL, AFNI, ANTs, FreeSurfer CLI tools)
+- **⚠️ Possible**: ~25 tools (SPM/MATLAB-based, complex pipelines)
+- **❌ Not Feasible**: ~5 tools (GUI-only)
+
+**Implementation priority**: Brain extraction → Motion correction → Registration → Smoothing → Segmentation → Statistical analysis
 
 ---
 

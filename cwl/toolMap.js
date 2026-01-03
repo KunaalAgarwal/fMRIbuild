@@ -19,7 +19,7 @@
  */
 
 export const TOOL_MAP = {
-    'Brain Extraction': {
+    'bet': {
         id: 'bet',
         cwlPath: 'cwl/fsl/bet.cwl',
         primaryOutputs: ['brain_extraction'],
@@ -148,7 +148,7 @@ export const TOOL_MAP = {
         }
     },
 
-    'Segmentation': {
+    'fast': {
         id: 'fast',
         cwlPath: 'cwl/fsl/fast.cwl',
         primaryOutputs: ['segmented_files'],

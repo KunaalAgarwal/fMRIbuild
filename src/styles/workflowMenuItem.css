@@ -1,22 +1,27 @@
 .workflow-menu-item {
-    width: 100%; 
+    position: relative;
+    width: 100%;
     padding: clamp(8px, 1vw, 12px);
     background-color: #3a3a3a;
     color: #e0e0e0;
-    font-size: clamp(0.2rem, 1.2vw, 1.0rem);
+    font-size: clamp(0.75rem, 1.2vw, 0.9rem);
     font-weight: 500;
     border-radius: 10px;
     text-align: center;
     cursor: pointer;
-    transition: transform 0.15s ease, background-color 0.3s ease, 
+    transition: transform 0.15s ease, background-color 0.3s ease,
                 box-shadow 0.2s ease, border 0.2s ease;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     border: 1px solid rgba(255, 255, 255, 0.1);
-    gap: 10px;
-    /*Useful as we add more details to the component*/
-    /* display: flex; */
-    /* align-items: center; */
-    /* justify-content: space-between; */
+}
+
+/* Dynamic font sizing for long tool names */
+.workflow-menu-item.font-small {
+    font-size: clamp(0.6rem, 0.9vw, 0.75rem);
+}
+
+.workflow-menu-item.font-smaller {
+    font-size: clamp(0.5rem, 0.75vw, 0.65rem);
 }
 
 .workflow-menu-item:hover {
@@ -41,4 +46,43 @@
     align-items: center;
     justify-content: center;
     font-size: 1.2rem;
+}
+
+/* Tooltip Styles (rendered via React Portal) */
+.workflow-tooltip {
+    position: fixed;
+    background-color: #1a1a1a;
+    padding: 12px;
+    border-radius: 8px;
+    width: 280px;
+    z-index: 10000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    pointer-events: none;
+}
+
+.tooltip-section {
+    margin-bottom: 8px;
+}
+
+.tooltip-section:last-child {
+    margin-bottom: 0;
+}
+
+.tooltip-label {
+    display: block;
+    font-size: 0.7rem;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 2px;
+    font-weight: 600;
+}
+
+.tooltip-text {
+    display: block;
+    font-size: 0.8rem;
+    color: #e0e0e0;
+    line-height: 1.4;
 }

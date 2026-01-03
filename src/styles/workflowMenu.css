@@ -75,3 +75,23 @@
   font-size: 0.85em;
   text-align: center;
 }
+
+/* Subsection Styles */
+.subsection {
+  margin-bottom: 8px;
+}
+
+.subsection-header {
+  font-size: 0.7em;
+  color: #888;
+  padding: 8px 8px 4px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 500;
+}
+
+.subsection-tools {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}

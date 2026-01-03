@@ -1,6 +1,6 @@
 # Comprehensive fMRI Analysis Tools Reference
 
-This document catalogs neuroimaging analysis tools commonly used in fMRI research, organized by software library. Each entry includes a description and CWL (Common Workflow Language) implementation feasibility.
+This document catalogs neuroimaging analysis tools commonly used in fMRI research, organized by software library. Each entry includes a description, documentation link, and CWL (Common Workflow Language) implementation feasibility.
 
 ## CWL Compatibility Legend
 
@@ -16,10 +16,13 @@ This document catalogs neuroimaging analysis tools commonly used in fMRI researc
 
 FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain imaging data. All FSL tools are command-line based, making them excellent candidates for CWL implementation.
 
+**General Documentation**: [FSL Wiki](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/)
+
 ### Preprocessing Tools
 
 #### BET (Brain Extraction Tool)
 - **Command**: `bet`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET)
 - **Function**: Removes non-brain tissue from structural and functional images using a surface model approach
 - **Key Parameters**: Fractional intensity threshold (-f), vertical gradient (-g), output brain mask (-m)
 - **Typical Use**: First step in most preprocessing pipelines to isolate brain tissue
@@ -28,6 +31,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FAST (FMRIB's Automated Segmentation Tool)
 - **Command**: `fast`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST)
 - **Function**: Segments brain images into gray matter, white matter, and CSF with bias field correction
 - **Key Parameters**: Number of tissue classes (-n), output type (-o), bias field correction (-B)
 - **Typical Use**: Tissue probability maps for normalization, VBM studies, or masking
@@ -36,6 +40,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### MCFLIRT (Motion Correction FLIRT)
 - **Command**: `mcflirt`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT)
 - **Function**: Intra-modal motion correction for fMRI time series using rigid-body transformations
 - **Key Parameters**: Reference volume (-refvol), cost function (-cost), motion parameter output (-plots)
 - **Typical Use**: Correcting head motion in functional data; motion parameters used as nuisance regressors
@@ -44,6 +49,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FLIRT (FMRIB's Linear Image Registration Tool)
 - **Command**: `flirt`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)
 - **Function**: Linear (affine) registration between images using 6, 9, or 12 degrees of freedom
 - **Key Parameters**: Reference image (-ref), degrees of freedom (-dof), cost function (-cost), output matrix (-omat)
 - **Typical Use**: EPI-to-structural alignment, structural-to-standard registration
@@ -52,6 +58,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FNIRT (FMRIB's Non-linear Image Registration Tool)
 - **Command**: `fnirt`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT)
 - **Function**: Non-linear registration using spline-based deformations for precise anatomical alignment
 - **Key Parameters**: Reference (-ref), affine input (--aff), configuration file (--config), warp output (--cout)
 - **Typical Use**: High-accuracy normalization to MNI space for group analyses
@@ -60,6 +67,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FUGUE (FMRIB's Utility for Geometrically Unwarping EPIs)
 - **Command**: `fugue`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE)
 - **Function**: Corrects geometric distortions in EPI images using fieldmap data
 - **Key Parameters**: Input fieldmap (--loadfmap), dwell time (--dwell), unwarp direction (--unwarpdir)
 - **Typical Use**: Distortion correction when fieldmap data is available
@@ -68,6 +76,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### TOPUP
 - **Command**: `topup`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup)
 - **Function**: Estimates and corrects susceptibility-induced distortions using reversed phase-encode images
 - **Key Parameters**: Image pairs (--imain), acquisition parameters (--datain), configuration (--config)
 - **Typical Use**: Distortion correction using blip-up/blip-down acquisitions
@@ -76,6 +85,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### SUSAN (Smallest Univalue Segment Assimilating Nucleus)
 - **Command**: `susan`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN)
 - **Function**: Edge-preserving noise reduction that smooths within tissue boundaries
 - **Key Parameters**: Brightness threshold, spatial size, dimensionality
 - **Typical Use**: Noise reduction while preserving structural boundaries
@@ -84,6 +94,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### SliceTimer
 - **Command**: `slicetimer`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SliceTimer](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SliceTimer)
 - **Function**: Corrects for differences in slice acquisition times within a volume
 - **Key Parameters**: TR (-r), slice order (--odd/--down), timing file (--tcustom)
 - **Typical Use**: Temporal alignment of slices acquired at different times
@@ -92,6 +103,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslreorient2std
 - **Command**: `fslreorient2std`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Orientation%20Explained](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Orientation%20Explained)
 - **Function**: Reorients images to match standard (MNI) orientation
 - **Key Parameters**: Input image, output image
 - **Typical Use**: Ensuring consistent orientation before processing
@@ -100,6 +112,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslsplit
 - **Command**: `fslsplit`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils)
 - **Function**: Splits 4D time series into individual 3D volumes
 - **Key Parameters**: Input 4D image, output basename, split direction (-t/-x/-y/-z)
 - **Typical Use**: Processing individual volumes separately, quality control
@@ -108,6 +121,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslmerge
 - **Command**: `fslmerge`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils)
 - **Function**: Concatenates multiple 3D volumes into a 4D time series
 - **Key Parameters**: Merge direction (-t/-x/-y/-z), output file, input files
 - **Typical Use**: Combining processed volumes, concatenating runs
@@ -118,6 +132,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FEAT (FMRI Expert Analysis Tool)
 - **Command**: `feat`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT)
 - **Function**: Complete first and higher-level fMRI analysis including preprocessing, GLM, and group statistics
 - **Key Parameters**: Design file (.fsf) containing all analysis parameters
 - **Typical Use**: Full analysis pipeline from raw data to statistical maps
@@ -126,6 +141,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FILM (FMRIB's Improved Linear Model)
 - **Command**: `film_gls`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM)
 - **Function**: Fits GLM to fMRI time series with autocorrelation correction
 - **Key Parameters**: Input 4D data, design matrix, autocorrelation options
 - **Typical Use**: First-level statistical analysis within FEAT or standalone
@@ -134,6 +150,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FLAME (FMRIB's Local Analysis of Mixed Effects)
 - **Command**: `flameo`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME)
 - **Function**: Mixed-effects group analysis accounting for within and between-subject variance
 - **Key Parameters**: Cope images, variance images, design matrix, contrast file
 - **Typical Use**: Second-level group analyses with proper random effects
@@ -142,6 +159,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### Randomise
 - **Command**: `randomise`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise)
 - **Function**: Non-parametric permutation testing for statistical inference
 - **Key Parameters**: Input 4D, design matrix, contrasts, number of permutations (-n), TFCE (-T)
 - **Typical Use**: Group-level inference with family-wise error correction
@@ -150,6 +168,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### MELODIC
 - **Command**: `melodic`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC)
 - **Function**: Independent Component Analysis for data exploration and denoising
 - **Key Parameters**: Input data, dimensionality (-d), output directory
 - **Typical Use**: Resting-state network identification, noise component detection
@@ -158,6 +177,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FIX (FMRIB's ICA-based Xnoiseifier)
 - **Command**: `fix`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIX)
 - **Function**: Automatically classifies and removes noise ICA components
 - **Key Parameters**: MELODIC directory, training data, threshold
 - **Typical Use**: Automated denoising of resting-state or task data
@@ -166,6 +186,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### dual_regression
 - **Command**: `dual_regression`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/DualRegression](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/DualRegression)
 - **Function**: Projects group ICA maps back to individual subjects
 - **Key Parameters**: Group maps, design matrix, contrasts, permutations, subject list
 - **Typical Use**: Group comparisons of resting-state networks
@@ -176,6 +197,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### BEDPOSTX
 - **Command**: `bedpostx`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX)
 - **Function**: Bayesian estimation of diffusion parameters with crossing fiber modeling
 - **Key Parameters**: Data directory (with data, bvals, bvecs, nodif_brain_mask)
 - **Typical Use**: Preparing diffusion data for probabilistic tractography
@@ -184,6 +206,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### PROBTRACKX2
 - **Command**: `probtrackx2`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#PROBTRACKX](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#PROBTRACKX)
 - **Function**: Probabilistic tractography using distributions from BEDPOSTX
 - **Key Parameters**: Seed mask (-x), BEDPOSTX directory (-s), waypoint masks, exclusion masks
 - **Typical Use**: White matter pathway reconstruction, connectivity analysis
@@ -192,6 +215,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### TBSS (Tract-Based Spatial Statistics)
 - **Command**: `tbss_*` (multiple scripts)
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS)
 - **Function**: Voxelwise analysis of FA and other diffusion metrics on skeleton
 - **Key Parameters**: FA images, registration options
 - **Typical Use**: Group comparisons of white matter integrity
@@ -200,6 +224,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### FIRST
 - **Command**: `run_first_all`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIRST](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIRST)
 - **Function**: Segmentation of subcortical structures using shape and appearance models
 - **Key Parameters**: Input T1 (-i), structure selection (-s)
 - **Typical Use**: Automated segmentation of hippocampus, amygdala, basal ganglia, etc.
@@ -208,6 +233,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### SIENA/SIENAX
 - **Command**: `siena` / `sienax`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA)
 - **Function**: Brain atrophy estimation (longitudinal) and cross-sectional volume estimation
 - **Key Parameters**: Input images, BET options
 - **Typical Use**: Longitudinal atrophy studies, brain volume normalization
@@ -216,6 +242,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fsl_anat
 - **Command**: `fsl_anat`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat)
 - **Function**: Complete structural MRI processing pipeline
 - **Key Parameters**: Input T1 (-i), processing options
 - **Typical Use**: Standardized structural preprocessing including bias correction, registration, segmentation
@@ -226,6 +253,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslmaths
 - **Command**: `fslmaths`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils)
 - **Function**: Versatile image calculator for mathematical operations, filtering, and thresholding
 - **Key Parameters**: Input image, operations (chained), output image
 - **Typical Use**: Masking, thresholding, smoothing, mathematical operations
@@ -234,6 +262,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslstats
 - **Command**: `fslstats`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils)
 - **Function**: Calculates statistics from image data
 - **Key Parameters**: Input image, statistic flags (-m, -s, -V, -R, etc.)
 - **Typical Use**: QC metrics, threshold determination, ROI statistics
@@ -242,6 +271,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslroi
 - **Command**: `fslroi`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils)
 - **Function**: Extracts region of interest or subvolume from image
 - **Key Parameters**: Input, output, dimension ranges (xmin xsize ymin ysize...)
 - **Typical Use**: Cropping images, extracting specific volumes from time series
@@ -250,6 +280,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### fslmeants
 - **Command**: `fslmeants`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils)
 - **Function**: Extracts mean time series from ROI or coordinate
 - **Key Parameters**: Input 4D (-i), mask (-m) or coordinate (-c)
 - **Typical Use**: ROI time course extraction for connectivity or plotting
@@ -258,6 +289,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### cluster
 - **Command**: `cluster`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Cluster](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Cluster)
 - **Function**: Identifies and reports clusters in statistical images
 - **Key Parameters**: Input z-stat, threshold (-t), connectivity, output options
 - **Typical Use**: Cluster-level inference, extracting peak coordinates
@@ -266,6 +298,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### applywarp
 - **Command**: `applywarp`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Applying_the_warps](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Applying_the_warps)
 - **Function**: Applies linear and non-linear transformations to images
 - **Key Parameters**: Input (-i), reference (-r), warp field (-w), premat (--premat)
 - **Typical Use**: Applying normalization, transforming ROIs between spaces
@@ -274,6 +307,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### invwarp
 - **Command**: `invwarp`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Inverting_warps](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Inverting_warps)
 - **Function**: Inverts a non-linear warp field
 - **Key Parameters**: Warp field (-w), reference (-r), output (-o)
 - **Typical Use**: Transforming from standard to native space
@@ -282,6 +316,7 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 #### convertwarp
 - **Command**: `convertwarp`
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Combining_warps](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Combining_warps)
 - **Function**: Combines multiple transformations into single warp field
 - **Key Parameters**: Reference (-r), warps/affines to combine
 - **Typical Use**: Efficient application of multiple registration steps
@@ -294,10 +329,13 @@ FSL is a comprehensive library of analysis tools for FMRI, MRI, and DTI brain im
 
 AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most tools are command-line based with excellent CWL compatibility.
 
+**General Documentation**: [AFNI Documentation](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/)
+
 ### Preprocessing Tools
 
 #### 3dSkullStrip
 - **Command**: `3dSkullStrip`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSkullStrip.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSkullStrip.html)
 - **Function**: Removes non-brain tissue using an expansion algorithm
 - **Key Parameters**: -input, -prefix, -push_to_edge, -orig_vol
 - **Typical Use**: Brain extraction for functional or structural images
@@ -306,6 +344,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dvolreg
 - **Command**: `3dvolreg`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dvolreg.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dvolreg.html)
 - **Function**: Rigid-body motion correction by registering all volumes to a base
 - **Key Parameters**: -base, -prefix, -1Dfile (motion parameters), -maxdisp
 - **Typical Use**: Motion correction; outputs 6 motion parameters
@@ -314,6 +353,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dTshift
 - **Command**: `3dTshift`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html)
 - **Function**: Corrects for slice timing differences via temporal interpolation
 - **Key Parameters**: -tpattern (alt+z, seq+z, etc.), -prefix, -tzero
 - **Typical Use**: Aligning all slices to same temporal reference
@@ -322,6 +362,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dDespike
 - **Command**: `3dDespike`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDespike.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDespike.html)
 - **Function**: Removes spike artifacts from time series using L1 fit
 - **Key Parameters**: -prefix, -NEW (algorithm version), -nomask
 - **Typical Use**: Artifact removal before other preprocessing
@@ -330,6 +371,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dBandpass
 - **Command**: `3dBandpass`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBandpass.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBandpass.html)
 - **Function**: Bandpass filtering of time series with optional regression
 - **Key Parameters**: lowfreq, highfreq, -prefix, -ort (confound removal)
 - **Typical Use**: Resting-state frequency filtering (typically 0.01-0.1 Hz)
@@ -338,6 +380,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dBlurToFWHM
 - **Command**: `3dBlurToFWHM`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html)
 - **Function**: Spatially smooths data to achieve target smoothness level
 - **Key Parameters**: -FWHM, -input, -prefix, -mask
 - **Typical Use**: Achieving consistent smoothness across subjects/studies
@@ -346,6 +389,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dmerge
 - **Command**: `3dmerge`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html)
 - **Function**: Spatial filtering and dataset merging operations
 - **Key Parameters**: -1blur_fwhm, -doall, -prefix
 - **Typical Use**: Gaussian smoothing of functional data
@@ -354,6 +398,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dAllineate
 - **Command**: `3dAllineate`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAllineate.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAllineate.html)
 - **Function**: Linear registration with multiple cost functions
 - **Key Parameters**: -base, -source, -prefix, -cost, -1Dmatrix_save
 - **Typical Use**: Affine alignment between modalities or to standard space
@@ -362,6 +407,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dQwarp
 - **Command**: `3dQwarp`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html)
 - **Function**: Non-linear registration using cubic polynomial basis
 - **Key Parameters**: -base, -source, -prefix, -blur, -minpatch
 - **Typical Use**: High-accuracy normalization to template
@@ -370,6 +416,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### @auto_tlrc
 - **Command**: `@auto_tlrc`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/@auto_tlrc.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/@auto_tlrc.html)
 - **Function**: Automated Talairach transformation for anatomical images
 - **Key Parameters**: -base, -input, -no_ss (skip skull strip)
 - **Typical Use**: Legacy Talairach normalization
@@ -378,6 +425,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### @SSwarper
 - **Command**: `@SSwarper`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/@SSwarper.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/@SSwarper.html)
 - **Function**: Combined skull stripping and nonlinear warping to template
 - **Key Parameters**: -input, -base, -subid
 - **Typical Use**: Modern anatomical preprocessing for afni_proc.py
@@ -386,6 +434,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### align_epi_anat.py
 - **Command**: `align_epi_anat.py`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/align_epi_anat.py.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/align_epi_anat.py.html)
 - **Function**: Aligns EPI to anatomical with distortion correction options
 - **Key Parameters**: -epi, -anat, -epi_base, -cost
 - **Typical Use**: Core EPI-to-structural alignment
@@ -394,6 +443,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dUnifize
 - **Command**: `3dUnifize`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUnifize.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUnifize.html)
 - **Function**: Corrects intensity inhomogeneity (bias field)
 - **Key Parameters**: -prefix, -input, -GM (enhance GM/WM contrast)
 - **Typical Use**: Bias correction before segmentation or registration
@@ -402,6 +452,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dAutomask
 - **Command**: `3dAutomask`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutomask.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutomask.html)
 - **Function**: Creates brain mask from EPI data automatically
 - **Key Parameters**: -prefix, -dilate, -erode, -clfrac
 - **Typical Use**: Generating functional brain masks
@@ -410,6 +461,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dTcat
 - **Command**: `3dTcat`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html)
 - **Function**: Concatenates datasets in time or selects sub-bricks
 - **Key Parameters**: -prefix, input datasets with selectors
 - **Typical Use**: Combining runs, removing initial volumes
@@ -420,6 +472,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dDeconvolve
 - **Command**: `3dDeconvolve`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html)
 - **Function**: Multiple linear regression analysis for fMRI
 - **Key Parameters**: -input, -polort, -num_stimts, -stim_times, -gltsym
 - **Typical Use**: First-level GLM analysis with flexible HRF models
@@ -428,6 +481,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dREMLfit
 - **Command**: `3dREMLfit`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html)
 - **Function**: GLM with ARMA(1,1) temporal autocorrelation correction
 - **Key Parameters**: -matrix (from 3dDeconvolve), -input, -mask, -Rbuck
 - **Typical Use**: More accurate first-level statistics than 3dDeconvolve OLS
@@ -436,6 +490,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dMEMA
 - **Command**: `3dMEMA`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEMA.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEMA.html)
 - **Function**: Mixed Effects Meta Analysis for group studies
 - **Key Parameters**: -set (subject data), -mask, -prefix
 - **Typical Use**: Group analysis with proper mixed effects modeling
@@ -444,6 +499,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dANOVA / 3dANOVA2 / 3dANOVA3
 - **Command**: `3dANOVA*`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA.html)
 - **Function**: Fixed-effects ANOVA models (1, 2, or 3 factors)
 - **Key Parameters**: -type, -alevels, -blevels, -dset, -fa, -fb
 - **Typical Use**: Factorial designs in group analysis
@@ -452,6 +508,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dttest++
 - **Command**: `3dttest++`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dttest++.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dttest++.html)
 - **Function**: Two-sample t-test with covariates and advanced options
 - **Key Parameters**: -setA, -setB, -prefix, -covariates, -mask
 - **Typical Use**: Group comparisons with covariate control
@@ -460,6 +517,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dMVM
 - **Command**: `3dMVM`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMVM.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMVM.html)
 - **Function**: Multivariate modeling with ANOVA/ANCOVA
 - **Key Parameters**: -dataTable, -bsVars, -wsVars, -qVars
 - **Typical Use**: Complex repeated measures and mixed designs
@@ -468,6 +526,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dLME / 3dLMEr
 - **Command**: `3dLME` / `3dLMEr`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dLME.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dLME.html)
 - **Function**: Linear mixed effects modeling
 - **Key Parameters**: -dataTable, -model, -ranEff
 - **Typical Use**: Longitudinal data, nested designs
@@ -476,6 +535,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dClustSim
 - **Command**: `3dClustSim`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClustSim.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClustSim.html)
 - **Function**: Simulates null distribution for cluster size thresholding
 - **Key Parameters**: -mask, -acf (smoothness parameters), -athr, -pthr
 - **Typical Use**: Determining cluster size thresholds for multiple comparison correction
@@ -484,6 +544,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dFWHMx
 - **Command**: `3dFWHMx`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dFWHMx.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dFWHMx.html)
 - **Function**: Estimates spatial smoothness of data
 - **Key Parameters**: -input, -mask, -acf (output ACF parameters)
 - **Typical Use**: Getting smoothness estimates for 3dClustSim
@@ -494,6 +555,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dNetCorr
 - **Command**: `3dNetCorr`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html)
 - **Function**: Computes correlation matrices between ROI time series
 - **Key Parameters**: -inset, -in_rois, -prefix, -fish_z
 - **Typical Use**: Creating connectivity matrices from parcellations
@@ -502,6 +564,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dTcorr1D
 - **Command**: `3dTcorr1D`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorr1D.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorr1D.html)
 - **Function**: Correlates 4D data with 1D seed time series
 - **Key Parameters**: -input 4D, 1D seed file, -prefix
 - **Typical Use**: Seed-based correlation analysis
@@ -510,6 +573,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dTcorrMap
 - **Command**: `3dTcorrMap`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorrMap.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorrMap.html)
 - **Function**: Computes various whole-brain correlation metrics
 - **Key Parameters**: -input, -mask, -Hist, -Mean, -Zmean
 - **Typical Use**: Global connectivity metrics, data exploration
@@ -518,6 +582,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dRSFC
 - **Command**: `3dRSFC`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dRSFC.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dRSFC.html)
 - **Function**: Computes resting-state metrics (ALFF, fALFF, RSFA, etc.)
 - **Key Parameters**: -input, -prefix, -band, -mask
 - **Typical Use**: Amplitude of low-frequency fluctuations analysis
@@ -526,6 +591,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dGroupInCorr
 - **Command**: `3dGroupInCorr`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dGroupInCorr.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dGroupInCorr.html)
 - **Function**: Interactive group correlation analysis (InstaCorr server)
 - **Key Parameters**: -setA, -setB, -batch
 - **Typical Use**: Exploring group-level seed correlations
@@ -536,6 +602,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dROIstats
 - **Command**: `3dROIstats`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dROIstats.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dROIstats.html)
 - **Function**: Extracts statistics from data within ROI masks
 - **Key Parameters**: -mask, input dataset, -quiet, -nzmean
 - **Typical Use**: Extracting mean values from regions
@@ -544,6 +611,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dmaskave
 - **Command**: `3dmaskave`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmaskave.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmaskave.html)
 - **Function**: Outputs average time series from masked region
 - **Key Parameters**: -mask, -quiet, input dataset
 - **Typical Use**: Simple ROI time series extraction
@@ -552,6 +620,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dUndump
 - **Command**: `3dUndump`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUndump.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUndump.html)
 - **Function**: Creates dataset from coordinate text file
 - **Key Parameters**: -master, -xyz, -prefix, coordinate file
 - **Typical Use**: Creating spherical ROIs from peak coordinates
@@ -560,6 +629,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### whereami
 - **Command**: `whereami`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/whereami.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/whereami.html)
 - **Function**: Reports atlas labels for coordinates
 - **Key Parameters**: -coord_file, -atlas, -tab
 - **Typical Use**: Identifying anatomical locations of activations
@@ -568,6 +638,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dresample
 - **Command**: `3dresample`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dresample.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dresample.html)
 - **Function**: Resamples dataset to different grid
 - **Key Parameters**: -master, -input, -prefix, -rmode
 - **Typical Use**: Matching resolution between datasets
@@ -576,6 +647,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dfractionize
 - **Command**: `3dfractionize`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dfractionize.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dfractionize.html)
 - **Function**: Resamples ROI/atlas with fractional weighting
 - **Key Parameters**: -template, -input, -prefix, -clip
 - **Typical Use**: Resampling parcellations to functional resolution
@@ -586,6 +658,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dcalc
 - **Command**: `3dcalc`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcalc.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcalc.html)
 - **Function**: Voxelwise calculator with extensive expression support
 - **Key Parameters**: -a (input), -expr, -prefix
 - **Typical Use**: Mathematical operations, masking, thresholding
@@ -594,6 +667,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dinfo
 - **Command**: `3dinfo`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dinfo.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dinfo.html)
 - **Function**: Displays header information from datasets
 - **Key Parameters**: -verb, -n4, -tr, -orient, etc.
 - **Typical Use**: QC, scripting decisions based on data properties
@@ -602,6 +676,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dTstat
 - **Command**: `3dTstat`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTstat.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTstat.html)
 - **Function**: Computes temporal statistics (mean, stdev, etc.)
 - **Key Parameters**: -mean, -stdev, -prefix, input
 - **Typical Use**: Creating mean functional images, variance maps
@@ -610,6 +685,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dcopy
 - **Command**: `3dcopy`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcopy.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcopy.html)
 - **Function**: Copies dataset with optional format conversion
 - **Key Parameters**: input, output
 - **Typical Use**: Format conversion, making editable copies
@@ -618,6 +694,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dZeropad
 - **Command**: `3dZeropad`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html)
 - **Function**: Adds zero-padding around dataset boundaries
 - **Key Parameters**: -I/-S/-A/-P/-L/-R (directions), -master, -prefix
 - **Typical Use**: Matching matrix sizes, preventing edge effects
@@ -626,6 +703,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dNwarpApply
 - **Command**: `3dNwarpApply`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html)
 - **Function**: Applies nonlinear warps to datasets
 - **Key Parameters**: -nwarp, -source, -master, -prefix
 - **Typical Use**: Applying 3dQwarp transformations
@@ -634,6 +712,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### 3dNwarpCat
 - **Command**: `3dNwarpCat`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpCat.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpCat.html)
 - **Function**: Concatenates multiple warps into one
 - **Key Parameters**: -warp1, -warp2, etc., -prefix
 - **Typical Use**: Combining transformations efficiently
@@ -644,6 +723,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### afni_proc.py
 - **Command**: `afni_proc.py`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/afni_proc.py.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/afni_proc.py.html)
 - **Function**: Generates complete preprocessing and analysis scripts
 - **Key Parameters**: -subj_id, -dsets, -blocks, -tlrc_base, many others
 - **Typical Use**: Creating standardized preprocessing pipelines
@@ -652,6 +732,7 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 #### uber_subject.py
 - **Command**: `uber_subject.py`
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/program_help/uber_subject.py.html](https://afni.nimh.nih.gov/pub/dist/doc/program_help/uber_subject.py.html)
 - **Function**: GUI for designing afni_proc.py commands
 - **Key Parameters**: GUI-based
 - **Typical Use**: Interactive pipeline design
@@ -664,10 +745,13 @@ AFNI provides a comprehensive suite of C-based programs for fMRI analysis. Most 
 
 SPM is MATLAB-based, requiring special consideration for CWL implementation. Command-line execution is possible through MATLAB batch mode or compiled versions.
 
+**General Documentation**: [SPM Documentation](https://www.fil.ion.ucl.ac.uk/spm/doc/)
+
 ### Preprocessing Tools
 
 #### Realign
 - **Command**: `spm_realign` (MATLAB function)
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Rigid-body motion correction across time series
 - **Key Parameters**: Quality, separation, smoothing kernel, interpolation
 - **Typical Use**: First motion correction step in SPM pipelines
@@ -676,6 +760,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Realign & Unwarp
 - **Command**: `spm_uw_estimate` + `spm_uw_apply`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Motion correction with distortion-by-motion interaction correction
 - **Key Parameters**: Realign parameters plus distortion estimation
 - **Typical Use**: Improved motion correction accounting for susceptibility effects
@@ -684,6 +769,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Slice Timing
 - **Command**: `spm_slice_timing`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Temporal interpolation to correct for slice acquisition order
 - **Key Parameters**: Number of slices, TR, slice order, reference slice
 - **Typical Use**: Temporal alignment in SPM pipelines
@@ -692,6 +778,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Coregister
 - **Command**: `spm_coreg`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Rigid-body registration between different modalities
 - **Key Parameters**: Reference, source, cost function
 - **Typical Use**: Aligning functional to structural images
@@ -700,6 +787,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Segment (New Segment/Unified Segmentation)
 - **Command**: `spm_preproc_run`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Simultaneous tissue segmentation, bias correction, and normalization
 - **Key Parameters**: Tissue probability maps, regularization, warping
 - **Typical Use**: Core preprocessing step in modern SPM
@@ -708,6 +796,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Normalise (Write)
 - **Command**: `spm_write_sn` / `spm_normalise`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Applies spatial normalization to MNI space
 - **Key Parameters**: Deformation field, voxel sizes, bounding box
 - **Typical Use**: Transforming data to standard space
@@ -716,6 +805,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Smooth
 - **Command**: `spm_smooth`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 2)
 - **Function**: Gaussian spatial smoothing
 - **Key Parameters**: FWHM (typically 6-8mm)
 - **Typical Use**: Increasing SNR and meeting statistical assumptions
@@ -724,6 +814,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### DARTEL
 - **Command**: `spm_dartel*` functions
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 12)
 - **Function**: Diffeomorphic registration for improved normalization
 - **Key Parameters**: Template creation, flow fields
 - **Typical Use**: High-quality group template and normalization
@@ -732,6 +823,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### CAT12 (Extension)
 - **Command**: `cat12` batch
+- **Documentation**: [http://www.neuro.uni-jena.de/cat12/CAT12-Manual.pdf](http://www.neuro.uni-jena.de/cat12/CAT12-Manual.pdf)
 - **Function**: Advanced segmentation with cortical thickness and surface extraction
 - **Key Parameters**: Many preprocessing and analysis options
 - **Typical Use**: VBM with advanced quality control
@@ -742,6 +834,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Specify 1st-level (Model Specification)
 - **Command**: `spm_fmri_design`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 3)
 - **Function**: Creates design matrix from experimental conditions
 - **Key Parameters**: Units, TR, conditions (onsets/durations), HRF basis
 - **Typical Use**: Defining the GLM structure
@@ -750,6 +843,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Model Estimation
 - **Command**: `spm_spm`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 3)
 - **Function**: Estimates GLM parameters using ReML
 - **Key Parameters**: SPM.mat specification
 - **Typical Use**: Computing beta weights and variance estimates
@@ -758,6 +852,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Contrast Manager
 - **Command**: `spm_contrasts`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 3)
 - **Function**: Defines and computes contrast images
 - **Key Parameters**: Contrast vectors/matrices, contrast names
 - **Typical Use**: Testing specific hypotheses
@@ -766,6 +861,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Results
 - **Command**: `spm_results_ui` (GUI) / `spm_getSPM`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 3)
 - **Function**: Statistical inference and thresholding
 - **Key Parameters**: Height threshold, extent threshold, correction method
 - **Typical Use**: Viewing and saving thresholded statistical maps
@@ -774,6 +870,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Factorial Design Specification
 - **Command**: `spm_spm` (2nd level)
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 4)
 - **Function**: Group-level statistical designs
 - **Key Parameters**: Design type (one-sample, two-sample, ANOVA, etc.)
 - **Typical Use**: Random effects group analysis
@@ -784,6 +881,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### CONN Toolbox
 - **Command**: `conn` batch mode
+- **Documentation**: [https://web.conn-toolbox.org/resources/documentation](https://web.conn-toolbox.org/resources/documentation)
 - **Function**: Complete functional connectivity analysis pipeline
 - **Key Parameters**: Preprocessing, denoising, first-level, second-level options
 - **Typical Use**: ROI-to-ROI, seed-based, ICA-based connectivity
@@ -792,6 +890,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### DCM (Dynamic Causal Modeling)
 - **Command**: `spm_dcm_*` functions
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 10)
 - **Function**: Effective connectivity modeling of neural interactions
 - **Key Parameters**: VOIs, model structure, priors
 - **Typical Use**: Inferring directional connectivity
@@ -800,6 +899,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### PPI (Psychophysiological Interaction)
 - **Command**: `spm_peb_ppi`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 3)
 - **Function**: Context-dependent connectivity analysis
 - **Key Parameters**: VOI time series, psychological variable
 - **Typical Use**: How connectivity changes with task
@@ -810,6 +910,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Display
 - **Command**: `spm_image` / `spm_check_registration`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 1)
 - **Function**: Image visualization and registration quality check
 - **Key Parameters**: Images to display
 - **Typical Use**: Visual QC
@@ -818,6 +919,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### ImCalc (Image Calculator)
 - **Command**: `spm_imcalc`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 13)
 - **Function**: Mathematical operations on images
 - **Key Parameters**: Input images, expression, output
 - **Typical Use**: Masking, thresholding, combining images
@@ -826,6 +928,7 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 #### Deformations
 - **Command**: `spm_deformations`
+- **Documentation**: [https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf](https://www.fil.ion.ucl.ac.uk/spm/doc/manual.pdf) (Chapter 13)
 - **Function**: Applies, composes, or inverts deformation fields
 - **Key Parameters**: Deformation type, images to transform
 - **Typical Use**: Applying normalization, inverse normalization
@@ -838,10 +941,13 @@ SPM is MATLAB-based, requiring special consideration for CWL implementation. Com
 
 FreeSurfer provides comprehensive surface-based analysis. Most tools are command-line based with good CWL compatibility.
 
+**General Documentation**: [FreeSurfer Wiki](https://surfer.nmr.mgh.harvard.edu/fswiki/)
+
 ### Surface Reconstruction Pipeline
 
 #### recon-all
 - **Command**: `recon-all`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all](https://surfer.nmr.mgh.harvard.edu/fswiki/recon-all)
 - **Function**: Complete cortical reconstruction and parcellation pipeline
 - **Key Parameters**: -s (subject), -i (input), -all, -autorecon1/2/3
 - **Typical Use**: Full structural processing from T1 to surfaces and parcellation
@@ -850,6 +956,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_convert
 - **Command**: `mri_convert`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_convert](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_convert)
 - **Function**: Format conversion between neuroimaging formats
 - **Key Parameters**: Input, output, conforming options
 - **Typical Use**: Converting DICOM to NIfTI, conforming to FreeSurfer standards
@@ -858,6 +965,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_watershed
 - **Command**: `mri_watershed`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_watershed](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_watershed)
 - **Function**: Skull stripping using watershed algorithm
 - **Key Parameters**: Input T1, output brain
 - **Typical Use**: Brain extraction within recon-all
@@ -866,6 +974,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_normalize
 - **Command**: `mri_normalize`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_normalize](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_normalize)
 - **Function**: Intensity normalization for T1 images
 - **Key Parameters**: Input, output, normalization options
 - **Typical Use**: Preparing T1 for segmentation
@@ -874,6 +983,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_segment
 - **Command**: `mri_segment`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segment](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segment)
 - **Function**: White matter segmentation
 - **Key Parameters**: Input normalized volume
 - **Typical Use**: WM identification for surface reconstruction
@@ -882,6 +992,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mris_inflate
 - **Command**: `mris_inflate`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mris_inflate](https://surfer.nmr.mgh.harvard.edu/fswiki/mris_inflate)
 - **Function**: Inflates cortical surface for visualization
 - **Key Parameters**: Input surface, output inflated surface
 - **Typical Use**: Creating inflated surfaces for visualization
@@ -890,6 +1001,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mris_sphere
 - **Command**: `mris_sphere`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mris_sphere](https://surfer.nmr.mgh.harvard.edu/fswiki/mris_sphere)
 - **Function**: Maps surface to sphere for registration
 - **Key Parameters**: Input surface, output spherical surface
 - **Typical Use**: Preparing for spherical registration
@@ -900,6 +1012,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_aparc2aseg
 - **Command**: `mri_aparc2aseg`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_aparc2aseg](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_aparc2aseg)
 - **Function**: Combines cortical parcellation with subcortical segmentation
 - **Key Parameters**: Subject directory, annotation file
 - **Typical Use**: Creating volumetric parcellation from surface labels
@@ -908,6 +1021,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_annotation2label
 - **Command**: `mri_annotation2label`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_annotation2label](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_annotation2label)
 - **Function**: Converts surface annotation to individual label files
 - **Key Parameters**: Subject, hemisphere, annotation
 - **Typical Use**: Extracting individual ROIs from parcellation
@@ -916,6 +1030,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mris_ca_label
 - **Command**: `mris_ca_label`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mris_ca_label](https://surfer.nmr.mgh.harvard.edu/fswiki/mris_ca_label)
 - **Function**: Automatic cortical labeling based on atlas
 - **Key Parameters**: Subject, hemisphere, atlas
 - **Typical Use**: Applying parcellation atlas to individual
@@ -924,6 +1039,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_label2vol
 - **Command**: `mri_label2vol`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_label2vol](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_label2vol)
 - **Function**: Converts surface labels to volume space
 - **Key Parameters**: Label file, template volume, registration
 - **Typical Use**: Creating volumetric ROIs from surface ROIs
@@ -934,6 +1050,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### bbregister
 - **Command**: `bbregister`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/bbregister](https://surfer.nmr.mgh.harvard.edu/fswiki/bbregister)
 - **Function**: Boundary-based registration of EPI to FreeSurfer anatomy
 - **Key Parameters**: Subject, --mov (functional), --bold, --init-fsl
 - **Typical Use**: High-quality EPI to T1 registration using surfaces
@@ -942,6 +1059,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_vol2surf
 - **Command**: `mri_vol2surf`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_vol2surf](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_vol2surf)
 - **Function**: Projects volume data onto cortical surface
 - **Key Parameters**: Volume, registration, surface, output
 - **Typical Use**: Mapping functional data to surface for analysis
@@ -950,6 +1068,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_surf2vol
 - **Command**: `mri_surf2vol`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_surf2vol](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_surf2vol)
 - **Function**: Projects surface data back to volume
 - **Key Parameters**: Surface data, template volume, output
 - **Typical Use**: Converting surface results to volume space
@@ -958,6 +1077,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mris_preproc
 - **Command**: `mris_preproc`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mris_preproc](https://surfer.nmr.mgh.harvard.edu/fswiki/mris_preproc)
 - **Function**: Prepares surface data for group analysis
 - **Key Parameters**: Subject list, measure, target surface, output
 - **Typical Use**: Concatenating subjects for surface group analysis
@@ -966,6 +1086,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_glmfit
 - **Command**: `mri_glmfit`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_glmfit](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_glmfit)
 - **Function**: General linear model on surface or volume data
 - **Key Parameters**: --y (data), --fsgd (design), --C (contrasts)
 - **Typical Use**: Surface-based group analysis
@@ -976,6 +1097,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mris_anatomical_stats
 - **Command**: `mris_anatomical_stats`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mris_anatomical_stats](https://surfer.nmr.mgh.harvard.edu/fswiki/mris_anatomical_stats)
 - **Function**: Computes surface-based morphometric measures
 - **Key Parameters**: Subject, hemisphere, annotation
 - **Typical Use**: Extracting thickness, area, volume per region
@@ -984,6 +1106,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### mri_segstats
 - **Command**: `mri_segstats`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segstats](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segstats)
 - **Function**: Computes statistics from segmentation
 - **Key Parameters**: --seg (segmentation), --i (intensity volume)
 - **Typical Use**: Extracting volumes, mean intensities per structure
@@ -992,6 +1115,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### aparcstats2table
 - **Command**: `aparcstats2table`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/aparcstats2table](https://surfer.nmr.mgh.harvard.edu/fswiki/aparcstats2table)
 - **Function**: Collects parcellation stats across subjects into table
 - **Key Parameters**: --subjects, --hemi, --meas, --tablefile
 - **Typical Use**: Creating group spreadsheet for statistical analysis
@@ -1000,6 +1124,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### asegstats2table
 - **Command**: `asegstats2table`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/asegstats2table](https://surfer.nmr.mgh.harvard.edu/fswiki/asegstats2table)
 - **Function**: Collects subcortical stats across subjects into table
 - **Key Parameters**: --subjects, --meas, --tablefile
 - **Typical Use**: Group analysis of subcortical volumes
@@ -1010,6 +1135,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### trac-all
 - **Command**: `trac-all`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/Tracula](https://surfer.nmr.mgh.harvard.edu/fswiki/Tracula)
 - **Function**: Complete TRACULA tractography pipeline
 - **Key Parameters**: Configuration file with all parameters
 - **Typical Use**: Automated probabilistic tractography
@@ -1018,6 +1144,7 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 #### dmri_postreg
 - **Command**: `dmri_postreg`
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/dmri_postreg](https://surfer.nmr.mgh.harvard.edu/fswiki/dmri_postreg)
 - **Function**: Post-registration processing for diffusion
 - **Key Parameters**: Subject, registration type
 - **Typical Use**: Part of TRACULA pipeline
@@ -1030,10 +1157,13 @@ FreeSurfer provides comprehensive surface-based analysis. Most tools are command
 
 ANTs provides state-of-the-art registration algorithms. All tools are command-line based with excellent CWL compatibility.
 
+**General Documentation**: [ANTs GitHub Wiki](https://github.com/ANTsX/ANTs/wiki)
+
 ### Registration Tools
 
 #### antsRegistration
 - **Command**: `antsRegistration`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call](https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call)
 - **Function**: Comprehensive image registration with multiple stages
 - **Key Parameters**: Fixed, moving, transforms, metrics, convergence
 - **Typical Use**: High-quality registration with full control
@@ -1042,6 +1172,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsRegistrationSyN.sh
 - **Command**: `antsRegistrationSyN.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call](https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call)
 - **Function**: Symmetric normalization with sensible defaults
 - **Key Parameters**: -f (fixed), -m (moving), -t (transform type), -o (output)
 - **Typical Use**: Standard registration with good defaults
@@ -1050,6 +1181,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsRegistrationSyNQuick.sh
 - **Command**: `antsRegistrationSyNQuick.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call](https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call)
 - **Function**: Fast SyN registration with reduced parameters
 - **Key Parameters**: Same as SyN.sh
 - **Typical Use**: Quick registration when speed is priority
@@ -1058,6 +1190,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsApplyTransforms
 - **Command**: `antsApplyTransforms`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call](https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call)
 - **Function**: Applies transformations to images
 - **Key Parameters**: -i (input), -r (reference), -t (transforms), -o (output)
 - **Typical Use**: Applying registration to data or labels
@@ -1066,6 +1199,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsMotionCorr
 - **Command**: `antsMotionCorr`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/antsMotionCorr](https://github.com/ANTsX/ANTs/wiki/antsMotionCorr)
 - **Function**: Motion correction using ANTs registration
 - **Key Parameters**: -d (dimension), -a (average), -o (output)
 - **Typical Use**: High-quality motion correction
@@ -1074,6 +1208,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsIntermodalityIntrasubject.sh
 - **Command**: `antsIntermodalityIntrasubject.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call](https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call)
 - **Function**: Registration between modalities within subject
 - **Key Parameters**: -d (dimension), -i (source), -r (target), -t (transform)
 - **Typical Use**: T1-to-T2, fMRI-to-T1 alignment
@@ -1084,6 +1219,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### Atropos
 - **Command**: `Atropos`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4](https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4)
 - **Function**: Probabilistic tissue segmentation using EM algorithm
 - **Key Parameters**: -d (dimension), -a (input), -x (mask), -c (classes)
 - **Typical Use**: GMM-based brain tissue segmentation
@@ -1092,6 +1228,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsAtroposN4.sh
 - **Command**: `antsAtroposN4.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4](https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4)
 - **Function**: Combined bias correction and segmentation
 - **Key Parameters**: -d (dimension), -a (input), -x (mask)
 - **Typical Use**: Iterative N4 + segmentation for better results
@@ -1100,6 +1237,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsBrainExtraction.sh
 - **Command**: `antsBrainExtraction.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/antsBrainExtraction-and-templates](https://github.com/ANTsX/ANTs/wiki/antsBrainExtraction-and-templates)
 - **Function**: Brain extraction using registration and templates
 - **Key Parameters**: -d (dimension), -a (input), -e (template), -m (probability mask)
 - **Typical Use**: High-quality skull stripping
@@ -1108,6 +1246,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsCorticalThickness.sh
 - **Command**: `antsCorticalThickness.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates](https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates)
 - **Function**: Complete cortical thickness estimation pipeline
 - **Key Parameters**: -d, -a (T1), -e (template), -t (tissue priors)
 - **Typical Use**: DiReCT-based cortical thickness measurement
@@ -1116,6 +1255,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### KellyKapowski (DiReCT)
 - **Command**: `KellyKapowski`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates](https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates)
 - **Function**: Diffeomorphic Registration-based Cortical Thickness
 - **Key Parameters**: -d, -s (segmentation), -g (GM probability), -w (WM probability)
 - **Typical Use**: Computing cortical thickness from segmentation
@@ -1126,6 +1266,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### N4BiasFieldCorrection
 - **Command**: `N4BiasFieldCorrection`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4](https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4)
 - **Function**: Advanced bias field correction using N4 algorithm
 - **Key Parameters**: -d (dimension), -i (input), -o (output), -s (shrink factor)
 - **Typical Use**: Removing intensity inhomogeneity
@@ -1134,6 +1275,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### DenoiseImage
 - **Command**: `DenoiseImage`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/DenoiseImage](https://github.com/ANTsX/ANTs/wiki/DenoiseImage)
 - **Function**: Non-local means denoising
 - **Key Parameters**: -d (dimension), -i (input), -o (output), -v (noise model)
 - **Typical Use**: Noise reduction while preserving edges
@@ -1142,6 +1284,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### ImageMath
 - **Command**: `ImageMath`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/ImageMath](https://github.com/ANTsX/ANTs/wiki/ImageMath)
 - **Function**: Various image operations and measurements
 - **Key Parameters**: dimension, output, operation, input(s)
 - **Typical Use**: Mathematical operations, morphological operations
@@ -1150,6 +1293,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### ThresholdImage
 - **Command**: `ThresholdImage`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki](https://github.com/ANTsX/ANTs/wiki)
 - **Function**: Thresholding with various methods
 - **Key Parameters**: dimension, input, output, threshold parameters
 - **Typical Use**: Creating binary masks, Otsu thresholding
@@ -1158,6 +1302,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### LabelGeometryMeasures
 - **Command**: `LabelGeometryMeasures`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki](https://github.com/ANTsX/ANTs/wiki)
 - **Function**: Computes geometric measures for labeled regions
 - **Key Parameters**: dimension, label image, intensity image (optional)
 - **Typical Use**: Volume, centroid, and shape measures per label
@@ -1166,6 +1311,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### antsJointLabelFusion
 - **Command**: `antsJointLabelFusion.sh`
+- **Documentation**: [https://github.com/ANTsX/ANTs/wiki/antsJointLabelFusion](https://github.com/ANTsX/ANTs/wiki/antsJointLabelFusion)
 - **Function**: Multi-atlas segmentation with joint label fusion
 - **Key Parameters**: -d, -t (target), -g (atlas images), -l (atlas labels)
 - **Typical Use**: High-accuracy segmentation using multiple atlases
@@ -1179,6 +1325,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 ### Nipype
 
 #### Workflow Framework
+- **Documentation**: [https://nipype.readthedocs.io/](https://nipype.readthedocs.io/)
 - **Function**: Unified interface for neuroimaging tools, workflow management
 - **Key Components**: Interfaces (tool wrappers), Nodes, Workflows, DataGrabber, DataSink
 - **Typical Use**: Building reproducible pipelines combining multiple packages
@@ -1188,6 +1335,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 ### Nilearn
 
 #### Machine Learning & Visualization
+- **Documentation**: [https://nilearn.github.io/](https://nilearn.github.io/)
 - **Function**: Statistical learning on neuroimaging data, visualization
 - **Key Components**: masking, signal extraction, decoding, plotting
 - **Typical Use**: MVPA, visualization, ROI extraction
@@ -1197,6 +1345,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 ### PyMVPA
 
 #### Multivariate Pattern Analysis
+- **Documentation**: [http://www.pymvpa.org/](http://www.pymvpa.org/)
 - **Function**: Advanced MVPA and machine learning for neuroimaging
 - **Key Components**: Datasets, classifiers, cross-validation, searchlight
 - **Typical Use**: Decoding, searchlight analysis, RSA
@@ -1211,6 +1360,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### Standardized Preprocessing
 - **Command**: `fmriprep`
+- **Documentation**: [https://fmriprep.org/](https://fmriprep.org/)
 - **Function**: Robust, reproducible preprocessing pipeline
 - **Key Parameters**: BIDS input, output directory, participant label
 - **Typical Use**: Standardized preprocessing with comprehensive QC
@@ -1221,6 +1371,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### Quality Control
 - **Command**: `mriqc`
+- **Documentation**: [https://mriqc.readthedocs.io/](https://mriqc.readthedocs.io/)
 - **Function**: Automated quality metrics extraction
 - **Key Parameters**: BIDS input, output directory
 - **Typical Use**: Automated QC before preprocessing
@@ -1231,6 +1382,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 #### Motion Denoising
 - **Command**: `ICA_AROMA.py`
+- **Documentation**: [https://github.com/maartenmennes/ICA-AROMA](https://github.com/maartenmennes/ICA-AROMA)
 - **Function**: Automatic removal of motion artifacts using ICA
 - **Key Parameters**: -i (input), -mc (motion parameters), -o (output)
 - **Typical Use**: Denoising after MELODIC
@@ -1242,6 +1394,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 ## Connectivity Analysis Tools
 
 ### CONN Toolbox
+- **Documentation**: [https://web.conn-toolbox.org/](https://web.conn-toolbox.org/)
 - **Function**: Complete functional connectivity analysis
 - **Platform**: MATLAB/SPM-based
 - **Key Features**: Preprocessing, denoising, ROI-to-ROI, seed-based, ICA
@@ -1249,6 +1402,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 - **Notes**: Has batch/scripting mode
 
 ### DPABI/DPARSF
+- **Documentation**: [http://rfmri.org/DPABI](http://rfmri.org/DPABI)
 - **Function**: Resting-state fMRI processing and analysis
 - **Platform**: MATLAB/SPM-based
 - **Key Features**: Preprocessing, ALFF/fALFF/ReHo, functional connectivity
@@ -1256,6 +1410,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 - **Notes**: Popular for resting-state studies
 
 ### Brain Connectivity Toolbox
+- **Documentation**: [https://sites.google.com/site/babornik/Resources/bct](https://sites.google.com/site/babornik/Resources/bct)
 - **Function**: Graph theoretical analysis of brain networks
 - **Platform**: MATLAB (also Python version: bctpy)
 - **Key Features**: Network metrics, modularity, centrality, efficiency
@@ -1263,6 +1418,7 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 - **Notes**: Typically operates on connectivity matrices
 
 ### GRETNA
+- **Documentation**: [https://www.nitrc.org/projects/gretna/](https://www.nitrc.org/projects/gretna/)
 - **Function**: Graph-theory network analysis
 - **Platform**: MATLAB-based
 - **Key Features**: Network construction, global/local metrics, hub analysis
@@ -1275,31 +1431,31 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 
 ### FSLeyes
 - **Command**: `fsleyes`
-- **Function**: FSL image viewer and analysis tool
+- **Documentation**: [https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FSLeyes)
 - **CWL Status**: ❌ Not Feasible
 - **Notes**: GUI-based; can generate snapshots via command line (fsleyes render)
 
 ### AFNI GUI
 - **Command**: `afni`
-- **Function**: AFNI visualization and analysis interface
+- **Documentation**: [https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/main_toc.html](https://afni.nimh.nih.gov/pub/dist/doc/htmldoc/tutorials/main_toc.html)
 - **CWL Status**: ❌ Not Feasible
 - **Notes**: Interactive GUI; some features via DrivAfni scripting
 
 ### Freeview
 - **Command**: `freeview`
-- **Function**: FreeSurfer visualization tool
+- **Documentation**: [https://surfer.nmr.mgh.harvard.edu/fswiki/FreeviewGuide](https://surfer.nmr.mgh.harvard.edu/fswiki/FreeviewGuide)
 - **CWL Status**: ❌ Not Feasible
 - **Notes**: GUI-based; limited scripting support
 
 ### MRIcroGL
 - **Command**: `mricrogl`
-- **Function**: 3D volume rendering and visualization
+- **Documentation**: [https://www.nitrc.org/projects/mricrogl](https://www.nitrc.org/projects/mricrogl)
 - **CWL Status**: ⚠️ Possible
 - **Notes**: Has scripting mode for automated rendering
 
 ### Connectome Workbench
 - **Command**: `wb_command` / `wb_view`
-- **Function**: HCP data visualization and surface analysis
+- **Documentation**: [https://www.humanconnectome.org/software/workbench-command](https://www.humanconnectome.org/software/workbench-command)
 - **CWL Status**: ✅ Ready (wb_command) / ❌ Not Feasible (wb_view)
 - **Notes**: wb_command provides many CWL-compatible operations
 
@@ -1310,26 +1466,26 @@ ANTs provides state-of-the-art registration algorithms. All tools are command-li
 ### Priority 1: Core Preprocessing (High CWL Compatibility)
 These tools should be implemented first as they form the backbone of most workflows:
 
-1. **Brain Extraction**: BET (FSL), 3dSkullStrip (AFNI), antsBrainExtraction.sh (ANTs)
-2. **Motion Correction**: MCFLIRT (FSL), 3dvolreg (AFNI)
-3. **Slice Timing**: SliceTimer (FSL), 3dTshift (AFNI)
-4. **Registration**: FLIRT/FNIRT (FSL), 3dAllineate/3dQwarp (AFNI), antsRegistration (ANTs)
-5. **Smoothing**: SUSAN/fslmaths (FSL), 3dBlurToFWHM/3dmerge (AFNI)
-6. **Segmentation**: FAST (FSL), Atropos (ANTs)
+1. **Brain Extraction**: [BET](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET) (FSL), [3dSkullStrip](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSkullStrip.html) (AFNI), [antsBrainExtraction.sh](https://github.com/ANTsX/ANTs/wiki/antsBrainExtraction-and-templates) (ANTs)
+2. **Motion Correction**: [MCFLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT) (FSL), [3dvolreg](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dvolreg.html) (AFNI)
+3. **Slice Timing**: [SliceTimer](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SliceTimer) (FSL), [3dTshift](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html) (AFNI)
+4. **Registration**: [FLIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT)/[FNIRT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT) (FSL), [3dAllineate](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAllineate.html)/[3dQwarp](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html) (AFNI), [antsRegistration](https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call) (ANTs)
+5. **Smoothing**: [SUSAN](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN)/[fslmaths](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils) (FSL), [3dBlurToFWHM](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html)/[3dmerge](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html) (AFNI)
+6. **Segmentation**: [FAST](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST) (FSL), [Atropos](https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4) (ANTs)
 
 ### Priority 2: Statistical Analysis
 First-level and group analysis tools:
 
-1. **First Level**: FILM/FEAT (FSL), 3dDeconvolve/3dREMLfit (AFNI)
-2. **Group Level**: FLAME/Randomise (FSL), 3dttest++/3dMEMA (AFNI)
-3. **Utilities**: fslmaths (FSL), 3dcalc (AFNI), ImageMath (ANTs)
+1. **First Level**: [FILM](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM)/[FEAT](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT) (FSL), [3dDeconvolve](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html)/[3dREMLfit](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html) (AFNI)
+2. **Group Level**: [FLAME](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME)/[Randomise](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise) (FSL), [3dttest++](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dttest++.html)/[3dMEMA](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEMA.html) (AFNI)
+3. **Utilities**: [fslmaths](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils) (FSL), [3dcalc](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcalc.html) (AFNI), [ImageMath](https://github.com/ANTsX/ANTs/wiki/ImageMath) (ANTs)
 
 ### Priority 3: Advanced Analysis
 More specialized tools:
 
-1. **ICA/Denoising**: MELODIC (FSL), ICA-AROMA
-2. **Connectivity**: 3dNetCorr (AFNI), seed-based correlation tools
-3. **Surface-based**: FreeSurfer tools (bbregister, mri_vol2surf)
+1. **ICA/Denoising**: [MELODIC](https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC) (FSL), [ICA-AROMA](https://github.com/maartenmennes/ICA-AROMA)
+2. **Connectivity**: [3dNetCorr](https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html) (AFNI), seed-based correlation tools
+3. **Surface-based**: FreeSurfer tools ([bbregister](https://surfer.nmr.mgh.harvard.edu/fswiki/bbregister), [mri_vol2surf](https://surfer.nmr.mgh.harvard.edu/fswiki/mri_vol2surf))
 
 ### Implementation Notes
 
@@ -1337,23 +1493,28 @@ More specialized tools:
 - Most straightforward CWL implementation
 - Consistent parameter syntax
 - Well-documented inputs/outputs
+- **Docker**: [brainlife/fsl](https://hub.docker.com/r/brainlife/fsl)
 
 #### For AFNI Tools
 - Generally command-line ready
 - May output multiple files requiring careful output capture
 - Some R-based tools need R runtime
+- **Docker**: [afni/afni](https://hub.docker.com/r/afni/afni)
 
 #### For SPM Tools
 - Require MATLAB runtime or compiled versions
 - Batch mode execution through matlabbatch
 - Consider using Nipype SPM interfaces
+- **Docker**: [spmcentral/spm](https://hub.docker.com/r/spmcentral/spm)
 
 #### For FreeSurfer Tools
 - Subject directory structure important
 - Long-running recon-all may need special handling
 - Environment variables required (SUBJECTS_DIR, FREESURFER_HOME)
+- **Docker**: [freesurfer/freesurfer](https://hub.docker.com/r/freesurfer/freesurfer)
 
 #### For ANTs Tools
 - Excellent CWL compatibility
 - Complex parameter syntax for antsRegistration
 - Wrapper scripts simplify common operations
+- **Docker**: [antsx/ants](https://hub.docker.com/r/antsx/ants)

@@ -28,6 +28,12 @@ function WorkflowMenuItem({ name, toolInfo, onDragStart }) {
     setIsHovered(false);
   };
 
+  const handleDoubleClick = () => {
+    if (toolInfo?.docUrl) {
+      window.open(toolInfo.docUrl, '_blank', 'noopener,noreferrer');
+    }
+  };
+
   const fontSizeClass = getFontSizeClass(name);
 
   return (
@@ -38,6 +44,7 @@ function WorkflowMenuItem({ name, toolInfo, onDragStart }) {
       onDragStart={(event) => onDragStart(event, name)}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onDoubleClick={handleDoubleClick}
     >
       <span className="tool-name">{name}</span>
 

@@ -67,7 +67,8 @@ function WorkflowMenu() {
                               name={tool.name}
                               toolInfo={{
                                 function: tool.function,
-                                typicalUse: tool.typicalUse
+                                typicalUse: tool.typicalUse,
+                                docUrl: tool.docUrl
                               }}
                               onDragStart={handleDragStart}
                             />

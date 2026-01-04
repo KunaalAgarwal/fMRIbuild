@@ -19,8 +19,9 @@ A web-based GUI for building neuroimaging (fMRI) analysis workflows. Users visua
 ```
 src/
 ├── main.jsx                # App entry point
-├── components/             # React components (8 files)
+├── components/             # React components (10 files)
 │   ├── actionsBar.jsx      # Generate workflow + workspace buttons
+│   ├── EdgeMappingModal.jsx   # Modal for mapping node outputs to inputs
 │   ├── footer.jsx          # Footer component
 │   ├── headerBar.jsx       # Header with help modal
 │   ├── NodeComponent.jsx   # Custom node with parameter editing modal
@@ -34,13 +35,14 @@ src/
 │   ├── useWorkspaces.js    # Multi-workspace state + localStorage persistence
 │   ├── generateWorkflow.js # Orchestrates CWL zip generation
 │   └── buildWorkflow.js    # Converts ReactFlow graph to CWL YAML
-└── styles/                 # CSS files (9 files, paired with components)
+└── styles/                 # CSS files (10 files, paired with components)
 
 public/cwl/
 ├── toolMap.js              # CWL tool registry (execution layer)
-├── fsl/                    # FSL CWL tool definitions
-│   ├── bet.cwl
-│   └── fast.cwl
+├── fsl/                    # FSL CWL tool definitions (30 files)
+├── afni/                   # AFNI CWL tool definitions (44 files)
+├── ants/                   # ANTs CWL tool definitions (17 files)
+├── freesurfer/             # FreeSurfer CWL tool definitions (20 files)
 └── README.md               # Template for exported bundles
 ```
 
@@ -60,6 +62,7 @@ npm run deploy    # Deploy to GitHub Pages
 | App entry point | src/main.jsx |
 | ReactFlow canvas config | src/components/workflowCanvas.jsx |
 | Node parameter editing | src/components/NodeComponent.jsx |
+| Edge output-to-input mapping | src/components/EdgeMappingModal.jsx |
 | Workspace persistence | src/hooks/useWorkspaces.js |
 | CWL workflow generation | src/hooks/buildWorkflow.js |
 | CWL tool definitions | public/cwl/toolMap.js |
@@ -70,7 +73,8 @@ npm run deploy    # Deploy to GitHub Pages
 1. User drags tools from `workflowMenu` onto `workflowCanvas`
 2. Double-click node opens parameter modal (`NodeComponent`)
 3. Connect nodes via edges to define dependencies
-4. "Generate Workflow" triggers:
+4. Click edge to map source node outputs to target node inputs (`EdgeMappingModal`)
+5. "Generate Workflow" triggers:
    - `buildWorkflow.js` converts graph to CWL (includes cycle detection via Kahn's algorithm)
    - `generateWorkflow.js` fetches CWL files, creates ZIP bundle
    - Downloads `workflow_bundle.zip`
@@ -95,11 +99,22 @@ UI metadata for 100+ tools organized by library:
 
 ## Current Tools
 
-**CWL Implemented** (2 tools with full workflow support):
-- `bet` - Brain Extraction Tool (FSL)
-- `fast` - FMRIB's Automated Segmentation Tool (FSL)
+**CWL Implemented** (111 tools with full workflow support):
 
-**UI Available** (~100 tools for future implementation):
+| Library | CWL Files | Key Tools |
+|---------|-----------|-----------|
+| FSL | 30 | bet, fast, flirt, fnirt, mcflirt, melodic, feat, randomise, topup, etc. |
+| AFNI | 44 | 3dvolreg, 3dDeconvolve, 3dAllineate, 3dSkullStrip, 3dQwarp, 3dttest++, etc. |
+| ANTs | 17 | antsRegistration, N4BiasFieldCorrection, antsBrainExtraction, antsCorticalThickness, etc. |
+| FreeSurfer | 20 | mri_convert, bbregister, mri_segstats, mris_preproc, mri_glmfit, etc. |
+
+All CWL definitions include:
+- Docker containerization (brainlife/fsl, afni/afni, antsx/ants, freesurfer/freesurfer)
+- Full input/output specifications with type safety
+- Stdout/stderr logging
+- Conditional and dependent parameter handling
+
+**UI Available** (~100 tools displayed in menu):
 - FSL: Preprocessing, Statistical, ICA/Denoising, Diffusion/Structural, Utilities
 - AFNI: Preprocessing, Statistical, Connectivity, ROI/Parcellation, Utilities
 - FreeSurfer: Surface Reconstruction, Parcellation, Functional, Morphometry

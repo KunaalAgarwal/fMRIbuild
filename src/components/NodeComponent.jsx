@@ -7,11 +7,13 @@ import '../styles/workflowItem.css';
 const NodeComponent = ({ data }) => {
     const [showModal, setShowModal] = useState(false);
     const [textInput, setTextInput] = useState(data.parameters || '');
+    const [dockerVersion, setDockerVersion] = useState(data.dockerVersion || 'latest');
 
     // Get tool definition and optional inputs
     const tool = TOOL_MAP[data.label];
     const optionalInputs = tool?.optionalInputs || {};
     const hasDefinedTool = !!tool;
+    const dockerImage = tool?.dockerImage || null;
 
     // Generate a helpful default JSON showing available optional parameters
     const defaultJson = useMemo(() => {
@@ -81,10 +83,16 @@ const NodeComponent = ({ data }) => {
         // Attempt to parse; fallback to user's raw text if invalid
         if (typeof data.onSaveParameters === 'function') {
             try {
-                data.onSaveParameters(JSON.parse(textInput));
+                data.onSaveParameters({
+                    params: JSON.parse(textInput),
+                    dockerVersion: dockerVersion || 'latest'
+                });
             } catch (err) {
                 alert('Invalid JSON entered. Defaulting to raw text storage. Please ensure entry is formatted appropriately.');
-                data.onSaveParameters(textInput);
+                data.onSaveParameters({
+                    params: textInput,
+                    dockerVersion: dockerVersion || 'latest'
+                });
             }
         }
     };
@@ -135,6 +143,28 @@ const NodeComponent = ({ data }) => {
                 </Modal.Header>
                 <Modal.Body onClick={(e) => e.stopPropagation()}>
                     <Form>
+                        {/* Docker Version Input */}
+                        {dockerImage && (
+                            <Form.Group className="docker-version-group">
+                                <Form.Label className="modal-label">
+                                    Docker Image
+                                </Form.Label>
+                                <div className="docker-version-input-wrapper">
+                                    <span className="docker-image-prefix">{dockerImage}:</span>
+                                    <Form.Control
+                                        type="text"
+                                        value={dockerVersion}
+                                        onChange={(e) => setDockerVersion(e.target.value)}
+                                        className="docker-version-input"
+                                        placeholder="latest"
+                                    />
+                                </div>
+                                <div className="docker-help-text">
+                                    Specify a tag (e.g., "latest", "6.0.5", "2023.01")
+                                </div>
+                            </Form.Group>
+                        )}
+
                         <Form.Group className="mb-3">
                             <Form.Label className="modal-label">
                                 Configure optional parameters as JSON.

@@ -46,3 +46,58 @@
 .custom-modal .modal-body {
   padding: 12px;
 }
+
+/* Docker version input styles */
+.docker-version-group {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.docker-version-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  padding: 6px 10px;
+  transition: border-color 0.15s ease;
+}
+
+.docker-version-input-wrapper:focus-within {
+  border-color: #4a90e2;
+}
+
+.docker-image-prefix {
+  font-family: 'Roboto Mono', monospace;
+  color: #888;
+  font-size: 0.85rem;
+  white-space: nowrap;
+  user-select: none;
+}
+
+.docker-version-input {
+  font-family: 'Roboto Mono', monospace;
+  background-color: transparent !important;
+  border: none !important;
+  color: #4a90e2 !important;
+  padding: 0 4px;
+  flex: 1;
+  font-size: 0.85rem;
+  min-width: 80px;
+}
+
+.docker-version-input:focus {
+  box-shadow: none !important;
+  outline: none;
+}
+
+.docker-version-input::placeholder {
+  color: #555;
+}
+
+.docker-help-text {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 6px;
+}

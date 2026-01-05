@@ -75,12 +75,19 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     }
   };
 
-  // Update a node’s parameters.
-  const handleNodeUpdate = (nodeId, updatedParameters) => {
+  // Update a node's parameters and dockerVersion.
+  const handleNodeUpdate = (nodeId, updatedData) => {
     setNodes((prevNodes) => {
       const updatedNodes = prevNodes.map((node) =>
           node.id === nodeId
-              ? { ...node, data: { ...node.data, parameters: updatedParameters } }
+              ? {
+                  ...node,
+                  data: {
+                    ...node.data,
+                    parameters: updatedData.params || updatedData,
+                    dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest'
+                  }
+                }
               : node
       );
       updateWorkspaceState(updatedNodes, edges);
@@ -246,7 +253,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       data: {
         label: name,
         parameters: '',
-        onSaveParameters: (newParams) => handleNodeUpdate(newNode.id, newParams),
+        dockerVersion: 'latest',
+        onSaveParameters: (newData) => handleNodeUpdate(newNode.id, newData),
       },
       position: flowPosition,
     };

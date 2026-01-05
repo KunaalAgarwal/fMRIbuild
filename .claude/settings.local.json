@@ -13,7 +13,8 @@
       "WebFetch(domain:afni.nimh.nih.gov)",
       "Bash(dir /b \"C:\\\\Users\\\\kuna8\\\\personal_projects\\\\neuro-analysis-frontend\\\\public\\\\cwl\\\\afni\")",
       "WebFetch(domain:surfer.nmr.mgh.harvard.edu)",
-      "Bash(dir:*)"
+      "Bash(dir:*)",
+      "Bash(cat:*)"
     ]
   }
 }

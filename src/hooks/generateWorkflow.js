@@ -1,5 +1,6 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import YAML from 'js-yaml';
 import { buildCWLWorkflow } from './buildWorkflow.js';
 import { TOOL_MAP } from '../../public/cwl/toolMap.js';
 
@@ -51,7 +52,27 @@ export function useGenerateWorkflow() {
             console.warn('Could not fetch README.md:', err.message);
         }
 
-        /* ---------- fetch each unique tool file ---------- */
+        /* ---------- build Docker version map for each tool path ---------- */
+        // Maps cwlPath -> { dockerImage, dockerVersion }
+        const dockerVersionMap = {};
+        graph.nodes.forEach(node => {
+            const tool = TOOL_MAP[node.data.label];
+            if (tool?.cwlPath && tool?.dockerImage) {
+                // Use the node's dockerVersion, defaulting to 'latest'
+                const version = node.data.dockerVersion || 'latest';
+                // If multiple nodes use the same tool, use the first non-'latest' version,
+                // or the last specified version if all are 'latest'
+                if (!dockerVersionMap[tool.cwlPath] ||
+                    (dockerVersionMap[tool.cwlPath].dockerVersion === 'latest' && version !== 'latest')) {
+                    dockerVersionMap[tool.cwlPath] = {
+                        dockerImage: tool.dockerImage,
+                        dockerVersion: version
+                    };
+                }
+            }
+        });
+
+        /* ---------- fetch each unique tool file and inject Docker version ---------- */
         const uniquePaths = [
             ...new Set(graph.nodes.map(n => TOOL_MAP[n.data.label]?.cwlPath).filter(Boolean))
         ];
@@ -60,7 +81,35 @@ export function useGenerateWorkflow() {
             for (const p of uniquePaths) {
                 const res = await fetch(`${base}${p}`);
                 if (!res.ok) throw new Error(`${res.status} ${res.statusText}`);
-                zip.file(p, await res.text());
+
+                let cwlContent = await res.text();
+
+                // Inject Docker version if we have one for this tool
+                const dockerInfo = dockerVersionMap[p];
+                if (dockerInfo) {
+                    try {
+                        // Parse the CWL YAML
+                        const cwlDoc = YAML.load(cwlContent);
+
+                        // Update or create the DockerRequirement hint
+                        if (!cwlDoc.hints) {
+                            cwlDoc.hints = {};
+                        }
+                        cwlDoc.hints.DockerRequirement = {
+                            dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`
+                        };
+
+                        // Re-serialize to YAML, preserving the shebang if present
+                        const hasShebang = cwlContent.startsWith('#!/');
+                        const shebangLine = hasShebang ? cwlContent.split('\n')[0] + '\n\n' : '';
+                        cwlContent = shebangLine + YAML.dump(cwlDoc, { noRefs: true, lineWidth: -1 });
+                    } catch (parseErr) {
+                        console.warn(`Could not parse CWL file ${p} for Docker injection:`, parseErr.message);
+                        // Keep original content if parsing fails
+                    }
+                }
+
+                zip.file(p, cwlContent);
             }
         } catch (err) {
             alert(`Unable to fetch tool file:\n${err.message}`);

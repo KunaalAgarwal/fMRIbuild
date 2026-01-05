@@ -200,6 +200,18 @@ export function buildCWLWorkflow(graph) {
             });
         }
 
+        /* ---------- add Docker hints ---------- */
+        const dockerVersion = node.data.dockerVersion || 'latest';
+        const dockerImage = effectiveTool.dockerImage;
+
+        if (dockerImage) {
+            step.hints = {
+                DockerRequirement: {
+                    dockerPull: `${dockerImage}:${dockerVersion}`
+                }
+            };
+        }
+
         wf.steps[stepId] = step;
     });
 

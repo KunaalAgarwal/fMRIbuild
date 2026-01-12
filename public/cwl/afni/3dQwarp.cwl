@@ -119,21 +119,21 @@ outputs:
   warped:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob: $(inputs.prefix)+*.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
   warp:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)_WARP+orig.HEAD
+      glob: $(inputs.prefix)_WARP+*.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
   inverse_warp:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)_WARPINV+orig.HEAD
+      glob: $(inputs.prefix)_WARPINV+*.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz

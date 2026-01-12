@@ -19,9 +19,19 @@ require_cmd() {
   fi
 }
 
+ensure_repo_data_gitignore() {
+  local data_path="$1"
+  local data_root="${ROOT_DIR}/tests/data"
+  if [[ "$data_path" == "$data_root"* ]]; then
+    mkdir -p "$data_root"
+    touch "$data_root/.gitignore"
+  fi
+}
+
 require_cmd curl
 require_cmd tar
 
+ensure_repo_data_gitignore "$DATA_DIR"
 mkdir -p "$SUBJECTS_DIR" "$ARCHIVE_DIR"
 
 if [[ -d "$SUBJECTS_DIR/bert" ]]; then

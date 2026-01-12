@@ -80,7 +80,7 @@ outputs:
   concatenated_warp:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob: $(inputs.prefix)+*.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz

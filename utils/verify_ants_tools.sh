@@ -70,6 +70,15 @@ require_cmd() {
   fi
 }
 
+ensure_repo_data_gitignore() {
+  local data_path="$1"
+  local data_root="${ROOT_DIR}/tests/data"
+  if [[ "$data_path" == "$data_root"* ]]; then
+    mkdir -p "$data_root"
+    touch "$data_root/.gitignore"
+  fi
+}
+
 skip_tool() {
   local name="$1"
   local reason="${2:-}"
@@ -202,6 +211,7 @@ require_cmd cwltool
 require_cmd docker
 require_cmd python3
 
+ensure_repo_data_gitignore "$DATA_DIR"
 mkdir -p "$JOB_DIR" "$OUT_DIR" "$LOG_DIR" "$DERIVED_DIR"
 
 move_cortical_testmode_artifacts() {

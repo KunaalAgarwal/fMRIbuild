@@ -21,7 +21,7 @@ inputs:
   output:
     type: string
     label: Output filename prefix
-    inputBinding: {prefix: -o, separate: false}
+    inputBinding: {prefix: -o}
 
   # OPTIONAL PARAMETERS
   nclass:

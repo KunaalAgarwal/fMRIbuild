@@ -210,7 +210,7 @@ echo -e "tool\tstatus" >"$SUMMARY_FILE"
 
 # Download data if missing.
 if [[ ! -d "${DATA_SUBJECTS_DIR}/bert" ]]; then
-  "${ROOT_DIR}/scripts/download_freesurfer_test_data.sh"
+  "${ROOT_DIR}/utils/download_freesurfer_test_data.sh"
 fi
 
 if [[ ! -d "${DATA_SUBJECTS_DIR}/bert" ]]; then

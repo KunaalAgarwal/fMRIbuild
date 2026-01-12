@@ -304,7 +304,7 @@ ensure_image "$AFNI_TEST_IMAGE" build
 # Download data if missing.
 if [[ ! -d "${DATA_DIR}/ds002979" ]]; then
   require_cmd aws
-  "${ROOT_DIR}/scripts/download_afni_test_data.sh"
+  "${ROOT_DIR}/utils/download_afni_test_data.sh"
 fi
 
 DS1="${DATA_DIR}/ds002979"

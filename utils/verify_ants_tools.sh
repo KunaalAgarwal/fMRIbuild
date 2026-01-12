@@ -250,7 +250,7 @@ ensure_image "$ANTS_IMAGE"
 # Download data if missing.
 if [[ ! -d "${DATA_DIR}/ds002979" ]]; then
   require_cmd aws
-  "${ROOT_DIR}/scripts/download_ants_test_data.sh"
+  "${ROOT_DIR}/utils/download_ants_test_data.sh"
 fi
 
 DS1="${DATA_DIR}/ds002979"

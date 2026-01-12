@@ -287,7 +287,7 @@ echo -e "tool\tstatus" >"$SUMMARY_FILE"
 # Download data if missing.
 if [[ ! -d "${DATA_DIR}/ds002979" || ! -d "${DATA_DIR}/ds003676" || ! -d "${DATA_DIR}/ds002185" ]]; then
   require_cmd aws
-  "${ROOT_DIR}/scripts/download_fsl_test_data.sh"
+  "${ROOT_DIR}/utils/download_fsl_test_data.sh"
 fi
 
 # Locate key files.

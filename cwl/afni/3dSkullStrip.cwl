@@ -8,7 +8,7 @@ baseCommand: ['xvfb-run', '-a', '3dSkullStrip']
 
 hints:
   DockerRequirement:
-    dockerPull: fmribuild/afni-test:latest
+    dockerPull: nibuild/afni-test:latest
 
 stdout: $(inputs.prefix).log
 stderr: $(inputs.prefix).log

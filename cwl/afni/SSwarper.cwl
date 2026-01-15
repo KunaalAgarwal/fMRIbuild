@@ -8,7 +8,7 @@ baseCommand: ['xvfb-run', '-a', '@SSwarper']
 
 hints:
   DockerRequirement:
-    dockerPull: fmribuild/afni-test:latest
+    dockerPull: nibuild/afni-test:latest
 
 stdout: $(inputs.subid)_SSwarper.log
 stderr: $(inputs.subid)_SSwarper.log

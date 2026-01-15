@@ -8,7 +8,7 @@ baseCommand: '3dLME'
 
 hints:
   DockerRequirement:
-    dockerPull: fmribuild/afni-test:latest
+    dockerPull: nibuild/afni-test:latest
 
 requirements:
   InlineJavascriptRequirement: {}

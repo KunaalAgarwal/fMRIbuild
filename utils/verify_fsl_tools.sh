@@ -240,6 +240,14 @@ run_tool() {
     return 0
   fi
 
+  # Validate CWL file first - fail immediately if invalid
+  if ! cwltool --validate "$cwl_file" >>"$log_file" 2>&1; then
+    echo "CWL validation failed for ${cwl_file}" >>"$log_file"
+    RUN_TOOL_STATUS=1
+    echo -e "${name}\tFAIL" >>"$SUMMARY_FILE"
+    return 0
+  fi
+
   if cwltool --outdir "$out_dir" "$cwl_file" "$job_file" >"$out_json" 2>"$log_file"; then
     if verify_outputs "$out_json" >>"$log_file" 2>&1; then
       status="PASS"

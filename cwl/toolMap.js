@@ -22,7 +22,7 @@
 // Docker images for each neuroimaging library
 export const DOCKER_IMAGES = {
     fsl: 'brainlife/fsl',
-    afni: 'afni/afni',
+    afni: 'brainlife/afni',
     ants: 'antsx/ants',
     freesurfer: 'freesurfer/freesurfer'
 };

@@ -1,6 +1,6 @@
 .actions-bar {
-  width: clamp(200px, 60%, 750px);  
-  margin: 0 auto clamp(8px, 2vw, 15px) auto;
+  width: clamp(200px, 60%, 750px);
+  margin: 0;
   padding: clamp(8px, 1.5vw, 15px);
   display: flex;
   justify-content: space-evenly;

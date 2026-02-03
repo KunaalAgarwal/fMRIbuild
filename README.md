@@ -1,7 +1,7 @@
 # niBuild
 
 To streamline the process of creating fMRI and other neuro-imaging analysis workflows, 
-we've developed niBuild. Through the graphical user interface (GUI) users can design workflows 
+we developed niBuild. Through the graphical user interface (GUI) users can design workflows 
 leveraging analysis operations from FSL, AFNI, ANTs, FreeSurfer, etc. After designing the workflow 
 users can directly generate a workflow zip package containing the 
 [Common Workflow Language (CWL)](https://www.commonwl.org/user_guide/introduction/index.html) workflow 

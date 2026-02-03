@@ -101,3 +101,29 @@
   color: #666;
   margin-top: 6px;
 }
+
+/* Node wrapper and handle labels */
+.node-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.handle-label {
+  font-size: 6px;
+  font-family: 'Roboto Mono', monospace;
+  color: #666;
+  font-weight: 500;
+  letter-spacing: 0.3px;
+  pointer-events: none;
+  user-select: none;
+  line-height: 1;
+}
+
+.handle-label-top {
+  margin-bottom: 1px;
+}
+
+.handle-label-bottom {
+  margin-top: 1px;
+}

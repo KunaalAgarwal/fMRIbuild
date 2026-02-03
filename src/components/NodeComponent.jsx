@@ -123,10 +123,14 @@ const NodeComponent = ({ data }) => {
 
     return (
         <>
-            <div onDoubleClick={handleOpenModal}>
-                {data.label}
-                <Handle type="target" position={Position.Top} />
-                <Handle type="source" position={Position.Bottom} />
+            <div className="node-wrapper">
+                <span className="handle-label handle-label-top">IN</span>
+                <div onDoubleClick={handleOpenModal} className="node-content">
+                    <Handle type="target" position={Position.Top} />
+                    {data.label}
+                    <Handle type="source" position={Position.Bottom} />
+                </div>
+                <span className="handle-label handle-label-bottom">OUT</span>
             </div>
 
             <Modal

@@ -93,6 +93,15 @@ button:focus {
   outline-offset: 2px;
 }
 
+.toolbar-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  position: relative;
+  padding: 0 clamp(10px, 2vw, 20px);
+  margin-bottom: clamp(8px, 2vw, 15px);
+}
+
 /* Global Scrollbar Styling */
 *::-webkit-scrollbar {
   width: 10px;

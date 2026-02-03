@@ -6,11 +6,40 @@ import { TOOL_MAP } from '../../public/cwl/toolMap.js';
 
 export function useGenerateWorkflow() {
     /**
+     * Sanitize workflow name for safe use as a filename.
+     * Security: Prevents path traversal, code injection, and special characters.
+     * - Only allows alphanumeric, underscore, and hyphen
+     * - Removes path separators (/, \, ..)
+     * - Limits length to prevent filesystem issues
+     * - Falls back to 'main' for empty/invalid input
+     */
+    const sanitizeFilename = (name) => {
+        if (!name || typeof name !== 'string') return 'main';
+
+        const sanitized = name
+            .trim()
+            .toLowerCase()
+            // Remove any path traversal attempts
+            .replace(/\.\./g, '')
+            .replace(/[/\\]/g, '')
+            // Only allow alphanumeric, underscore, hyphen
+            .replace(/[^a-z0-9_-]/g, '_')
+            // Collapse multiple underscores
+            .replace(/_+/g, '_')
+            // Remove leading/trailing underscores
+            .replace(/^_|_$/g, '')
+            // Limit length to 50 characters
+            .slice(0, 50);
+
+        return sanitized || 'main';
+    };
+
+    /**
      * Builds main.cwl, pulls tool CWL files, zips, and downloads.
      * Works both in `npm run dev` (BASE_URL = "/") and on GitHub Pages
      * (BASE_URL = "/niBuild/").
      */
-    const generateWorkflow = async (getWorkflowData) => {
+    const generateWorkflow = async (getWorkflowData, workflowName = '') => {
         if (typeof getWorkflowData !== 'function') {
             console.error('generateWorkflow expects a function');
             return;
@@ -21,6 +50,8 @@ export function useGenerateWorkflow() {
             alert('Empty workflow — nothing to export.');
             return;
         }
+
+        const safeWorkflowName = sanitizeFilename(workflowName);
 
         /* ---------- build CWL workflow ---------- */
         let mainCWL;
@@ -37,7 +68,7 @@ export function useGenerateWorkflow() {
 
         /* ---------- prepare ZIP ---------- */
         const zip = new JSZip();
-        zip.file('workflows/main.cwl', mainCWL);
+        zip.file(`workflows/${safeWorkflowName}.cwl`, mainCWL);
 
         // baseURL ends in "/", ensure single slash join
         const base = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
@@ -46,7 +77,9 @@ export function useGenerateWorkflow() {
         try {
             const readmeRes = await fetch(`${base}README.md`);
             if (readmeRes.ok) {
-                zip.file('README.md', await readmeRes.text());
+                let readmeContent = await readmeRes.text();
+                readmeContent = readmeContent.replace(/main\.cwl/g, `${safeWorkflowName}.cwl`);
+                zip.file('README.md', readmeContent);
             }
         } catch (err) {
             console.warn('Could not fetch README.md:', err.message);

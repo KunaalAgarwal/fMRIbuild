@@ -5,6 +5,7 @@ import HeaderBar from './components/headerBar';
 import WorkflowMenu from './components/workflowMenu';
 import ToggleWorkflowBar from './components/toggleWorkflowBar';
 import WorkflowCanvas from './components/workflowCanvas'
+import WorkflowNameInput from './components/workflowNameInput';
 import Footer from "./components/footer";
 import { useWorkspaces } from './hooks/useWorkspaces';
 import { useGenerateWorkflow } from './hooks/generateWorkflow';
@@ -19,8 +20,11 @@ function App() {
         addNewWorkspace,
         clearCurrentWorkspace,
         updateCurrentWorkspaceItems,
-        removeCurrentWorkspace
+        removeCurrentWorkspace,
+        updateWorkspaceName
     } = useWorkspaces();
+
+    const currentWorkflowName = workspaces[currentWorkspace]?.name || '';
 
     // This state will eventually hold a function returned by WorkflowCanvas
     const [getWorkflowData, setGetWorkflowData] = useState(null);
@@ -31,14 +35,20 @@ function App() {
         <div>
             <div className="app-layout">
                 <HeaderBar />
-                <ActionsBar
-                    onNewWorkspace={addNewWorkspace}
-                    onClearWorkspace={clearCurrentWorkspace}
-                    onRemoveWorkspace={removeCurrentWorkspace}
-                    workspaceCount={workspaces.length}
-                    // On click, we pass our function to generateWorkflow
-                    onGenerateWorkflow={() => generateWorkflow(getWorkflowData)}
-                />
+                <div className="toolbar-row">
+                    <ActionsBar
+                        onNewWorkspace={addNewWorkspace}
+                        onClearWorkspace={clearCurrentWorkspace}
+                        onRemoveWorkspace={removeCurrentWorkspace}
+                        workspaceCount={workspaces.length}
+                        // On click, we pass our function to generateWorkflow
+                        onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentWorkflowName)}
+                    />
+                    <WorkflowNameInput
+                        name={currentWorkflowName}
+                        onNameChange={updateWorkspaceName}
+                    />
+                </div>
                 <div className="workflow-content">
                     <div className="workflow-content-main">
                         <WorkflowMenu />

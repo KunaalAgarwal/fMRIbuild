@@ -1,0 +1,82 @@
+.workflow-name-container {
+  display: flex;
+  align-items: center;
+  gap: clamp(4px, 0.5vw, 8px);
+  padding: clamp(4px, 0.6vw, 8px) clamp(6px, 1vw, 12px);
+  background-color: rgba(46, 46, 46, 0.9);
+  border-radius: 6px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  position: absolute;
+  right: clamp(8px, 1.5vw, 16px);
+}
+
+.workflow-name-input-wrapper {
+  display: flex;
+  align-items: center;
+  background-color: #1e1e1e;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  overflow: hidden;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.workflow-name-input-wrapper:focus-within {
+  border-color: #4a90e2;
+  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+}
+
+.workflow-name-input {
+  font-family: 'Roboto Mono', monospace;
+  background: transparent;
+  color: #e0e0e0;
+  border: none;
+  padding: clamp(3px, 0.5vw, 6px) clamp(6px, 0.8vw, 10px);
+  font-size: clamp(0.55rem, 0.8vw, 0.75rem);
+  width: clamp(60px, 8vw, 120px);
+  outline: none;
+}
+
+.workflow-name-input::placeholder {
+  color: #666;
+  font-style: italic;
+}
+
+.workflow-name-suffix {
+  font-family: 'Roboto Mono', monospace;
+  font-size: clamp(0.55rem, 0.8vw, 0.75rem);
+  color: #666;
+  padding-right: clamp(4px, 0.6vw, 8px);
+  user-select: none;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 1200px) {
+  .workflow-name-container {
+    padding: 4px 8px;
+  }
+
+  .workflow-name-input {
+    width: 70px;
+    padding: 3px 6px;
+    font-size: 0.6rem;
+  }
+
+  .workflow-name-suffix {
+    font-size: 0.6rem;
+  }
+}
+
+@media (max-width: 900px) {
+  .workflow-name-input {
+    width: 60px;
+  }
+}
+
+@media (max-width: 600px) {
+  .workflow-name-container {
+    position: static;
+    margin-top: 8px;
+  }
+}

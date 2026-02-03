@@ -51,14 +51,19 @@
 .library-header .library-name {
   flex: 1;
   font-size: clamp(0.8rem, 1.1vw, 0.95rem);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
 }
 
 .library-header .tool-count {
-  font-size: 0.75em;
+  font-size: clamp(0.55rem, 0.7vw, 0.75rem);
   color: #888;
   background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px 8px;
+  padding: 2px 6px;
   border-radius: 10px;
+  white-space: nowrap;
 }
 
 .library-tools {

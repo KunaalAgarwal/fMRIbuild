@@ -5,7 +5,15 @@ export function useWorkspaces() {
   // Each workspace is now an object with 'nodes' and 'edges'
   const [workspaces, setWorkspaces] = useState(() => {
     const savedWorkspaces = JSON.parse(localStorage.getItem('workspaces'));
-    return savedWorkspaces ? savedWorkspaces : [{ nodes: [], edges: [] }]; // Default to a blank workspace
+    if (savedWorkspaces) {
+      // Migrate existing data to include name field
+      return savedWorkspaces.map(ws => ({
+        nodes: ws.nodes || [],
+        edges: ws.edges || [],
+        name: ws.name || ''
+      }));
+    }
+    return [{ nodes: [], edges: [], name: '' }];
   });
 
   const [currentWorkspace, setCurrentWorkspace] = useState(() => {
@@ -26,7 +34,7 @@ export function useWorkspaces() {
   const addNewWorkspace = () => {
     setWorkspaces((prevWorkspaces) => [
       ...prevWorkspaces,
-      { nodes: [], edges: [] }
+      { nodes: [], edges: [], name: '' }
     ]);
     setCurrentWorkspace(workspaces.length); // Switch to the new workspace
   };
@@ -34,7 +42,9 @@ export function useWorkspaces() {
   const clearCurrentWorkspace = () => {
     setWorkspaces((prevWorkspaces) => {
       const updatedWorkspaces = [...prevWorkspaces];
-      updatedWorkspaces[currentWorkspace] = { nodes: [], edges: [] };
+      // Preserve the name when clearing
+      const currentName = updatedWorkspaces[currentWorkspace]?.name || '';
+      updatedWorkspaces[currentWorkspace] = { nodes: [], edges: [], name: currentName };
       return updatedWorkspaces;
     });
   };
@@ -43,7 +53,12 @@ export function useWorkspaces() {
     // newItems is expected to be an object with shape: { nodes, edges }
     setWorkspaces((prevWorkspaces) => {
       const updatedWorkspaces = [...prevWorkspaces];
-      updatedWorkspaces[currentWorkspace] = newItems;
+      // Preserve the name when updating nodes/edges
+      const currentName = updatedWorkspaces[currentWorkspace]?.name || '';
+      updatedWorkspaces[currentWorkspace] = {
+        ...newItems,
+        name: currentName
+      };
       return updatedWorkspaces;
     });
   };
@@ -64,6 +79,17 @@ export function useWorkspaces() {
     });
   };
 
+  const updateWorkspaceName = (newName) => {
+    setWorkspaces((prevWorkspaces) => {
+      const updatedWorkspaces = [...prevWorkspaces];
+      updatedWorkspaces[currentWorkspace] = {
+        ...updatedWorkspaces[currentWorkspace],
+        name: newName
+      };
+      return updatedWorkspaces;
+    });
+  };
+
   return {
     workspaces,
     currentWorkspace,
@@ -71,6 +97,7 @@ export function useWorkspaces() {
     addNewWorkspace,
     clearCurrentWorkspace,
     updateCurrentWorkspaceItems,
-    removeCurrentWorkspace
+    removeCurrentWorkspace,
+    updateWorkspaceName
   };
 }

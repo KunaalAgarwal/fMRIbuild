@@ -211,3 +211,24 @@ export const DOCKER_TAGS = {
     // freesurfer/freesurfer - https://hub.docker.com/r/freesurfer/freesurfer/tags
     FreeSurfer: ['latest', '8.1.0', '8.0.0', '7.4.1', '7.3.2', '7.3.1', '7.3.0', '7.2.0', '7.1.1', '6.0']
 };
+
+/**
+ * Pre-computed Map for O(1) tool lookup by name.
+ * Replaces triple-nested O(L×C×T) lookups with O(1).
+ */
+export const toolByName = new Map();
+
+// Build the lookup map at module load time
+for (const library of Object.values(toolsByLibrary)) {
+    for (const category of Object.values(library)) {
+        for (const tool of category) {
+            toolByName.set(tool.name, tool);
+        }
+    }
+}
+// Also add dummy nodes
+for (const category of Object.values(dummyNodes)) {
+    for (const tool of category) {
+        toolByName.set(tool.name, tool);
+    }
+}

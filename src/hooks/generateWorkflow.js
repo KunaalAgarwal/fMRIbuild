@@ -3,8 +3,10 @@ import { saveAs } from 'file-saver';
 import YAML from 'js-yaml';
 import { buildCWLWorkflow } from './buildWorkflow.js';
 import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { useToast } from '../context/ToastContext.jsx';
 
 export function useGenerateWorkflow() {
+    const { showError, showWarning } = useToast();
     /**
      * Sanitize workflow name for safe use as a filename.
      * Security: Prevents path traversal, code injection, and special characters.
@@ -47,7 +49,7 @@ export function useGenerateWorkflow() {
 
         const graph = getWorkflowData();
         if (!graph || !graph.nodes || graph.nodes.length === 0) {
-            alert('Empty workflow — nothing to export.');
+            showWarning('Empty workflow — nothing to export.');
             return;
         }
 
@@ -58,7 +60,7 @@ export function useGenerateWorkflow() {
         try {
             mainCWL = buildCWLWorkflow(graph);
         } catch (err) {
-            alert(`Workflow build failed:\n${err.message}`);
+            showError(`Workflow build failed: ${err.message}`);
             return;
         }
 
@@ -145,7 +147,7 @@ export function useGenerateWorkflow() {
                 zip.file(p, cwlContent);
             }
         } catch (err) {
-            alert(`Unable to fetch tool file:\n${err.message}`);
+            showError(`Unable to fetch tool file: ${err.message}`);
             return;
         }
 

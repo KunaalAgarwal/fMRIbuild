@@ -15,6 +15,7 @@ import '../styles/actionsBar.css';
 import NodeComponent from './NodeComponent';
 import EdgeMappingModal, { checkTypeCompatibility } from './EdgeMappingModal';
 import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { useNodeLookup } from '../hooks/useNodeLookup.js';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
@@ -26,6 +27,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+
+  // Memoized node lookup for O(1) access
+  const nodeMap = useNodeLookup(nodes);
+
+  // Ref to track current nodes for closures (fixes stale closure issue)
+  const nodesRef = useRef(nodes);
+  useEffect(() => {
+    nodesRef.current = nodes;
+  }, [nodes]);
 
   // Edge mapping modal state
   const [showEdgeModal, setShowEdgeModal] = useState(false);
@@ -102,9 +112,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         setPendingConnection(connection);
         setEditingEdge(null);
 
-        // Get source/target node info for modal
-        const sourceNode = nodes.find(n => n.id === connection.source);
-        const targetNode = nodes.find(n => n.id === connection.target);
+        // Get source/target node info for modal using O(1) lookup
+        const sourceNode = nodeMap.get(connection.source);
+        const targetNode = nodeMap.get(connection.target);
 
         if (sourceNode && targetNode) {
           // Check for type compatibility between source outputs and target inputs
@@ -138,15 +148,16 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           setShowEdgeModal(true);
         }
       },
-      [nodes]
+      [nodeMap]
   );
 
   // Handle double-click on edge to edit mapping
   const onEdgeDoubleClick = useCallback(
       (event, edge) => {
         event.stopPropagation();
-        const sourceNode = nodes.find(n => n.id === edge.source);
-        const targetNode = nodes.find(n => n.id === edge.target);
+        // Use O(1) lookup instead of O(n) find
+        const sourceNode = nodeMap.get(edge.source);
+        const targetNode = nodeMap.get(edge.target);
 
         if (sourceNode && targetNode) {
           setEditingEdge(edge);
@@ -159,7 +170,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           setShowEdgeModal(true);
         }
       },
-      [nodes]
+      [nodeMap]
   );
 
   // Handle saving edge mappings from modal
@@ -216,6 +227,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   }, []);
 
   // Wrap onEdgesChange to sync edge deletions to localStorage
+  // Uses nodesRef to avoid stale closure capturing nodes
   const handleEdgesChange = useCallback((changes) => {
     // Apply the changes first
     onEdgesChange(changes);
@@ -224,11 +236,11 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     const deletions = changes.filter(c => c.type === 'remove');
     if (deletions.length > 0) {
       setEdges((currentEdges) => {
-        updateWorkspaceState(nodes, currentEdges);
+        updateWorkspaceState(nodesRef.current, currentEdges);
         return currentEdges;
       });
     }
-  }, [nodes, onEdgesChange]);
+  }, [onEdgesChange]);
 
   // Handle drag over.
   const handleDragOver = (event) => {
@@ -267,20 +279,21 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   };
 
   // Delete nodes and corresponding edges.
+  // Uses Set for O(1) lookups instead of O(n) array.some()
   const onNodesDelete = useCallback(
       (deletedNodes) => {
+        // Pre-compute Set for O(1) lookups (fixes O(n²) -> O(n))
+        const deletedIds = new Set(deletedNodes.map(n => n.id));
+
         // Remove deleted nodes from the nodes state.
         setNodes((prevNodes) => {
           const updatedNodes = prevNodes.filter(
-              (node) => !deletedNodes.some((del) => del.id === node.id)
+              (node) => !deletedIds.has(node.id)
           );
           // Update edges using the updated nodes.
           setEdges((prevEdges) => {
             const updatedEdges = prevEdges.filter(
-                (edge) =>
-                    !deletedNodes.some(
-                        (node) => edge.source === node.id || edge.target === node.id
-                    )
+                (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
             );
             // Update persistent workspace with both new nodes and edges.
             updateWorkspaceState(updatedNodes, updatedEdges);

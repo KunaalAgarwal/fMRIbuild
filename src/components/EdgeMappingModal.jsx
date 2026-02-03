@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { TOOL_MAP } from '../../public/cwl/toolMap.js';
 import { parseExtensionsFromGlob, checkExtensionCompatibility } from '../utils/extensionValidation.js';
+import { useToast } from '../context/ToastContext.jsx';
 import '../styles/edgeMappingModal.css';
 
 /**
@@ -100,6 +101,7 @@ const EdgeMappingModal = ({
     existingMappings = [],
     hasTypeMismatch = false
 }) => {
+    const { showWarning } = useToast();
     const [mappings, setMappings] = useState([]);
     const [selectedOutput, setSelectedOutput] = useState(null);
     const outputRefs = useRef({});
@@ -202,7 +204,7 @@ const EdgeMappingModal = ({
 
     const handleSave = () => {
         if (mappings.length === 0) {
-            alert('Please create at least one mapping before saving.');
+            showWarning('Please create at least one mapping before saving.');
             return;
         }
         onSave(mappings);

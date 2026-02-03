@@ -212,3 +212,32 @@
   line-height: 1.4;
 }
 
+/* ============================================
+   DUMMY NODE STYLES (I/O nodes)
+   ============================================ */
+.node-dummy {
+  opacity: 0.85;
+}
+
+.node-dummy .node-content {
+  background: linear-gradient(135deg, #3a3a4a 0%, #2a2a3a 100%);
+  border: 1px dashed #666;
+  border-radius: 6px;
+  padding: 8px 16px;
+}
+
+.node-dummy-input .node-content {
+  border-color: #4a9eff;
+  background: linear-gradient(135deg, #1a3a5a 0%, #0a2a4a 100%);
+}
+
+.node-dummy-output .node-content {
+  border-color: #4aff9e;
+  background: linear-gradient(135deg, #1a5a3a 0%, #0a4a2a 100%);
+}
+
+.node-dummy .node-label {
+  font-style: italic;
+  color: #aaa;
+}
+

@@ -9,6 +9,7 @@ import WorkflowNameInput from './components/workflowNameInput';
 import Footer from "./components/footer";
 import { useWorkspaces } from './hooks/useWorkspaces';
 import { useGenerateWorkflow } from './hooks/generateWorkflow';
+import { ToastProvider } from './context/ToastContext.jsx';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
 
@@ -70,4 +71,8 @@ function App() {
     );
 }
 
-ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+ReactDOM.createRoot(document.getElementById('root')).render(
+    <ToastProvider>
+        <App />
+    </ToastProvider>
+);

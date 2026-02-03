@@ -22,10 +22,24 @@ export function buildCWLWorkflow(graph) {
         !dummyNodeIds.has(e.source) && !dummyNodeIds.has(e.target)
     );
 
-    /* ---------- helper look-ups ---------- */
-    const nodeById   = id => nodes.find(n => n.id === id);
-    const inEdgesOf  = id => edges.filter(e => e.target === id);
-    const outEdgesOf = id => edges.filter(e => e.source === id);
+    /* ---------- Pre-compute lookup maps for O(1) access ---------- */
+    // Node lookup by ID
+    const nodeMap = new Map(nodes.map(n => [n.id, n]));
+    const nodeById = id => nodeMap.get(id);
+
+    // Pre-compute incoming and outgoing edges per node
+    const inEdgeMap = new Map();
+    const outEdgeMap = new Map();
+    for (const node of nodes) {
+        inEdgeMap.set(node.id, []);
+        outEdgeMap.set(node.id, []);
+    }
+    for (const edge of edges) {
+        inEdgeMap.get(edge.target)?.push(edge);
+        outEdgeMap.get(edge.source)?.push(edge);
+    }
+    const inEdgesOf = id => inEdgeMap.get(id) || [];
+    const outEdgesOf = id => outEdgeMap.get(id) || [];
 
     /* ---------- topo-sort (Kahn's algorithm) ---------- */
     const incoming = Object.fromEntries(nodes.map(n => [n.id, 0]));

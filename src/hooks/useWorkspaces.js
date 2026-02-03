@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
+import { useDebouncedStorage } from './useDebouncedStorage.js';
 
 export function useWorkspaces() {
   // Initialize state from localStorage or use defaults if nothing is stored.
@@ -21,15 +22,9 @@ export function useWorkspaces() {
     return !isNaN(savedIndex) ? savedIndex : 0; // Default to the first workspace
   });
 
-  // Save workspaces to localStorage whenever they change.
-  useEffect(() => {
-    localStorage.setItem('workspaces', JSON.stringify(workspaces));
-  }, [workspaces]);
-
-  // Save the current workspace index to localStorage whenever it changes.
-  useEffect(() => {
-    localStorage.setItem('currentWorkspace', currentWorkspace);
-  }, [currentWorkspace]);
+  // Debounced localStorage writes (300ms delay prevents main thread blocking)
+  useDebouncedStorage('workspaces', workspaces, 300);
+  useDebouncedStorage('currentWorkspace', currentWorkspace, 300);
 
   const addNewWorkspace = () => {
     setWorkspaces((prevWorkspaces) => [

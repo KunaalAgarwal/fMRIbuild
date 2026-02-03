@@ -3,7 +3,8 @@ import { createPortal } from 'react-dom';
 import { Handle, Position } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { TOOL_MAP, DOCKER_IMAGES } from '../../public/cwl/toolMap.js';
-import { toolsByLibrary, DOCKER_TAGS } from '../data/toolData.js';
+import { DOCKER_TAGS, toolByName } from '../data/toolData.js';
+import { useToast } from '../context/ToastContext.jsx';
 import TagDropdown from './TagDropdown.jsx';
 import '../styles/workflowItem.css';
 
@@ -28,6 +29,7 @@ const NodeComponent = ({ data }) => {
     // Check if this is a dummy node early
     const isDummy = data.isDummy === true;
 
+    const { showError } = useToast();
     const [showModal, setShowModal] = useState(false);
     const [textInput, setTextInput] = useState(data.parameters || '');
     const [dockerVersion, setDockerVersion] = useState(data.dockerVersion || 'latest');
@@ -70,15 +72,10 @@ const NodeComponent = ({ data }) => {
         }
     };
 
-    // Find tool info from toolsByLibrary for the info tooltip
+    // Find tool info using pre-computed Map for O(1) lookup
+    // (Previously O(L×C×T) triple-nested loop)
     const toolInfo = useMemo(() => {
-        for (const library of Object.values(toolsByLibrary)) {
-            for (const category of Object.values(library)) {
-                const found = category.find(t => t.name === data.label);
-                if (found) return found;
-            }
-        }
-        return null;
+        return toolByName.get(data.label) || null;
     }, [data.label]);
 
     // Generate a helpful default JSON showing available optional parameters
@@ -160,7 +157,7 @@ const NodeComponent = ({ data }) => {
                     dockerVersion: finalDockerVersion
                 });
             } catch (err) {
-                alert('Invalid JSON entered. Defaulting to raw text storage. Please ensure entry is formatted appropriately.');
+                showError('Invalid JSON entered. Defaulting to raw text storage. Please ensure entry is formatted appropriately.');
                 data.onSaveParameters({
                     params: textInput,
                     dockerVersion: finalDockerVersion
@@ -212,7 +209,7 @@ const NodeComponent = ({ data }) => {
     // Render simplified UI for dummy nodes (no decoration)
     if (isDummy) {
         return (
-            <div className="node-wrapper">
+            <div className={`node-wrapper node-dummy node-dummy-${data.label.toLowerCase()}`}>
                 <div className="node-content">
                     <Handle type="target" position={Position.Top} />
                     <span className="node-label">{data.label}</span>

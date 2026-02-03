@@ -1,7 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Handle, Position } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { toolsByLibrary } from '../data/toolData.js';
 import '../styles/workflowItem.css';
 
 const NodeComponent = ({ data }) => {
@@ -9,11 +11,27 @@ const NodeComponent = ({ data }) => {
     const [textInput, setTextInput] = useState(data.parameters || '');
     const [dockerVersion, setDockerVersion] = useState(data.dockerVersion || 'latest');
 
+    // Info tooltip state (hover only, like workflowMenuItem)
+    const [showInfoTooltip, setShowInfoTooltip] = useState(false);
+    const [infoTooltipPos, setInfoTooltipPos] = useState({ top: 0, left: 0 });
+    const infoIconRef = useRef(null);
+
     // Get tool definition and optional inputs
     const tool = TOOL_MAP[data.label];
     const optionalInputs = tool?.optionalInputs || {};
     const hasDefinedTool = !!tool;
     const dockerImage = tool?.dockerImage || null;
+
+    // Find tool info from toolsByLibrary for the info tooltip
+    const toolInfo = useMemo(() => {
+        for (const library of Object.values(toolsByLibrary)) {
+            for (const category of Object.values(library)) {
+                const found = category.find(t => t.name === data.label);
+                if (found) return found;
+            }
+        }
+        return null;
+    }, [data.label]);
 
     // Generate a helpful default JSON showing available optional parameters
     const defaultJson = useMemo(() => {
@@ -80,18 +98,24 @@ const NodeComponent = ({ data }) => {
     const handleCloseModal = () => {
         setShowModal(false);
 
+        // Default to 'latest' if docker version is empty
+        const finalDockerVersion = dockerVersion.trim() || 'latest';
+        if (finalDockerVersion !== dockerVersion) {
+            setDockerVersion(finalDockerVersion);
+        }
+
         // Attempt to parse; fallback to user's raw text if invalid
         if (typeof data.onSaveParameters === 'function') {
             try {
                 data.onSaveParameters({
                     params: JSON.parse(textInput),
-                    dockerVersion: dockerVersion || 'latest'
+                    dockerVersion: finalDockerVersion
                 });
             } catch (err) {
                 alert('Invalid JSON entered. Defaulting to raw text storage. Please ensure entry is formatted appropriately.');
                 data.onSaveParameters({
                     params: textInput,
-                    dockerVersion: dockerVersion || 'latest'
+                    dockerVersion: finalDockerVersion
                 });
             }
         }
@@ -121,17 +145,83 @@ const NodeComponent = ({ data }) => {
         }
     };
 
+    // Info icon hover handlers (simple tooltip, no click persistence)
+    const handleInfoMouseEnter = () => {
+        if (infoIconRef.current && toolInfo) {
+            const rect = infoIconRef.current.getBoundingClientRect();
+            setInfoTooltipPos({
+                top: rect.top + rect.height / 2,
+                left: rect.right + 10
+            });
+            setShowInfoTooltip(true);
+        }
+    };
+
+    const handleInfoMouseLeave = () => {
+        setShowInfoTooltip(false);
+    };
+
     return (
         <>
             <div className="node-wrapper">
-                <span className="handle-label handle-label-top">IN</span>
+                <div className="node-top-row">
+                    {dockerImage ? (
+                        <span className="node-version">{dockerVersion}</span>
+                    ) : (
+                        <span className="node-version-spacer"></span>
+                    )}
+                    <span className="handle-label">IN</span>
+                    <span className="node-params-btn" onClick={handleOpenModal}>Params</span>
+                </div>
+
                 <div onDoubleClick={handleOpenModal} className="node-content">
                     <Handle type="target" position={Position.Top} />
-                    {data.label}
+                    <span className="node-label">{data.label}</span>
                     <Handle type="source" position={Position.Bottom} />
                 </div>
-                <span className="handle-label handle-label-bottom">OUT</span>
+
+                <div className="node-bottom-row">
+                    <span className="node-bottom-spacer"></span>
+                    <span className="handle-label">OUT</span>
+                    {toolInfo ? (
+                        <span
+                            ref={infoIconRef}
+                            className="node-info-btn"
+                            onMouseEnter={handleInfoMouseEnter}
+                            onMouseLeave={handleInfoMouseLeave}
+                        >Info</span>
+                    ) : (
+                        <span className="node-info-spacer"></span>
+                    )}
+                </div>
             </div>
+
+            {/* Info Tooltip (same style as workflowMenuItem) */}
+            {showInfoTooltip && toolInfo && createPortal(
+                <div
+                    className="workflow-tooltip"
+                    style={{
+                        top: infoTooltipPos.top,
+                        left: infoTooltipPos.left,
+                        transform: 'translateY(-50%)'
+                    }}
+                >
+                    {toolInfo.fullName && (
+                        <div className="tooltip-section tooltip-fullname">
+                            <span className="tooltip-text">{toolInfo.fullName}</span>
+                        </div>
+                    )}
+                    <div className="tooltip-section">
+                        <span className="tooltip-label">Function:</span>
+                        <span className="tooltip-text">{toolInfo.function}</span>
+                    </div>
+                    <div className="tooltip-section">
+                        <span className="tooltip-label">Typical Use:</span>
+                        <span className="tooltip-text">{toolInfo.typicalUse}</span>
+                    </div>
+                </div>,
+                document.body
+            )}
 
             <Modal
                 show={showModal}

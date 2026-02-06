@@ -7,6 +7,9 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'dwidenoise'
 
+requirements:
+  InlineJavascriptRequirement: {}
+
 hints:
   DockerRequirement:
     dockerPull: mrtrix3/mrtrix3:latest
@@ -51,7 +54,11 @@ outputs:
   noise_map:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.noise)
+      glob: |
+        ${
+          if (inputs.noise) { return inputs.noise; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   log:
     type: File
     outputBinding:

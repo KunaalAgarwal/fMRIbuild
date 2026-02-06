@@ -7,6 +7,9 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'tensor2metric'
 
+requirements:
+  InlineJavascriptRequirement: {}
+
 hints:
   DockerRequirement:
     dockerPull: mrtrix3/mrtrix3:latest
@@ -62,19 +65,35 @@ outputs:
   fa_map:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.fa)
+      glob: |
+        ${
+          if (inputs.fa) { return inputs.fa; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   md_map:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.adc)
+      glob: |
+        ${
+          if (inputs.adc) { return inputs.adc; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   ad_map:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.ad)
+      glob: |
+        ${
+          if (inputs.ad) { return inputs.ad; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   rd_map:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.rd)
+      glob: |
+        ${
+          if (inputs.rd) { return inputs.rd; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   log:
     type: File
     outputBinding:

@@ -9,7 +9,7 @@ baseCommand: 'mri_gtmpvc'
 
 hints:
   DockerRequirement:
-    dockerPull: freesurfer/freesurfer:7.4.1
+    dockerPull: freesurfer/freesurfer:latest
 
 stdout: mri_gtmpvc.log
 stderr: mri_gtmpvc.log

@@ -7,6 +7,9 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'dwi2tensor'
 
+requirements:
+  InlineJavascriptRequirement: {}
+
 hints:
   DockerRequirement:
     dockerPull: mrtrix3/mrtrix3:latest
@@ -61,11 +64,19 @@ outputs:
   b0_image:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.b0)
+      glob: |
+        ${
+          if (inputs.b0) { return inputs.b0; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   kurtosis_tensor:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.dkt)
+      glob: |
+        ${
+          if (inputs.dkt) { return inputs.dkt; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   log:
     type: File
     outputBinding:

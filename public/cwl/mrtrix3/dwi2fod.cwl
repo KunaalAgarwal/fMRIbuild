@@ -7,6 +7,15 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'dwi2fod'
 
+doc: |
+  Positional constraint: GM and CSF tissue arguments are strictly positional.
+  If you provide CSF inputs, you MUST also provide GM inputs. Skipping GM while
+  providing CSF will cause the CSF arguments to shift into the GM positions,
+  producing incorrect results.
+
+requirements:
+  InlineJavascriptRequirement: {}
+
 hints:
   DockerRequirement:
     dockerPull: mrtrix3/mrtrix3:latest
@@ -39,22 +48,22 @@ inputs:
   # Optional multi-tissue outputs (for msmt_csd)
   gm_response:
     type: ['null', File]
-    label: Grey matter response function
+    label: Grey matter response (required before CSF)
     inputBinding:
       position: 5
   gm_fod:
     type: ['null', string]
-    label: Output GM FOD image filename
+    label: Output GM FOD filename (required before CSF)
     inputBinding:
       position: 6
   csf_response:
     type: ['null', File]
-    label: CSF response function
+    label: CSF response (requires GM inputs)
     inputBinding:
       position: 7
   csf_fod:
     type: ['null', string]
-    label: Output CSF FOD image filename
+    label: Output CSF FOD filename (requires GM inputs)
     inputBinding:
       position: 8
 
@@ -73,11 +82,19 @@ outputs:
   gm_fod_image:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.gm_fod)
+      glob: |
+        ${
+          if (inputs.gm_fod) { return inputs.gm_fod; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   csf_fod_image:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.csf_fod)
+      glob: |
+        ${
+          if (inputs.csf_fod) { return inputs.csf_fod; }
+          else { return "UNUSED_PLACEHOLDER_DO_NOT_MATCH"; }
+        }
   log:
     type: File
     outputBinding:

@@ -1,107 +1,485 @@
 /**
  * Tool metadata organized by library and subsection.
- * Each tool contains: name, function description, typical use case, and documentation URL.
- * Extracted from fmri_tools_reference.md
+ * Each tool contains: name, fullName, function, modality, keyParameters, keyPoints, typicalUse, docUrl.
+ *
+ * toolsByLibrary is the canonical registry for all tool objects.
+ * toolsByModality provides a modality-first view using shared object references.
  */
 
 export const toolsByLibrary = {
   FSL: {
-    'Preprocessing': [
-      { name: 'bet', fullName: 'Brain Extraction Tool', function: 'Removes non-brain tissue from structural and functional images using a surface model approach', typicalUse: 'First step in most preprocessing pipelines to isolate brain tissue', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET' },
-      { name: 'fast', fullName: "FMRIB's Automated Segmentation Tool", function: 'Segments brain images into gray matter, white matter, and CSF with bias field correction', typicalUse: 'Tissue probability maps for normalization, VBM studies, or masking', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST' },
-      { name: 'mcflirt', fullName: 'Motion Correction FLIRT', function: 'Intra-modal motion correction for fMRI time series using rigid-body transformations', typicalUse: 'Correcting head motion in functional data; motion parameters used as nuisance regressors', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT' },
-      { name: 'flirt', fullName: "FMRIB's Linear Image Registration Tool", function: 'Linear (affine) registration between images using 6, 9, or 12 degrees of freedom', typicalUse: 'EPI-to-structural alignment, structural-to-standard registration', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT' },
-      { name: 'fnirt', fullName: "FMRIB's Non-linear Image Registration Tool", function: 'Non-linear registration using spline-based deformations for precise anatomical alignment', typicalUse: 'High-accuracy normalization to MNI space for group analyses', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT' },
-      { name: 'fugue', fullName: "FMRIB's Utility for Geometrically Unwarping EPIs", function: 'Corrects geometric distortions in EPI images using fieldmap data', typicalUse: 'Distortion correction when fieldmap data is available', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE' },
-      { name: 'topup', fullName: 'Tool for Estimating and Correcting Susceptibility-Induced Distortions', function: 'Estimates and corrects susceptibility-induced distortions using reversed phase-encode images', typicalUse: 'Distortion correction using blip-up/blip-down acquisitions', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup' },
-      { name: 'susan', fullName: 'Smallest Univalue Segment Assimilating Nucleus', function: 'Edge-preserving noise reduction that smooths within tissue boundaries', typicalUse: 'Noise reduction while preserving structural boundaries', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN' },
-      { name: 'slicetimer', fullName: "FMRIB's Interpolation for Slice Timing", function: 'Corrects for differences in slice acquisition times within a volume', typicalUse: 'Temporal alignment of slices acquired at different times', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SliceTimer' },
-      { name: 'fslreorient2std', fullName: 'FSL Reorient to Standard', function: 'Reorients images to match standard (MNI) orientation', typicalUse: 'Ensuring consistent orientation before processing', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Orientation%20Explained' },
-      { name: 'fslsplit', fullName: 'FSL Split', function: 'Splits 4D time series into individual 3D volumes', typicalUse: 'Processing individual volumes separately, quality control', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' },
-      { name: 'fslmerge', fullName: 'FSL Merge', function: 'Concatenates multiple 3D volumes into a 4D time series', typicalUse: 'Combining processed volumes, concatenating runs', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' }
+    'Brain Extraction': [
+      {
+        name: 'bet', fullName: 'Brain Extraction Tool (BET)',
+        function: 'Removes non-brain tissue from MRI images using a deformable surface model that iteratively fits to the brain boundary.',
+        modality: 'T1-weighted structural image (3D NIfTI). Can also process 4D fMRI with -F flag.',
+        keyParameters: '-f (fractional intensity 0→1, default 0.5), -g (vertical gradient), -R (robust mode), -m (output binary mask)',
+        keyPoints: 'Default threshold works for most T1s. Use -R for noisy/difficult data. Lower -f (~0.3) for functional images.',
+        typicalUse: 'First step in structural or functional preprocessing to isolate brain tissue.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BET'
+      }
     ],
-    'Statistical': [
-      { name: 'film_gls', fullName: "FMRIB's Improved Linear Model", function: 'Fits GLM to fMRI time series with autocorrelation correction', typicalUse: 'First-level statistical analysis within FEAT or standalone', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM' },
-      { name: 'flameo', fullName: "FMRIB's Local Analysis of Mixed Effects", function: 'Mixed-effects group analysis accounting for within and between-subject variance', typicalUse: 'Second-level group analyses with proper random effects', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME' },
-      { name: 'randomise', fullName: 'FSL Randomise Permutation Testing', function: 'Non-parametric permutation testing for statistical inference', typicalUse: 'Group-level inference with family-wise error correction', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise' }
+    'Tissue Segmentation': [
+      {
+        name: 'fast', fullName: "FMRIB's Automated Segmentation Tool (FAST)",
+        function: 'Segments brain images into gray matter, white matter, and CSF using a hidden Markov random field model with integrated bias field correction.',
+        modality: 'Brain-extracted T1-weighted 3D NIfTI volume.',
+        keyParameters: '-n (number of tissue classes, default 3), -t (image type: 1=T1, 2=T2, 3=PD), -B (output bias field), -o (output basename)',
+        keyPoints: 'Input must be brain-extracted. Outputs partial volume maps (*_pve_0/1/2) for each tissue class. Use -B to get estimated bias field.',
+        typicalUse: 'Tissue probability maps for normalization, VBM studies, or masking.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FAST'
+      },
+      {
+        name: 'run_first_all', fullName: "FMRIB's Integrated Registration and Segmentation Tool (FIRST)",
+        function: 'Automated segmentation of subcortical structures using shape and appearance models trained on manually labeled data.',
+        modality: 'T1-weighted 3D NIfTI volume (does not need to be brain-extracted).',
+        keyParameters: '-i (input image), -o (output basename), -b (run BET first), -s (comma-separated structures list)',
+        keyPoints: 'Models 15 subcortical structures. Outputs meshes (.vtk) and volumetric labels. Can run on selected structures only with -s flag.',
+        typicalUse: 'Volumetric analysis of subcortical structures (hippocampus, amygdala, caudate, etc.).',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIRST'
+      }
+    ],
+    'Registration': [
+      {
+        name: 'flirt', fullName: "FMRIB's Linear Image Registration Tool (FLIRT)",
+        function: 'Linear (affine) registration between images using optimized cost functions with 6, 7, 9, or 12 degrees of freedom.',
+        modality: 'Any 3D NIfTI volume pair (structural, functional, or standard template).',
+        keyParameters: '-ref (reference image), -dof (degrees of freedom: 6/7/9/12), -cost (cost function), -omat (output matrix)',
+        keyPoints: 'Use 6-DOF for within-subject rigid-body, 12-DOF for cross-subject affine. Cost function matters: corratio for intra-modal, mutualinfo for inter-modal.',
+        typicalUse: 'EPI-to-structural alignment, structural-to-standard registration.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLIRT'
+      },
+      {
+        name: 'fnirt', fullName: "FMRIB's Non-linear Image Registration Tool (FNIRT)",
+        function: 'Non-linear registration using B-spline deformations for precise anatomical alignment to a template.',
+        modality: 'T1-weighted 3D NIfTI volume plus reference template. Requires initial affine from FLIRT.',
+        keyParameters: '--ref (reference), --aff (initial affine), --config (config file), --cout (coefficient output), --iout (warped output)',
+        keyPoints: 'Always run FLIRT first for initial alignment. Use --config=T1_2_MNI152_2mm for standard T1-to-MNI. Computationally intensive.',
+        typicalUse: 'High-accuracy normalization to MNI space for group analyses.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT'
+      }
+    ],
+    'Pipelines': [
+      {
+        name: 'fsl_anat', fullName: 'FSL Anatomical Processing Pipeline',
+        function: 'Comprehensive automated pipeline for structural T1 processing including reorientation, cropping, bias correction, registration, segmentation, and subcortical segmentation.',
+        modality: 'T1-weighted 3D NIfTI volume.',
+        keyParameters: '-i (input image), --noseg (skip segmentation), --nosubcortseg (skip subcortical), --nononlinreg (skip non-linear registration)',
+        keyPoints: 'Runs BET, FAST, FLIRT, FNIRT, and FIRST in sequence. Creates output directory with all intermediate files. Good for standardized structural processing.',
+        typicalUse: 'Full structural preprocessing from T1 image.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat'
+      },
+      {
+        name: 'siena', fullName: 'Structural Image Evaluation using Normalisation of Atrophy (SIENA)',
+        function: 'Estimates percentage brain volume change between two timepoints using edge-point displacement analysis.',
+        modality: 'Two T1-weighted 3D NIfTI volumes from different timepoints.',
+        keyParameters: '-o (output directory), -BET (BET options), -2 (2-class segmentation), -S (SIENA step options)',
+        keyPoints: 'Requires two scans of same subject at different timepoints. Reports percentage brain volume change (PBVC). Accurate to ~0.2% volume change.',
+        typicalUse: 'Measuring brain volume change over time (e.g., atrophy in neurodegeneration).',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA'
+      },
+      {
+        name: 'sienax', fullName: 'SIENA Cross-Sectional (SIENAX)',
+        function: 'Cross-sectional brain volume estimation normalized for head size using atlas-based scaling.',
+        modality: 'T1-weighted 3D NIfTI volume.',
+        keyParameters: '-o (output directory), -r (regional analysis), -BET (BET options), -S (SIENAX options)',
+        keyPoints: 'Single timepoint analysis. Normalizes volumes by head size for cross-subject comparisons. Reports total brain, GM, and WM volumes.',
+        typicalUse: 'Single timepoint normalized brain volume measures.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA'
+      }
+    ],
+    'Motion Correction': [
+      {
+        name: 'mcflirt', fullName: 'Motion Correction using FLIRT (MCFLIRT)',
+        function: 'Intra-modal motion correction for fMRI time series using rigid-body (6-DOF) transformations optimized for fMRI data.',
+        modality: '4D fMRI NIfTI time series.',
+        keyParameters: '-refvol (reference volume index), -cost (cost function), -plots (output motion parameter plots), -mats (save transformation matrices)',
+        keyPoints: 'Default reference is middle volume. Use -plots for motion parameter files (6 columns: 3 rotations + 3 translations). Motion params useful as nuisance regressors.',
+        typicalUse: 'Correcting head motion in functional data; motion parameters used as nuisance regressors.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MCFLIRT'
+      }
+    ],
+    'Slice Timing': [
+      {
+        name: 'slicetimer', fullName: "FMRIB's Slice Timing Correction (SliceTimer)",
+        function: 'Corrects for differences in slice acquisition times within each volume using sinc interpolation.',
+        modality: '4D fMRI NIfTI time series.',
+        keyParameters: '-r (TR in seconds), --odd (interleaved odd slices first), --down (reverse slice order), --tcustom (custom timing file)',
+        keyPoints: 'Must match actual acquisition order. Important for event-related designs with short TRs. Less critical for long TRs or block designs.',
+        typicalUse: 'Temporal alignment of slices acquired at different times within each TR.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SliceTimer'
+      }
+    ],
+    'Distortion Correction': [
+      {
+        name: 'fugue', fullName: "FMRIB's Utility for Geometrically Unwarping EPIs (FUGUE)",
+        function: 'Corrects geometric distortions in EPI images caused by magnetic field inhomogeneity using acquired fieldmap data.',
+        modality: '3D/4D EPI NIfTI plus preprocessed fieldmap (in rad/s).',
+        keyParameters: '--loadfmap (fieldmap), --dwell (echo spacing in seconds), --unwarpdir (phase-encode direction: x/y/z/-x/-y/-z)',
+        keyPoints: 'Requires preprocessed fieldmap (e.g., from fsl_prepare_fieldmap). Dwell time and unwarp direction must match acquisition parameters.',
+        typicalUse: 'Distortion correction when fieldmap data is available.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FUGUE'
+      },
+      {
+        name: 'topup', fullName: 'Tool for Estimating and Correcting Susceptibility-Induced Distortions (TOPUP)',
+        function: 'Estimates and corrects susceptibility-induced distortions using pairs of images with reversed phase-encode directions.',
+        modality: '4D NIfTI with concatenated blip-up/blip-down b=0 images, plus acquisition parameters file.',
+        keyParameters: '--imain (concatenated images), --datain (acquisition parameters file), --config (config file), --out (output basename)',
+        keyPoints: 'Requires reversed phase-encode image pair. Default config b02b0.cnf works well for most data. Outputs warp fields reusable by applytopup.',
+        typicalUse: 'Distortion correction using blip-up/blip-down acquisitions for fMRI or DWI.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/topup'
+      }
+    ],
+    'Smoothing': [
+      {
+        name: 'susan', fullName: 'Smallest Univalue Segment Assimilating Nucleus (SUSAN)',
+        function: 'Edge-preserving noise reduction using nonlinear filtering that smooths within tissue boundaries while preserving edges.',
+        modality: '3D or 4D NIfTI volume (structural or functional).',
+        keyParameters: '<input> <brightness_threshold> <spatial_size_mm> <dimensionality> <use_median> <n_usans> [<usan1>] <output>',
+        keyPoints: 'Brightness threshold typically 0.75 * median intensity. Set dimensionality to 3 for 3D volumes. Better edge preservation than Gaussian smoothing.',
+        typicalUse: 'Noise reduction while preserving structural boundaries in functional or structural data.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SUSAN'
+      }
+    ],
+    'Statistical Analysis': [
+      {
+        name: 'film_gls', fullName: "FMRIB's Improved Linear Model (FILM)",
+        function: 'Fits general linear model to fMRI time series with prewhitening using autocorrelation correction.',
+        modality: '4D fMRI NIfTI time series plus design matrix and contrast files.',
+        keyParameters: '--in (input 4D), --pd (design matrix), --con (contrast file), --thr (threshold), --sa (smoothed autocorrelation)',
+        keyPoints: 'Core statistical engine of FEAT. Design matrix must be pre-generated (e.g., via Feat_model). Outputs parameter estimates (pe), contrasts (cope), and stats (zstat).',
+        typicalUse: 'First-level statistical analysis within FEAT or standalone.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM'
+      },
+      {
+        name: 'flameo', fullName: "FMRIB's Local Analysis of Mixed Effects (FLAME)",
+        function: 'Group-level mixed-effects analysis accounting for both within-subject and between-subject variance using MCMC-based Bayesian estimation.',
+        modality: '4D NIfTI of stacked subject-level COPEs, VARCOPEs, plus group design matrix and contrast files.',
+        keyParameters: '--cope (cope image), --vc (varcope image), --dm (design matrix), --cs (contrast file), --runmode (fe/ols/flame1/flame12)',
+        keyPoints: 'FLAME1 is recommended (good accuracy with reasonable speed). OLS is fast but ignores within-subject variance. FLAME1+2 is most accurate but slowest.',
+        typicalUse: 'Second-level group analyses with proper random effects.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FLAME'
+      },
+      {
+        name: 'randomise', fullName: 'FSL Randomise Permutation Testing',
+        function: 'Non-parametric permutation testing for statistical inference with multiple correction methods including TFCE.',
+        modality: '4D NIfTI of stacked subject images plus design matrix and contrast files.',
+        keyParameters: '-i (input 4D), -o (output basename), -d (design matrix), -t (contrast file), -n (num permutations), -T (TFCE)',
+        keyPoints: 'Use -T for TFCE (recommended). 5000+ permutations for publication. Computationally intensive but provides strong family-wise error control.',
+        typicalUse: 'Group-level inference with family-wise error correction (VBM, TBSS, etc.).',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Randomise'
+      }
     ],
     'ICA/Denoising': [
-      { name: 'melodic', fullName: 'Multivariate Exploratory Linear Optimized Decomposition into Independent Components', function: 'Probabilistic ICA for separating fMRI signals into independent components', typicalUse: 'Data exploration, artifact identification, resting-state analysis', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC' },
-      { name: 'dual_regression', fullName: 'FSL Dual Regression', function: 'Projects group ICA components onto individual subjects', typicalUse: 'Subject-level ICA-based connectivity analysis', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/DualRegression' }
+      {
+        name: 'melodic', fullName: 'Multivariate Exploratory Linear Optimized Decomposition into Independent Components (MELODIC)',
+        function: 'Probabilistic ICA that decomposes fMRI data into spatially independent components representing signal and noise sources.',
+        modality: '4D fMRI NIfTI time series (single-subject or concatenated multi-subject).',
+        keyParameters: '-i (input 4D), -o (output directory), -d (dimensionality), --report (generate HTML report), --bgimage (background for report)',
+        keyPoints: 'Auto-dimensionality estimation by default (Laplace approximation). Can be run single-subject or group. Components classified as signal vs. noise manually or via FIX.',
+        typicalUse: 'Data exploration, artifact identification, resting-state network analysis.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/MELODIC'
+      },
+      {
+        name: 'dual_regression', fullName: 'FSL Dual Regression',
+        function: 'Projects group-level ICA spatial maps back to individual subjects via spatial then temporal regression to obtain subject-specific network maps.',
+        modality: '4D fMRI NIfTI time series for each subject plus group ICA spatial maps.',
+        keyParameters: '<group_ICA_maps> <design_matrix> <design_contrasts> <num_permutations> <subject_list>',
+        keyPoints: 'Two-stage regression: (1) spatial regression gives subject time courses, (2) temporal regression gives subject spatial maps. Can include randomise for group comparison.',
+        typicalUse: 'Subject-level ICA-based resting-state network analysis and group comparisons.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/DualRegression'
+      }
     ],
-    'Diffusion/Structural': [
-      { name: 'probtrackx2', fullName: 'Probabilistic Tractography with Crossing Fibres', function: 'Probabilistic tractography using crossing fiber models', typicalUse: 'White matter connectivity analysis, tract-based statistics', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#PROBTRACKX' },
-      { name: 'run_first_all', fullName: "FMRIB's Integrated Registration and Segmentation Tool", function: 'Automated subcortical structure segmentation', typicalUse: 'Volumetric analysis of subcortical structures', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FIRST' },
-      { name: 'siena', fullName: 'Structural Image Evaluation using Normalisation of Atrophy', function: 'Longitudinal brain atrophy estimation between two timepoints', typicalUse: 'Measuring brain volume change over time', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA' },
-      { name: 'sienax', fullName: 'SIENA Cross-Sectional', function: 'Cross-sectional brain volume estimation', typicalUse: 'Single timepoint normalized brain volume measures', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/SIENA' },
-      { name: 'fsl_anat', fullName: 'FSL Anatomical Processing Pipeline', function: 'Comprehensive anatomical processing pipeline', typicalUse: 'Full structural preprocessing from T1 image', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_anat' }
+    'Diffusion': [
+      {
+        name: 'eddy', fullName: 'FSL Eddy Current and Motion Correction (eddy)',
+        function: 'Corrects eddy current-induced distortions and subject movement in diffusion MRI data using a Gaussian process model.',
+        modality: '4D diffusion-weighted NIfTI with b-values (.bval), b-vectors (.bvec), acquisition parameters, and index files.',
+        keyParameters: '--imain (input DWI), --bvals, --bvecs, --acqp (acquisition params), --index (volume indices), --topup (topup output), --out (output)',
+        keyPoints: 'Should follow topup if available. Outputs rotated bvecs to account for motion. Use --repol for outlier replacement. GPU version (eddy_cuda) much faster.',
+        typicalUse: 'Primary preprocessing step for diffusion MRI after topup distortion correction.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/eddy'
+      },
+      {
+        name: 'dtifit', fullName: 'FSL Diffusion Tensor Fitting (dtifit)',
+        function: 'Fits a diffusion tensor model to each voxel of preprocessed diffusion-weighted data to generate scalar diffusion maps.',
+        modality: '4D diffusion-weighted NIfTI with b-values (.bval), b-vectors (.bvec), and brain mask.',
+        keyParameters: '-k (input DWI), -o (output basename), -m (brain mask), -r (bvecs file), -b (bvals file)',
+        keyPoints: 'Outputs FA, MD, eigenvalues (L1/L2/L3), eigenvectors (V1/V2/V3), and full tensor. Assumes single-fiber per voxel (use bedpostx for crossing fibers).',
+        typicalUse: 'Generating fractional anisotropy (FA) and mean diffusivity (MD) maps from DWI data.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#DTIFIT'
+      },
+      {
+        name: 'bedpostx', fullName: 'Bayesian Estimation of Diffusion Parameters Obtained using Sampling Techniques (BEDPOSTX)',
+        function: 'Bayesian estimation of fiber orientation distributions using MCMC sampling, supporting multiple crossing fibers per voxel.',
+        modality: 'Directory containing 4D DWI (data.nii.gz), b-values (bvals), b-vectors (bvecs), and brain mask (nodif_brain_mask.nii.gz).',
+        keyParameters: '<data_directory>, -n (max fibers per voxel, default 3)',
+        keyPoints: 'Very computationally intensive (hours-days). GPU version (bedpostx_gpu) strongly recommended. Required before probtrackx2. Outputs fiber orientations and uncertainty estimates.',
+        typicalUse: 'Prerequisite for probabilistic tractography with probtrackx2.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#BEDPOSTX'
+      },
+      {
+        name: 'probtrackx2', fullName: 'Probabilistic Tractography with Crossing Fibres (probtrackx2)',
+        function: 'Probabilistic tractography using fiber orientation distributions from bedpostx to trace white matter pathways.',
+        modality: 'BEDPOSTX output directory plus seed mask (3D NIfTI).',
+        keyParameters: '-x (seed mask), -s (bedpostx merged samples), --dir (output directory), -l (loop check), --waypoints (waypoint masks), --avoid (exclusion mask)',
+        keyPoints: 'Requires bedpostx output. Use --omatrix1 for seed-to-voxel connectivity, --omatrix2 for NxN connectivity. Waypoints constrain tractography to specific paths.',
+        typicalUse: 'White matter connectivity analysis, tract-based statistics.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FDT/UserGuide#PROBTRACKX'
+      }
     ],
-    'Utilities': [
-      { name: 'fslmaths', fullName: 'FSL Maths', function: 'Voxelwise mathematical operations on images', typicalUse: 'Mathematical operations, masking, thresholding', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' },
-      { name: 'fslstats', fullName: 'FSL Statistics', function: 'Computes various statistics from image data', typicalUse: 'Extracting summary statistics from ROIs', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' },
-      { name: 'fslroi', fullName: 'FSL Region of Interest Extraction', function: 'Extracts sub-regions from images (spatial or temporal)', typicalUse: 'Cropping images, selecting time points', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' },
-      { name: 'fslmeants', fullName: 'FSL Mean Time Series', function: 'Extracts mean time series from mask or coordinates', typicalUse: 'ROI time series extraction for connectivity analysis', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils' },
-      { name: 'cluster', fullName: 'FSL Cluster', function: 'Forms clusters from thresholded statistical images', typicalUse: 'Cluster-based thresholding, extracting peak coordinates', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Cluster' },
-      { name: 'applywarp', fullName: 'FSL Apply Warp', function: 'Applies warp fields to transform images', typicalUse: 'Applying normalization warps to functional data', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Applying_the_warps' },
-      { name: 'invwarp', fullName: 'FSL Invert Warp', function: 'Inverts a warp field', typicalUse: 'Creating inverse transformations for atlas-to-native mapping', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Inverting_warps' },
-      { name: 'convertwarp', fullName: 'FSL Convert Warp', function: 'Combines or converts between warp formats', typicalUse: 'Concatenating multiple transformations efficiently', docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Combining_warps' }
+    'TBSS': [
+      {
+        name: 'tbss_1_preproc', fullName: 'TBSS Step 1: Preprocessing',
+        function: 'Preprocesses FA images for TBSS by slightly eroding them and zeroing end slices to remove outlier voxels.',
+        modality: 'FA maps (3D NIfTI) from dtifit, placed in a common directory.',
+        keyParameters: '*.nii.gz (all FA images in current directory)',
+        keyPoints: 'Run from directory containing all subjects FA images. Creates FA/ subdirectory with preprocessed images. Must be run before tbss_2_reg.',
+        typicalUse: 'First step of TBSS pipeline for voxelwise diffusion analysis.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide'
+      },
+      {
+        name: 'tbss_2_reg', fullName: 'TBSS Step 2: Registration',
+        function: 'Registers all FA images to a target (best subject or standard-space template) using non-linear registration.',
+        modality: 'Preprocessed FA images from tbss_1_preproc.',
+        keyParameters: '-T (use FMRIB58_FA as target), -t <target> (use specified target), -n (find best subject as target)',
+        keyPoints: 'Use -T for standard target (recommended for most analyses). -n finds best representative subject but takes longer. Registration quality should be checked visually.',
+        typicalUse: 'Second step of TBSS pipeline: aligning all subjects to common space.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide'
+      },
+      {
+        name: 'tbss_3_postreg', fullName: 'TBSS Step 3: Post-Registration',
+        function: 'Creates mean FA image and FA skeleton by projecting registered FA data onto a mean tract center.',
+        modality: 'Registered FA images from tbss_2_reg.',
+        keyParameters: '-S (use study-specific mean FA and skeleton), -T (use FMRIB58_FA mean and skeleton)',
+        keyPoints: 'Creates mean_FA, mean_FA_skeleton, and all_FA (4D). Skeleton threshold typically 0.2 FA. -S recommended for study-specific analysis.',
+        typicalUse: 'Third step of TBSS: creating the white matter skeleton for analysis.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide'
+      },
+      {
+        name: 'tbss_4_prestats', fullName: 'TBSS Step 4: Pre-Statistics',
+        function: 'Projects all subjects FA data onto the mean FA skeleton, ready for voxelwise cross-subject statistics.',
+        modality: 'Mean FA skeleton from tbss_3_postreg plus registered FA images.',
+        keyParameters: '<threshold> (FA threshold for skeleton, typically 0.2)',
+        keyPoints: 'Threshold determines which voxels are included in skeleton. Creates all_FA_skeletonised (4D) ready for randomise. Can also project non-FA data (MD, etc.) using tbss_non_FA.',
+        typicalUse: 'Final TBSS step before statistical analysis with randomise.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/TBSS/UserGuide'
+      }
+    ],
+    'ASL Processing': [
+      {
+        name: 'oxford_asl', fullName: 'Oxford ASL Processing Pipeline',
+        function: 'Complete pipeline for ASL MRI quantification including motion correction, registration, calibration, and partial volume correction.',
+        modality: '4D ASL NIfTI (tag/control pairs) plus structural T1 image.',
+        keyParameters: '-i (input ASL), -o (output dir), -s (structural image), --casl/--pasl (labeling type), --iaf (input format: tc/ct/diff), --tis (inversion times)',
+        keyPoints: 'Handles both pASL and CASL/pCASL. Performs kinetic modeling via BASIL internally. Use --wp for white paper quantification mode. Requires calibration image for absolute CBF.',
+        typicalUse: 'Complete ASL quantification from raw data to calibrated CBF maps.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BASIL'
+      },
+      {
+        name: 'basil', fullName: 'Bayesian Inference for Arterial Spin Labeling (BASIL)',
+        function: 'Bayesian kinetic model inversion for ASL data using variational Bayes to estimate perfusion and arrival time.',
+        modality: '4D ASL NIfTI (differenced tag-control or raw tag/control pairs).',
+        keyParameters: '-i (input ASL), -o (output dir), --tis (inversion times), --casl/--pasl, --bolus (bolus duration), --bat (arterial transit time prior)',
+        keyPoints: 'Core kinetic modeling engine used by oxford_asl. Multi-TI data enables arrival time estimation. Spatial regularization improves estimates in low-SNR regions.',
+        typicalUse: 'Bayesian perfusion quantification with uncertainty estimation.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BASIL'
+      },
+      {
+        name: 'asl_calib', fullName: 'ASL Calibration (asl_calib)',
+        function: 'Calibrates ASL perfusion data to absolute CBF units (ml/100g/min) using an M0 calibration image.',
+        modality: 'Perfusion image (3D NIfTI) plus M0 calibration image and structural reference.',
+        keyParameters: '-i (perfusion image), -c (M0 calibration image), -s (structural image), --mode (voxelwise or reference region), --tr (TR of calibration)',
+        keyPoints: 'Two modes: voxelwise (divides each voxel by local M0) or reference region (uses CSF M0 as reference). Reference region mode more robust to coil sensitivity variations.',
+        typicalUse: 'Converting relative perfusion signals to absolute CBF values.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/BASIL'
+      }
+    ],
+    'Image Math': [
+      {
+        name: 'fslmaths', fullName: 'FSL Mathematical Image Operations (fslmaths)',
+        function: 'Performs a wide range of voxelwise mathematical operations on NIfTI images including arithmetic, filtering, thresholding, and morphological operations.',
+        modality: '3D or 4D NIfTI volume(s).',
+        keyParameters: '-add/-sub/-mul/-div (arithmetic), -thr/-uthr (thresholding), -bin (binarize), -s (smoothing sigma mm), -bptf (bandpass temporal filter)',
+        keyPoints: 'Swiss army knife of neuroimaging. Operations are applied left to right. Use -odt to control output data type. -bptf values are in volumes not seconds.',
+        typicalUse: 'Mathematical operations, masking, thresholding, temporal filtering.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils'
+      },
+      {
+        name: 'fslstats', fullName: 'FSL Image Statistics (fslstats)',
+        function: 'Computes various summary statistics from image data, optionally within a mask region.',
+        modality: '3D or 4D NIfTI volume, optional mask.',
+        keyParameters: '-k (mask image), -m (mean), -s (standard deviation), -r (min max), -V (volume in voxels and mm3), -p (nth percentile)',
+        keyPoints: 'Apply -k mask before other options. Use -t for per-volume stats on 4D data. Outputs to stdout for easy scripting.',
+        typicalUse: 'Extracting summary statistics from ROIs or whole-brain.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils'
+      },
+      {
+        name: 'fslroi', fullName: 'FSL Region of Interest Extraction (fslroi)',
+        function: 'Extracts a spatial or temporal sub-region from NIfTI images.',
+        modality: '3D or 4D NIfTI volume.',
+        keyParameters: '<input> <output> <xmin> <xsize> <ymin> <ysize> <zmin> <zsize> [<tmin> <tsize>]',
+        keyPoints: 'Indices are 0-based. For temporal extraction only, use: fslroi input output tmin tsize. Useful for extracting reference volumes from 4D data.',
+        typicalUse: 'Cropping images spatially or selecting specific time points from 4D data.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils'
+      },
+      {
+        name: 'fslmeants', fullName: 'FSL Mean Time Series Extraction (fslmeants)',
+        function: 'Extracts the mean time series from a 4D dataset within a mask or at specified coordinates.',
+        modality: '4D fMRI NIfTI time series plus ROI mask or coordinates.',
+        keyParameters: '-i (input 4D), -o (output text file), -m (mask image), -c (x y z coordinates), --eig (output eigenvariates)',
+        keyPoints: 'Outputs one value per timepoint. Use -m for mask-based extraction, -c for single-voxel. --eig outputs eigenvariate (first principal component) instead of mean.',
+        typicalUse: 'ROI time series extraction for seed-based connectivity analysis.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils'
+      }
+    ],
+    'Volume Operations': [
+      {
+        name: 'fslsplit', fullName: 'FSL Volume Split (fslsplit)',
+        function: 'Splits a 4D time series into individual 3D volumes or splits along any spatial axis.',
+        modality: '4D NIfTI time series.',
+        keyParameters: '<input> [output_basename] -t/-x/-y/-z (split direction, default -t for time)',
+        keyPoints: 'Default splits along time dimension. Output files are numbered sequentially (vol0000, vol0001, ...). Useful for per-volume quality control.',
+        typicalUse: 'Processing individual volumes separately, quality control inspection.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils'
+      },
+      {
+        name: 'fslmerge', fullName: 'FSL Volume Merge (fslmerge)',
+        function: 'Concatenates multiple 3D volumes into a 4D time series or merges along any spatial axis.',
+        modality: 'Multiple 3D NIfTI volumes.',
+        keyParameters: '-t/-x/-y/-z/-a (merge direction), <output> <input1> <input2> ...',
+        keyPoints: 'Use -t for temporal concatenation (most common). -a auto-detects axis. Input images must have matching spatial dimensions when merging in time.',
+        typicalUse: 'Combining processed volumes back into 4D, concatenating runs.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils'
+      },
+      {
+        name: 'fslreorient2std', fullName: 'FSL Reorient to Standard Orientation',
+        function: 'Reorients images to match standard (MNI) orientation using 90-degree rotations and flips only.',
+        modality: '3D or 4D NIfTI volume in any orientation.',
+        keyParameters: '<input> [output]',
+        keyPoints: 'Only applies 90-degree rotations/flips (no interpolation). Does not register to standard space. Should be run as first step before any processing.',
+        typicalUse: 'Ensuring consistent orientation before processing.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Orientation%20Explained'
+      }
+    ],
+    'Warp Utilities': [
+      {
+        name: 'applywarp', fullName: 'FSL Apply Warp Field (applywarp)',
+        function: 'Applies linear and/or non-linear warp fields to transform images between coordinate spaces.',
+        modality: '3D or 4D NIfTI volume plus warp field and/or affine matrix.',
+        keyParameters: '-i (input), -r (reference), -o (output), -w (warp field), --premat (pre-warp affine), --postmat (post-warp affine), --interp (interpolation)',
+        keyPoints: 'Can chain affine + nonlinear transforms in one step. Use --interp=nn for label images, --interp=spline for continuous images. Reference defines output grid.',
+        typicalUse: 'Applying normalization warps to functional data or atlas labels.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Applying_the_warps'
+      },
+      {
+        name: 'invwarp', fullName: 'FSL Invert Warp Field (invwarp)',
+        function: 'Computes the inverse of a non-linear warp field for reverse transformations.',
+        modality: 'Non-linear warp field (4D NIfTI from FNIRT --cout output).',
+        keyParameters: '-w (input warp), -o (output inverse warp), -r (reference image for output space)',
+        keyPoints: 'Needed to map atlas/standard-space ROIs back to native space. Reference should be the image that was originally warped.',
+        typicalUse: 'Creating inverse transformations for atlas-to-native space mapping.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Inverting_warps'
+      },
+      {
+        name: 'convertwarp', fullName: 'FSL Convert/Combine Warps (convertwarp)',
+        function: 'Combines multiple warp fields and affine matrices into a single composite warp for efficient one-step transformation.',
+        modality: 'Warp fields and/or affine matrices from FLIRT/FNIRT.',
+        keyParameters: '-r (reference), -o (output), --premat (first affine), --warp1 (first warp), --midmat (middle affine), --warp2 (second warp), --postmat (final affine)',
+        keyPoints: 'Applying one combined warp is faster and has less interpolation error than chaining multiple transformations. Transform order: premat > warp1 > midmat > warp2 > postmat.',
+        typicalUse: 'Concatenating multiple transformations (e.g., func > struct > standard) efficiently.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FNIRT/UserGuide#Combining_warps'
+      }
+    ],
+    'Clustering': [
+      {
+        name: 'cluster', fullName: 'FSL Cluster Analysis (cluster)',
+        function: 'Identifies contiguous clusters of suprathreshold voxels in statistical images and reports their properties.',
+        modality: 'Statistical map (z-stat or p-value 3D NIfTI).',
+        keyParameters: '-i (input stat image), -t (z threshold), -p (p threshold), --oindex (cluster index output), --olmax (local maxima output), -c (cope image for effect sizes)',
+        keyPoints: 'Reports cluster size, peak coordinates, and p-values. Use with -c to get mean COPE within clusters. GRF-based p-values require smoothness estimates.',
+        typicalUse: 'Cluster-based thresholding and extracting peak coordinates from statistical maps.',
+        docUrl: 'https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Cluster'
+      }
     ]
   },
 
   AFNI: {
-    'Preprocessing': [
-      { name: '3dSkullStrip', fullName: 'AFNI 3D Skull Strip', function: 'Removes non-brain tissue using an expansion algorithm', typicalUse: 'Brain extraction for functional or structural images', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSkullStrip.html' },
-      { name: '3dvolreg', fullName: 'AFNI 3D Volume Registration', function: 'Rigid-body motion correction by registering all volumes to a base', typicalUse: 'Motion correction; outputs 6 motion parameters', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dvolreg.html' },
-      { name: '3dTshift', fullName: 'AFNI 3D Temporal Shift', function: 'Corrects for slice timing differences via temporal interpolation', typicalUse: 'Aligning all slices to same temporal reference', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html' },
-      { name: '3dDespike', fullName: 'AFNI 3D Despike', function: 'Removes spike artifacts from time series using L1 fit', typicalUse: 'Artifact removal before other preprocessing', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDespike.html' },
-      { name: '3dBandpass', fullName: 'AFNI 3D Bandpass Filter', function: 'Bandpass filtering of time series with optional regression', typicalUse: 'Resting-state frequency filtering (typically 0.01-0.1 Hz)', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBandpass.html' },
-      { name: '3dBlurToFWHM', fullName: 'AFNI 3D Blur to Full Width at Half Maximum', function: 'Spatially smooths data to achieve target smoothness level', typicalUse: 'Achieving consistent smoothness across subjects/studies', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html' },
-      { name: '3dmerge', fullName: 'AFNI 3D Merge', function: 'Spatial filtering and dataset merging operations', typicalUse: 'Gaussian smoothing of functional data', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html' },
-      { name: '3dAllineate', fullName: 'AFNI 3D Allineate', function: 'Linear registration with multiple cost functions', typicalUse: 'Affine alignment between modalities or to standard space', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAllineate.html' },
-      { name: '3dQwarp', fullName: 'AFNI 3D Nonlinear Warp', function: 'Non-linear registration using cubic polynomial basis', typicalUse: 'High-accuracy normalization to template', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html' },
-      { name: '@auto_tlrc', fullName: 'AFNI Automated Talairach Transformation', function: 'Automated Talairach transformation for anatomical images', typicalUse: 'Legacy Talairach normalization', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/@auto_tlrc.html' },
-      { name: '@SSwarper', fullName: 'AFNI Skull Strip and Warp', function: 'Combined skull stripping and nonlinear warping to template', typicalUse: 'Modern anatomical preprocessing for afni_proc.py', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/@SSwarper.html' },
-      { name: 'align_epi_anat.py', fullName: 'AFNI Align EPI to Anatomy', function: 'Aligns EPI to anatomical with distortion correction options', typicalUse: 'Core EPI-to-structural alignment', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/align_epi_anat.py.html' },
-      { name: '3dUnifize', fullName: 'AFNI 3D Unifize', function: 'Corrects intensity inhomogeneity (bias field)', typicalUse: 'Bias correction before segmentation or registration', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUnifize.html' },
-      { name: '3dAutomask', fullName: 'AFNI 3D Automask', function: 'Creates brain mask from EPI data automatically', typicalUse: 'Generating functional brain masks', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutomask.html' },
-      { name: '3dTcat', fullName: 'AFNI 3D Temporal Concatenate', function: 'Concatenates datasets in time or selects sub-bricks', typicalUse: 'Combining runs, removing initial volumes', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html' }
+    'Brain Extraction': [
+      { name: '3dSkullStrip', fullName: 'AFNI 3D Skull Strip', function: 'Removes non-brain tissue using a modified spherical surface expansion algorithm adapted from BET.', modality: 'T1-weighted or T2-weighted 3D NIfTI/AFNI volume.', keyParameters: '-input (input dataset), -prefix (output prefix), -push_to_edge (expand mask), -orig_vol (output original volume)', keyPoints: 'Often more aggressive than BET. Use -push_to_edge if too much brain is removed. Works on T1 or T2 images.', typicalUse: 'Brain extraction for structural or functional images in AFNI pipelines.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dSkullStrip.html' },
+      { name: '@SSwarper', fullName: 'AFNI Skull Strip and Nonlinear Warp (@SSwarper)', function: 'Combined skull stripping and non-linear warping to template in a single optimized pipeline.', modality: 'T1-weighted 3D NIfTI volume plus reference template.', keyParameters: '-input (T1 image), -base (template), -subid (subject ID), -odir (output dir)', keyPoints: 'Preferred over separate skull-strip + registration. Output compatible with afni_proc.py.', typicalUse: 'Modern anatomical preprocessing for afni_proc.py pipelines.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/@SSwarper.html' }
     ],
-    'Statistical': [
-      { name: '3dDeconvolve', fullName: 'AFNI 3D Deconvolve', function: 'Multiple linear regression analysis for fMRI', typicalUse: 'First-level GLM analysis with flexible HRF models', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html' },
-      { name: '3dREMLfit', fullName: 'AFNI 3D REML Fit', function: 'GLM with ARMA(1,1) temporal autocorrelation correction', typicalUse: 'More accurate first-level statistics than 3dDeconvolve OLS', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html' },
-      { name: '3dMEMA', fullName: 'AFNI 3D Mixed Effects Meta Analysis', function: 'Mixed Effects Meta Analysis for group studies', typicalUse: 'Group analysis with proper mixed effects modeling', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEMA.html' },
-      { name: '3dANOVA', fullName: 'AFNI 3D ANOVA', function: 'Fixed-effects one-way ANOVA', typicalUse: 'Single-factor group analysis', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA.html' },
-      { name: '3dANOVA2', fullName: 'AFNI 3D Two-Way ANOVA', function: 'Fixed-effects two-way ANOVA', typicalUse: 'Two-factor factorial designs', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA2.html' },
-      { name: '3dANOVA3', fullName: 'AFNI 3D Three-Way ANOVA', function: 'Fixed-effects three-way ANOVA', typicalUse: 'Three-factor factorial designs', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA3.html' },
-      { name: '3dttest++', fullName: 'AFNI 3D T-Test', function: 'Two-sample t-test with covariates and advanced options', typicalUse: 'Group comparisons with covariate control', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dttest++.html' },
-      { name: '3dMVM', fullName: 'AFNI 3D MultiVariate Modeling', function: 'Multivariate modeling with ANOVA/ANCOVA', typicalUse: 'Complex repeated measures and mixed designs', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMVM.html' },
-      { name: '3dLME', fullName: 'AFNI 3D Linear Mixed Effects', function: 'Linear mixed effects modeling', typicalUse: 'Longitudinal data, nested designs', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dLME.html' },
-      { name: '3dLMEr', fullName: 'AFNI 3D Linear Mixed Effects with R', function: 'Linear mixed effects with R integration', typicalUse: 'Flexible mixed effects with R formula syntax', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dLMEr.html' },
-      { name: '3dClustSim', fullName: 'AFNI 3D Cluster Simulation', function: 'Simulates null distribution for cluster size thresholding', typicalUse: 'Determining cluster size thresholds for multiple comparison correction', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClustSim.html' },
-      { name: '3dFWHMx', fullName: 'AFNI 3D FWHM Estimation', function: 'Estimates spatial smoothness of data', typicalUse: 'Getting smoothness estimates for 3dClustSim', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dFWHMx.html' }
+    'Bias Correction': [
+      { name: '3dUnifize', fullName: 'AFNI 3D Intensity Uniformization (3dUnifize)', function: 'Corrects intensity inhomogeneity (bias field) to produce uniform white matter intensity.', modality: 'T1-weighted or T2-weighted 3D NIfTI/AFNI volume.', keyParameters: '-input (input), -prefix (output), -T2 (for T2-weighted input), -GM (also unifize gray matter)', keyPoints: 'Fast bias correction alternative to N4. Works well for T1 images by default. Use -T2 flag for T2-weighted images.', typicalUse: 'Bias correction before segmentation or registration.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUnifize.html' }
+    ],
+    'Registration': [
+      { name: '3dAllineate', fullName: 'AFNI 3D Affine Registration (3dAllineate)', function: 'Linear (affine) registration with multiple cost functions and optimization methods.', modality: 'Any 3D NIfTI/AFNI volume pair.', keyParameters: '-source (moving image), -base (reference), -prefix (output), -cost (cost function: lpc, mi, nmi), -1Dmatrix_save (save transform)', keyPoints: 'lpc cost recommended for EPI-to-T1 alignment. nmi for intra-modal.', typicalUse: 'Affine alignment between modalities or to standard space.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAllineate.html' },
+      { name: '3dQwarp', fullName: 'AFNI 3D Nonlinear Warp (3dQwarp)', function: 'Non-linear registration using cubic polynomial basis functions for precise anatomical alignment.', modality: 'T1-weighted 3D NIfTI/AFNI volumes (source and base, both skull-stripped).', keyParameters: '-source (moving), -base (reference), -prefix (output), -blur (smoothing), -minpatch (minimum patch size)', keyPoints: 'Both images should be skull-stripped. Use -blur 0 3 for typical T1 registration. Usually preceded by 3dAllineate.', typicalUse: 'High-accuracy normalization to template.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dQwarp.html' },
+      { name: '@auto_tlrc', fullName: 'AFNI Automated Talairach Transformation (@auto_tlrc)', function: 'Automated Talairach transformation using affine registration to a template atlas.', modality: 'T1-weighted 3D NIfTI/AFNI volume.', keyParameters: '-base (template), -input (anatomical), -no_ss (skip skull strip)', keyPoints: 'Legacy tool for Talairach normalization. For modern analyses, prefer @SSwarper or 3dQwarp.', typicalUse: 'Legacy Talairach normalization.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/@auto_tlrc.html' },
+      { name: 'align_epi_anat.py', fullName: 'AFNI EPI-to-Anatomy Alignment (align_epi_anat.py)', function: 'Aligns EPI functional images to anatomical images with optional distortion correction using local Pearson correlation.', modality: 'EPI volume (3D NIfTI) plus T1-weighted anatomical.', keyParameters: '-epi (EPI dataset), -anat (anatomical), -epi_base (EPI reference volume), -cost (cost function, default lpc)', keyPoints: 'lpc cost function designed for EPI-to-T1 alignment. Central tool in afni_proc.py.', typicalUse: 'Core EPI-to-structural alignment in functional preprocessing.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/align_epi_anat.py.html' }
+    ],
+    'Motion Correction': [
+      { name: '3dvolreg', fullName: 'AFNI 3D Volume Registration (3dvolreg)', function: 'Rigid-body motion correction by registering all volumes in a 4D dataset to a base volume.', modality: '4D fMRI NIfTI/AFNI time series.', keyParameters: '-base (reference volume index or dataset), -prefix (output), -1Dfile (motion parameters output), -maxdisp1D (max displacement output)', keyPoints: 'Default base is volume 0; use median volume for better results. Motion parameters output as 6 columns.', typicalUse: 'Motion correction for fMRI; outputs 6 motion parameters for nuisance regression.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dvolreg.html' }
+    ],
+    'Slice Timing': [
+      { name: '3dTshift', fullName: 'AFNI 3D Temporal Shift (3dTshift)', function: 'Corrects for slice timing differences by shifting each voxel time series to a common temporal reference.', modality: '4D fMRI NIfTI/AFNI time series.', keyParameters: '-prefix (output), -tpattern (slice timing pattern: alt+z, seq+z, etc.), -tzero (align to time zero), -TR (repetition time)', keyPoints: 'Auto-detects slice timing from header if available. Common patterns: alt+z (interleaved ascending), seq+z (sequential ascending).', typicalUse: 'Aligning all slices to the same temporal reference in fMRI data.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTshift.html' }
+    ],
+    'Denoising': [
+      { name: '3dDespike', fullName: 'AFNI 3D Despike (3dDespike)', function: 'Removes transient signal spikes from fMRI time series using an L1-norm fitting approach.', modality: '4D fMRI NIfTI/AFNI time series.', keyParameters: '-prefix (output), -ssave (save spike fit), -nomask (process all voxels), -NEW (updated algorithm)', keyPoints: 'Run early in preprocessing pipeline (before motion correction). -NEW algorithm recommended.', typicalUse: 'Artifact removal before other preprocessing steps.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDespike.html' },
+      { name: '3dBandpass', fullName: 'AFNI 3D Bandpass Filter (3dBandpass)', function: 'Applies temporal bandpass filtering to fMRI time series with optional simultaneous nuisance regression.', modality: '4D fMRI NIfTI/AFNI time series.', keyParameters: '<fbot> <ftop> (frequency range in Hz), -prefix (output), -ort (nuisance regressors file)', keyPoints: 'Typical resting-state range: 0.01-0.1 Hz. Can simultaneously regress nuisance signals with -ort.', typicalUse: 'Resting-state frequency filtering (typically 0.01-0.1 Hz).', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBandpass.html' }
+    ],
+    'Smoothing': [
+      { name: '3dBlurToFWHM', fullName: 'AFNI 3D Adaptive Smoothing to Target FWHM', function: 'Adaptively smooths data to achieve a target smoothness level, accounting for existing smoothness.', modality: '3D or 4D NIfTI/AFNI volume with mask.', keyParameters: '-input (input dataset), -prefix (output), -FWHM (target smoothness in mm), -mask (brain mask)', keyPoints: 'Measures existing smoothness and adds only enough to reach target FWHM. Better than fixed-kernel smoothing.', typicalUse: 'Achieving consistent smoothness across subjects/studies.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dBlurToFWHM.html' },
+      { name: '3dmerge', fullName: 'AFNI 3D Merge and Smooth (3dmerge)', function: 'Combines spatial filtering and dataset merging operations, commonly used for Gaussian smoothing.', modality: '3D or 4D NIfTI/AFNI volume.', keyParameters: '-1blur_fwhm (FWHM in mm), -doall (process all sub-bricks), -prefix (output)', keyPoints: 'Simple Gaussian smoothing with -1blur_fwhm. -doall applies to all volumes in 4D.', typicalUse: 'Gaussian smoothing of functional data.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmerge.html' }
+    ],
+    'Masking': [
+      { name: '3dAutomask', fullName: 'AFNI 3D Automatic Mask Creation (3dAutomask)', function: 'Creates a brain mask automatically from EPI data by finding connected high-intensity voxels.', modality: '3D or 4D EPI NIfTI/AFNI volume.', keyParameters: '-prefix (output mask), -dilate (number of dilation steps), -erode (number of erosion steps), -clfrac (clip fraction)', keyPoints: 'Works on EPI data directly (no structural needed). Lower -clfrac includes more voxels.', typicalUse: 'Generating functional brain masks from EPI data.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dAutomask.html' }
+    ],
+    'Statistical Analysis': [
+      { name: '3dDeconvolve', fullName: 'AFNI 3D Deconvolve (GLM Analysis)', function: 'Multiple linear regression analysis for fMRI with flexible hemodynamic response function models.', modality: '4D fMRI NIfTI/AFNI time series plus stimulus timing files.', keyParameters: '-input (4D data), -polort (polynomial detrending order), -num_stimts (number of regressors), -stim_times (timing files with HRF model), -gltsym (contrasts)', keyPoints: 'Supports many HRF models (GAM, BLOCK, dmBLOCK, TENT, CSPLIN). Use -x1D_stop to generate design matrix only.', typicalUse: 'First-level GLM analysis with flexible HRF models.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDeconvolve.html' },
+      { name: '3dREMLfit', fullName: 'AFNI 3D REML Fit (Improved GLM)', function: 'GLM with ARMA(1,1) temporal autocorrelation correction using restricted maximum likelihood estimation.', modality: '4D fMRI NIfTI/AFNI time series plus design matrix from 3dDeconvolve.', keyParameters: '-matrix (design matrix from 3dDeconvolve -x1D), -input (4D data), -Rbuck (output stats), -Rvar (output variance)', keyPoints: 'More accurate statistics than 3dDeconvolve OLS. Run after 3dDeconvolve for improved inference.', typicalUse: 'More accurate first-level statistics than 3dDeconvolve OLS.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dREMLfit.html' },
+      { name: '3dMEMA', fullName: 'AFNI 3D Mixed Effects Meta Analysis (3dMEMA)', function: 'Mixed effects meta-analysis for group studies that properly accounts for within and between-subject variance.', modality: 'Subject-level beta and t-statistic volumes (3D NIfTI/AFNI).', keyParameters: '-set (group name and subject beta+tstat pairs), -groups (group names), -covariates (covariate file), -prefix (output)', keyPoints: 'Uses both beta and t-stat from each subject. Better for unequal within-subject variance. Requires R.', typicalUse: 'Group analysis with proper mixed effects modeling.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMEMA.html' },
+      { name: '3dANOVA', fullName: 'AFNI 3D One-Way ANOVA', function: 'Voxelwise fixed-effects one-way analysis of variance.', modality: 'Multiple 3D NIfTI/AFNI volumes organized by factor level.', keyParameters: '-levels (number of levels), -dset (level dataset), -ftr (F-test output), -mean (level means output)', keyPoints: 'Fixed-effects only. For random/mixed effects, use 3dMVM or 3dLME instead.', typicalUse: 'Single-factor group analysis.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA.html' },
+      { name: '3dANOVA2', fullName: 'AFNI 3D Two-Way ANOVA', function: 'Voxelwise fixed-effects two-way analysis of variance with main effects and interaction.', modality: 'Multiple 3D NIfTI/AFNI volumes organized by two factors.', keyParameters: '-type (1-5, model type), -alevels/-blevels (factor levels), -dset (datasets), -fa/-fb/-fab (F-tests)', keyPoints: 'Type determines fixed/random effects per factor. Types 1-3 for within-subject designs.', typicalUse: 'Two-factor factorial designs.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA2.html' },
+      { name: '3dANOVA3', fullName: 'AFNI 3D Three-Way ANOVA', function: 'Voxelwise fixed-effects three-way analysis of variance.', modality: 'Multiple 3D NIfTI/AFNI volumes organized by three factors.', keyParameters: '-type (1-5), -alevels/-blevels/-clevels, -dset, -fa/-fb/-fc/-fab/-fac/-fbc/-fabc (F-tests)', keyPoints: 'Extension of 3dANOVA2 to three factors. Consider 3dMVM for more flexible modeling.', typicalUse: 'Three-factor factorial designs.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dANOVA3.html' },
+      { name: '3dttest++', fullName: 'AFNI 3D T-Test (3dttest++)', function: 'Two-sample t-test with support for covariates, paired tests, and cluster-level inference.', modality: 'Subject-level 3D NIfTI/AFNI volumes.', keyParameters: '-setA/-setB (group datasets), -prefix (output), -covariates (covariate file), -paired (paired test), -Clustsim (cluster simulation)', keyPoints: 'Use -Clustsim for built-in cluster-level correction. -covariates allows continuous covariates.', typicalUse: 'Group comparisons with covariate control.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dttest++.html' },
+      { name: '3dMVM', fullName: 'AFNI 3D MultiVariate Modeling (3dMVM)', function: 'Multivariate modeling framework supporting ANOVA/ANCOVA designs with between and within-subject factors.', modality: 'Subject-level 3D NIfTI/AFNI volumes with data table specifying factors.', keyParameters: '-dataTable (structured input table), -bsVars (between-subject variables), -wsVars (within-subject variables), -qVars (quantitative variables)', keyPoints: 'Most flexible group analysis tool in AFNI. Handles complex repeated measures designs. Requires R.', typicalUse: 'Complex repeated measures and mixed designs.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dMVM.html' },
+      { name: '3dLME', fullName: 'AFNI 3D Linear Mixed Effects (3dLME)', function: 'Linear mixed effects modeling using R lme4 package for designs with random effects.', modality: 'Subject-level 3D NIfTI/AFNI volumes with data table.', keyParameters: '-dataTable (input table), -model (model formula), -ranEff (random effects specification), -qVars (quantitative variables)', keyPoints: 'Best for longitudinal data and nested designs. Uses R lme4 syntax. Handles missing data naturally.', typicalUse: 'Longitudinal data, nested designs with random effects.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dLME.html' },
+      { name: '3dLMEr', fullName: 'AFNI 3D Linear Mixed Effects with R (3dLMEr)', function: 'Linear mixed effects with direct R formula syntax integration for flexible model specification.', modality: 'Subject-level 3D NIfTI/AFNI volumes with data table.', keyParameters: '-dataTable (input table), -model (R lmer formula), -qVars (quantitative variables), -gltCode (contrast specification)', keyPoints: 'More flexible than 3dLME. Uses lmerTest for degrees of freedom. Accepts full R formula syntax.', typicalUse: 'Flexible mixed effects with R formula syntax.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dLMEr.html' }
+    ],
+    'Multiple Comparisons': [
+      { name: '3dClustSim', fullName: 'AFNI 3D Cluster Size Simulation (3dClustSim)', function: 'Simulates null distribution of cluster sizes for determining cluster-extent thresholds that control family-wise error rate.', modality: 'Brain mask (3D NIfTI/AFNI) plus smoothness estimates from 3dFWHMx.', keyParameters: '-mask (brain mask), -acf (ACF parameters from 3dFWHMx), -athr (per-voxel alpha), -pthr (per-voxel p thresholds)', keyPoints: 'Use ACF-based smoothness (not FWHM) from 3dFWHMx on residuals. Updated in 2016 for non-Gaussian assumptions.', typicalUse: 'Determining cluster size thresholds for multiple comparison correction.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dClustSim.html' },
+      { name: '3dFWHMx', fullName: 'AFNI 3D Smoothness Estimation (3dFWHMx)', function: 'Estimates spatial smoothness of data using the autocorrelation function (ACF) model.', modality: 'Residual 4D NIfTI/AFNI from GLM analysis plus brain mask.', keyParameters: '-input (residuals), -mask (brain mask), -acf (output ACF parameters), -detrend (detrend order)', keyPoints: 'Run on residuals (not original data). ACF model accounts for non-Gaussian spatial structure. Output feeds into 3dClustSim.', typicalUse: 'Getting smoothness estimates for 3dClustSim.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dFWHMx.html' }
     ],
     'Connectivity': [
-      { name: '3dNetCorr', fullName: 'AFNI 3D Network Correlation', function: 'Computes correlation matrices between ROI time series', typicalUse: 'Creating connectivity matrices from parcellations', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html' },
-      { name: '3dTcorr1D', fullName: 'AFNI 3D Temporal Correlation 1D', function: 'Correlates 4D data with 1D seed time series', typicalUse: 'Seed-based correlation analysis', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorr1D.html' },
-      { name: '3dTcorrMap', fullName: 'AFNI 3D Temporal Correlation Map', function: 'Computes various whole-brain correlation metrics', typicalUse: 'Global connectivity metrics, data exploration', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorrMap.html' },
-      { name: '3dRSFC', fullName: 'AFNI 3D Resting State fMRI Connectivity', function: 'Computes resting-state metrics (ALFF, fALFF, RSFA, etc.)', typicalUse: 'Amplitude of low-frequency fluctuations analysis', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dRSFC.html' }
+      { name: '3dNetCorr', fullName: 'AFNI 3D Network Correlation Matrix (3dNetCorr)', function: 'Computes pairwise correlation matrices between ROI time series extracted from a parcellation atlas.', modality: '4D fMRI NIfTI/AFNI time series plus integer-labeled parcellation volume.', keyParameters: '-inset (4D time series), -in_rois (parcellation), -prefix (output), -fish_z (Fisher z-transform), -ts_out (output time series)', keyPoints: 'Outputs correlation matrix as text file. Use -fish_z for Fisher z-transformed values.', typicalUse: 'Creating functional connectivity matrices from parcellations.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNetCorr.html' },
+      { name: '3dTcorr1D', fullName: 'AFNI 3D Seed-Based Correlation (3dTcorr1D)', function: 'Computes voxelwise correlation between a 4D dataset and one or more 1D seed time series.', modality: '4D fMRI NIfTI/AFNI time series plus 1D seed time series file.', keyParameters: '-prefix (output), <4D_dataset> <1D_seed_timeseries>', keyPoints: 'Simple seed-based correlation. Extract seed time series first (e.g., with 3dmaskave).', typicalUse: 'Seed-based functional connectivity analysis.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorr1D.html' },
+      { name: '3dTcorrMap', fullName: 'AFNI 3D Whole-Brain Correlation Map (3dTcorrMap)', function: 'Computes various whole-brain voxelwise correlation metrics including average correlation and global connectivity.', modality: '4D fMRI NIfTI/AFNI time series plus brain mask.', keyParameters: '-input (4D data), -mask (brain mask), -Mean (mean correlation map), -Hist (histogram outputs)', keyPoints: 'Computes every-voxel-to-every-voxel correlations. Memory intensive.', typicalUse: 'Global connectivity metrics, whole-brain correlation exploration.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcorrMap.html' },
+      { name: '3dRSFC', fullName: 'AFNI 3D Resting State Functional Connectivity (3dRSFC)', function: 'Computes resting-state frequency-domain metrics including ALFF, fALFF, mALFF, and RSFA from bandpass-filtered data.', modality: '4D resting-state fMRI NIfTI/AFNI time series plus brain mask.', keyParameters: '<fbot> <ftop> (frequency range), -prefix (output), -input (4D data), -mask (brain mask)', keyPoints: 'Computes ALFF (amplitude of low-frequency fluctuations), fALFF (fractional ALFF), and RSFA.', typicalUse: 'Amplitude of low-frequency fluctuations analysis in resting-state fMRI.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dRSFC.html' }
     ],
-    'ROI/Parcellation': [
-      { name: '3dROIstats', fullName: 'AFNI 3D ROI Statistics', function: 'Extracts statistics from data within ROI masks', typicalUse: 'Extracting mean values from regions', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dROIstats.html' },
-      { name: '3dmaskave', fullName: 'AFNI 3D Mask Average', function: 'Outputs average time series from masked region', typicalUse: 'Simple ROI time series extraction', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmaskave.html' },
-      { name: '3dUndump', fullName: 'AFNI 3D Undump', function: 'Creates dataset from coordinate text file', typicalUse: 'Creating spherical ROIs from peak coordinates', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUndump.html' },
-      { name: 'whereami', fullName: 'AFNI Whereami Atlas Query', function: 'Reports atlas labels for coordinates', typicalUse: 'Identifying anatomical locations of activations', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/whereami.html' },
-      { name: '3dresample', fullName: 'AFNI 3D Resample', function: 'Resamples dataset to different grid', typicalUse: 'Matching resolution between datasets', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dresample.html' },
-      { name: '3dfractionize', fullName: 'AFNI 3D Fractionize', function: 'Resamples ROI/atlas with fractional weighting', typicalUse: 'Resampling parcellations to functional resolution', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dfractionize.html' }
+    'ROI Analysis': [
+      { name: '3dROIstats', fullName: 'AFNI 3D ROI Statistics (3dROIstats)', function: 'Extracts statistical summary measures from data within defined ROI masks.', modality: '3D or 4D NIfTI/AFNI volume plus ROI mask with integer labels.', keyParameters: '-mask (ROI mask), -nzmean (mean of non-zero voxels), -nzvoxels (count non-zero voxels), -minmax (min and max)', keyPoints: 'Can handle multi-label ROI masks. Outputs one row per volume, one column per ROI.', typicalUse: 'Extracting mean values from defined regions of interest.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dROIstats.html' },
+      { name: '3dmaskave', fullName: 'AFNI 3D Mask Average (3dmaskave)', function: 'Extracts and outputs the average time series from voxels within a mask region.', modality: '4D fMRI NIfTI/AFNI time series plus binary mask.', keyParameters: '-mask (mask dataset), -quiet (output values only), -mrange (min max value range in mask)', keyPoints: 'Simple and fast ROI time series extraction. Output is one value per timepoint to stdout.', typicalUse: 'Simple ROI time series extraction for connectivity analysis.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dmaskave.html' }
     ],
-    'Utilities': [
-      { name: '3dcalc', fullName: 'AFNI 3D Calculator', function: 'Voxelwise calculator with extensive expression support', typicalUse: 'Mathematical operations, masking, thresholding', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcalc.html' },
-      { name: '3dinfo', fullName: 'AFNI 3D Info', function: 'Displays header information from datasets', typicalUse: 'QC, scripting decisions based on data properties', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dinfo.html' },
-      { name: '3dTstat', fullName: 'AFNI 3D Temporal Statistics', function: 'Computes temporal statistics (mean, stdev, etc.)', typicalUse: 'Creating mean functional images, variance maps', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTstat.html' },
-      { name: '3dcopy', fullName: 'AFNI 3D Copy', function: 'Copies dataset with optional format conversion', typicalUse: 'Format conversion, making editable copies', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcopy.html' },
-      { name: '3dZeropad', fullName: 'AFNI 3D Zeropad', function: 'Adds zero-padding around dataset boundaries', typicalUse: 'Matching matrix sizes, preventing edge effects', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html' },
-      { name: '3dNwarpApply', fullName: 'AFNI 3D Nonlinear Warp Apply', function: 'Applies nonlinear warps to datasets', typicalUse: 'Applying 3dQwarp transformations', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html' },
-      { name: '3dNwarpCat', fullName: 'AFNI 3D Nonlinear Warp Concatenate', function: 'Concatenates multiple warps into one', typicalUse: 'Combining transformations efficiently', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpCat.html' }
+    'Image Math': [
+      { name: '3dcalc', fullName: 'AFNI 3D Voxelwise Calculator (3dcalc)', function: 'Voxelwise mathematical calculator supporting extensive expression syntax for operations on one or more datasets.', modality: '3D or 4D NIfTI/AFNI volume(s).', keyParameters: '-a/-b/-c (input datasets), -expr (mathematical expression), -prefix (output), -datum (output data type)', keyPoints: 'Extremely flexible expression syntax. Supports conditionals, trigonometric, and logical operations. Up to 26 inputs (a-z).', typicalUse: 'Mathematical operations, masking, thresholding, combining datasets.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcalc.html' },
+      { name: '3dTstat', fullName: 'AFNI 3D Temporal Statistics (3dTstat)', function: 'Computes voxelwise temporal statistics (mean, stdev, median, etc.) across a 4D time series.', modality: '4D NIfTI/AFNI time series.', keyParameters: '-prefix (output), -mean/-stdev/-median/-max/-min (statistic type), -mask (optional mask)', keyPoints: 'Default computes mean. Can compute multiple statistics in one run.', typicalUse: 'Creating mean functional images, variance maps, temporal SNR.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTstat.html' }
+    ],
+    'Dataset Operations': [
+      { name: '3dinfo', fullName: 'AFNI 3D Dataset Information (3dinfo)', function: 'Displays header information and metadata from AFNI/NIfTI datasets.', modality: 'Any NIfTI or AFNI format dataset.', keyParameters: '-n4 (dimensions), -tr (TR), -orient (orientation), -prefix (prefix only), -space (coordinate space)', keyPoints: 'Essential for scripting and QC. Use specific flags for machine-readable output.', typicalUse: 'Quality control, scripting decisions based on data properties.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dinfo.html' },
+      { name: '3dcopy', fullName: 'AFNI 3D Dataset Copy (3dcopy)', function: 'Copies a dataset with optional format conversion between AFNI and NIfTI formats.', modality: 'Any NIfTI or AFNI format dataset.', keyParameters: '<input> <output> (format determined by output extension)', keyPoints: 'Output format determined by extension. Simple way to convert between formats.', typicalUse: 'Format conversion between AFNI and NIfTI, making editable copies.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dcopy.html' },
+      { name: '3dZeropad', fullName: 'AFNI 3D Zero Padding (3dZeropad)', function: 'Adds zero-valued slices around dataset boundaries to extend the image matrix.', modality: '3D or 4D NIfTI/AFNI volume.', keyParameters: '-I/-S/-A/-P/-R/-L (add slices in each direction), -master (match grid of master dataset), -prefix (output)', keyPoints: 'Use -master to match another dataset grid. Can also crop with negative values.', typicalUse: 'Matching matrix sizes between datasets, preventing edge effects.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dZeropad.html' },
+      { name: '3dTcat', fullName: 'AFNI 3D Temporal Concatenate (3dTcat)', function: 'Concatenates datasets along the time dimension or selects specific sub-bricks from 4D data.', modality: '3D or 4D NIfTI/AFNI volumes.', keyParameters: '-prefix (output), <dataset>[selector] (input with optional sub-brick selector)', keyPoints: 'Sub-brick selectors allow flexible volume selection: [0..5] for first 6, [0..$-3] to skip last 3.', typicalUse: 'Combining runs, removing initial steady-state volumes.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTcat.html' }
+    ],
+    'ROI Utilities': [
+      { name: '3dUndump', fullName: 'AFNI 3D Undump (Coordinate to Volume)', function: 'Creates a 3D dataset from a text file containing voxel coordinates and values.', modality: 'Text coordinate file plus master dataset for grid definition.', keyParameters: '-prefix (output), -master (template grid), -xyz (coordinates are in mm), -srad (sphere radius in mm)', keyPoints: 'Use -srad to create spherical ROIs at each coordinate. Master dataset defines output grid.', typicalUse: 'Creating spherical ROIs from peak coordinates.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dUndump.html' },
+      { name: 'whereami', fullName: 'AFNI Atlas Location Query (whereami)', function: 'Reports anatomical atlas labels for given coordinates or identifies regions in multiple atlases simultaneously.', modality: 'MNI or Talairach coordinates, or labeled dataset.', keyParameters: '-coord_file (coordinate file), -atlas (atlas name), -lpi/-rai (coordinate system)', keyPoints: 'Queries multiple atlases at once by default. Coordinates must match atlas space.', typicalUse: 'Identifying anatomical locations of activation peaks.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/whereami.html' },
+      { name: '3dresample', fullName: 'AFNI 3D Resample (3dresample)', function: 'Resamples a dataset to match the grid of another dataset or to a specified voxel size.', modality: '3D or 4D NIfTI/AFNI volume.', keyParameters: '-master (template grid), -prefix (output), -dxyz (voxel size), -rmode (interpolation: NN, Li, Cu)', keyPoints: 'Use -rmode NN for label/mask images, Li or Cu for continuous data.', typicalUse: 'Matching resolution between datasets for analysis.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dresample.html' },
+      { name: '3dfractionize', fullName: 'AFNI 3D Fractionize (ROI Resampling)', function: 'Resamples ROI/atlas datasets using fractional occupancy to maintain region representation at different resolutions.', modality: 'ROI/atlas volume (3D NIfTI/AFNI) plus template for target grid.', keyParameters: '-template (target grid), -input (ROI dataset), -prefix (output), -clip (fraction threshold, default 0.5)', keyPoints: 'Better than nearest-neighbor for resampling parcellations. Preserves small ROIs better.', typicalUse: 'Resampling parcellations to functional resolution.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dfractionize.html' }
+    ],
+    'Warp Utilities': [
+      { name: '3dNwarpApply', fullName: 'AFNI 3D Nonlinear Warp Apply', function: 'Applies precomputed nonlinear warps (from 3dQwarp) to transform datasets.', modality: '3D or 4D NIfTI/AFNI volume plus warp dataset.', keyParameters: '-nwarp (warp dataset), -source (input), -master (reference grid), -prefix (output), -interp (interpolation method)', keyPoints: 'Can concatenate multiple warps in -nwarp string. Use wsinc5 interpolation for best quality.', typicalUse: 'Applying 3dQwarp transformations to functional or other data.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpApply.html' },
+      { name: '3dNwarpCat', fullName: 'AFNI 3D Nonlinear Warp Concatenate', function: 'Concatenates multiple nonlinear warps and affine matrices into a single combined warp.', modality: 'Multiple warp datasets and/or affine matrix files.', keyParameters: '-prefix (output), -warp1/-warp2/... (warps to concatenate), -iwarp (use inverse of a warp)', keyPoints: 'Reduces interpolation artifacts from multiple separate applications. Can invert individual warps in the chain.', typicalUse: 'Combining transformations efficiently for one-step resampling.', docUrl: 'https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dNwarpCat.html' }
     ]
   },
 
@@ -109,65 +487,109 @@ export const toolsByLibrary = {
 
   FreeSurfer: {
     'Surface Reconstruction': [
-      { name: 'mri_convert', fullName: 'FreeSurfer MRI Convert', function: 'Format conversion between neuroimaging formats', typicalUse: 'Converting DICOM to NIfTI, conforming to FreeSurfer standards', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_convert' },
-      { name: 'mri_watershed', fullName: 'FreeSurfer MRI Watershed', function: 'Skull stripping using watershed algorithm', typicalUse: 'Brain extraction within recon-all', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_watershed' },
-      { name: 'mri_normalize', fullName: 'FreeSurfer MRI Normalize', function: 'Intensity normalization for T1 images', typicalUse: 'Preparing T1 for segmentation', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_normalize' },
-      { name: 'mri_segment', fullName: 'FreeSurfer MRI Segment', function: 'White matter segmentation', typicalUse: 'WM identification for surface reconstruction', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segment' },
-      { name: 'mris_inflate', fullName: 'FreeSurfer Surface Inflate', function: 'Inflates cortical surface for visualization', typicalUse: 'Creating inflated surfaces for visualization', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_inflate' },
-      { name: 'mris_sphere', fullName: 'FreeSurfer Surface to Sphere', function: 'Maps surface to sphere for registration', typicalUse: 'Preparing for spherical registration', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_sphere' }
+      { name: 'mri_convert', fullName: 'FreeSurfer MRI Format Conversion (mri_convert)', function: 'Converts between neuroimaging file formats (DICOM, NIfTI, MGH/MGZ, ANALYZE, etc.) with optional resampling and conforming.', modality: 'Any neuroimaging volume format.', keyParameters: '--conform (resample to 256 cubed at 1mm isotropic), --out_type (output format), -vs (voxel size)', keyPoints: 'Use --conform to prepare T1 for FreeSurfer processing. Handles DICOM to NIfTI conversion. Can change voxel size and data type.', typicalUse: 'Converting DICOM to NIfTI, conforming images to FreeSurfer standards.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_convert' },
+      { name: 'mri_watershed', fullName: 'FreeSurfer MRI Watershed Skull Stripping', function: 'Brain extraction using a hybrid watershed/surface deformation algorithm to find the brain-skull boundary.', modality: 'T1-weighted 3D volume (typically MGZ format within FreeSurfer pipeline).', keyParameters: '-T1 (specify T1 volume), -atlas (use atlas for initial estimate), -h (preflooding height, default 25)', keyPoints: 'Core component of recon-all. Adjust -h parameter if too much/too little brain removed. Usually part of autorecon1.', typicalUse: 'Brain extraction within recon-all pipeline.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_watershed' },
+      { name: 'mri_normalize', fullName: 'FreeSurfer MRI Intensity Normalization', function: 'Normalizes T1 image intensities so that white matter has a target intensity value (default 110).', modality: 'T1-weighted 3D volume (MGZ format, within FreeSurfer pipeline).', keyParameters: '-n (number of iterations), -b (bias field smoothing sigma), -aseg (use aseg for normalization regions)', keyPoints: 'Part of recon-all autorecon1. Creates nu.mgz (non-uniformity corrected) and T1.mgz (intensity normalized).', typicalUse: 'Preparing T1 for segmentation within FreeSurfer pipeline.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_normalize' },
+      { name: 'mri_segment', fullName: 'FreeSurfer MRI White Matter Segmentation', function: 'Segments white matter from normalized T1 image using intensity thresholding and morphological operations.', modality: 'Intensity-normalized T1 volume (T1.mgz from mri_normalize).', keyParameters: '-thicken (thicken WM), -wlo/-whi (WM intensity range)', keyPoints: 'Part of recon-all. Outputs wm.mgz used for surface reconstruction. Quality depends on good intensity normalization.', typicalUse: 'White matter identification for surface reconstruction.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segment' },
+      { name: 'mris_inflate', fullName: 'FreeSurfer Surface Inflation', function: 'Inflates folded cortical surface to a smooth shape while minimizing metric distortion for visualization.', modality: 'FreeSurfer surface file (e.g., lh.smoothwm).', keyParameters: '-n (number of iterations), -dist (target distance)', keyPoints: 'Creates inflated surface for visualizing buried cortex. Part of recon-all. Metric distortion encoded in sulc file.', typicalUse: 'Creating inflated surfaces for visualization of cortical data.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_inflate' },
+      { name: 'mris_sphere', fullName: 'FreeSurfer Surface to Sphere Mapping', function: 'Maps the inflated cortical surface to a sphere for inter-subject spherical registration.', modality: 'FreeSurfer inflated surface file.', keyParameters: '(minimal user-facing parameters; uses inflated surface)', keyPoints: 'Prerequisite for cortical atlas registration. Part of recon-all. Spherical mapping enables vertex-wise inter-subject comparisons.', typicalUse: 'Preparing cortical surface for spherical registration and atlas labeling.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_sphere' }
     ],
     'Parcellation': [
-      { name: 'mri_aparc2aseg', fullName: 'FreeSurfer Aparc to Aseg', function: 'Combines cortical parcellation with subcortical segmentation', typicalUse: 'Creating volumetric parcellation from surface labels', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_aparc2aseg' },
-      { name: 'mri_annotation2label', fullName: 'FreeSurfer Annotation to Label', function: 'Converts surface annotation to individual label files', typicalUse: 'Extracting individual ROIs from parcellation', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_annotation2label' },
-      { name: 'mris_ca_label', fullName: 'FreeSurfer Cortical Atlas Label', function: 'Automatic cortical labeling based on atlas', typicalUse: 'Applying parcellation atlas to individual', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_ca_label' },
-      { name: 'mri_label2vol', fullName: 'FreeSurfer Label to Volume', function: 'Converts surface labels to volume space', typicalUse: 'Creating volumetric ROIs from surface ROIs', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_label2vol' }
+      { name: 'mri_aparc2aseg', fullName: 'FreeSurfer Cortical Parcellation to Volume', function: 'Combines surface-based cortical parcellation (aparc) with volumetric subcortical segmentation (aseg) into a single volume.', modality: 'FreeSurfer subject directory (requires completed recon-all).', keyParameters: '--s (subject), --annot (annotation name, default aparc), --o (output volume)', keyPoints: 'Creates aparc+aseg.mgz combining ~80 cortical and subcortical regions. Different parcellation schemes available.', typicalUse: 'Creating volumetric parcellation from surface labels for ROI analysis.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_aparc2aseg' },
+      { name: 'mri_annotation2label', fullName: 'FreeSurfer Annotation to Individual Labels', function: 'Extracts individual region labels from a surface annotation file into separate label files.', modality: 'FreeSurfer annotation file (e.g., lh.aparc.annot).', keyParameters: '--subject (subject), --hemi (hemisphere), --annotation (annotation name), --outdir (output directory)', keyPoints: 'Creates one .label file per region. Label files contain vertex indices and coordinates.', typicalUse: 'Extracting individual ROIs from parcellation for targeted analysis.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_annotation2label' },
+      { name: 'mris_ca_label', fullName: 'FreeSurfer Cortical Atlas Labeling', function: 'Applies a cortical parcellation atlas to an individual subject using trained classifier on spherical surface.', modality: 'FreeSurfer subject directory with sphere.reg (requires completed recon-all).', keyParameters: '<subject> <hemisphere> <sphere.reg> <atlas.gcs> <output_annotation>', keyPoints: 'Uses Gaussian classifier atlas trained on manual labels. Part of recon-all. Different atlases available.', typicalUse: 'Applying cortical parcellation atlas to individual subjects.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_ca_label' },
+      { name: 'mri_label2vol', fullName: 'FreeSurfer Label to Volume Conversion', function: 'Converts surface-based labels to volumetric ROIs using a registration matrix.', modality: 'FreeSurfer label file plus template volume and registration.', keyParameters: '--label (input label), --temp (template volume), --reg (registration file), --o (output volume), --proj (projection parameters)', keyPoints: 'Requires registration between surface and target volume space. Use --proj to control projection depth.', typicalUse: 'Creating volumetric ROIs from FreeSurfer surface parcellations.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_label2vol' }
     ],
     'Functional': [
-      { name: 'bbregister', fullName: 'FreeSurfer Boundary-Based Registration', function: 'Boundary-based registration of EPI to FreeSurfer anatomy', typicalUse: 'High-quality EPI to T1 registration using surfaces', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/bbregister' },
-      { name: 'mri_vol2surf', fullName: 'FreeSurfer Volume to Surface', function: 'Projects volume data onto cortical surface', typicalUse: 'Mapping functional data to surface for analysis', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_vol2surf' },
-      { name: 'mri_surf2vol', fullName: 'FreeSurfer Surface to Volume', function: 'Projects surface data back to volume', typicalUse: 'Converting surface results to volume space', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_surf2vol' },
-      { name: 'mris_preproc', fullName: 'FreeSurfer Surface Preprocessing', function: 'Prepares surface data for group analysis', typicalUse: 'Concatenating subjects for surface group analysis', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_preproc' },
-      { name: 'mri_glmfit', fullName: 'FreeSurfer General Linear Model Fit', function: 'General linear model on surface or volume data', typicalUse: 'Surface-based group analysis', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_glmfit' }
+      { name: 'bbregister', fullName: 'FreeSurfer Boundary-Based Registration (bbregister)', function: 'High-quality registration of functional EPI images to FreeSurfer anatomy using white matter boundary contrast.', modality: '3D EPI volume (mean/example func) plus FreeSurfer subject directory.', keyParameters: '--s (subject), --mov (moving/source image), --reg (output registration), --init-fsl (initialization method), --bold (contrast type)', keyPoints: 'Superior to volume-based registration for EPI-to-T1. Requires completed recon-all. --init-fsl recommended.', typicalUse: 'High-quality EPI to T1 registration using cortical surfaces.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/bbregister' },
+      { name: 'mri_vol2surf', fullName: 'FreeSurfer Volume to Surface Projection', function: 'Projects volumetric data (fMRI, PET, etc.) onto the cortical surface using specified sampling method.', modality: '3D or 4D NIfTI/MGZ volume plus FreeSurfer subject registration.', keyParameters: '--mov (input volume), --reg (registration), --hemi (hemisphere), --projfrac (fraction of cortical thickness), --o (output)', keyPoints: 'Use --projfrac 0.5 to sample at mid-cortical depth. Can average across depths with --projfrac-avg.', typicalUse: 'Mapping functional or PET data to cortical surface for surface-based analysis.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_vol2surf' },
+      { name: 'mri_surf2vol', fullName: 'FreeSurfer Surface to Volume Projection', function: 'Projects surface-based data back to volumetric space using registration and template volume.', modality: 'FreeSurfer surface overlay file plus template volume and registration.', keyParameters: '--surfval (surface data), --reg (registration), --template (output grid template), --hemi (hemisphere), --o (output volume)', keyPoints: 'Inverse of mri_vol2surf. Template defines output grid dimensions.', typicalUse: 'Converting surface-based results back to volume space for reporting.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_surf2vol' },
+      { name: 'mris_preproc', fullName: 'FreeSurfer Surface Data Preprocessing for Group Analysis', function: 'Concatenates surface data across subjects onto a common template surface for group-level analysis.', modality: 'Per-subject surface overlays (thickness, area, etc.) from FreeSurfer processing.', keyParameters: '--s (subject list), --meas (measure: thickness, area, volume), --target (target subject/template), --hemi (hemisphere), --o (output)', keyPoints: 'Resamples all subjects to common surface (fsaverage). Can smooth on surface with --fwhm.', typicalUse: 'Preparing surface data for group statistical analysis.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_preproc' },
+      { name: 'mri_glmfit', fullName: 'FreeSurfer General Linear Model (mri_glmfit)', function: 'Fits a general linear model on surface or volume data for group-level statistical analysis.', modality: 'Concatenated surface data from mris_preproc or stacked volume data.', keyParameters: '--y (input data), --fsgd (FreeSurfer group descriptor), --C (contrast file), --surf (surface subject), --glmdir (output directory)', keyPoints: 'Uses FSGD file for design specification. Supports DODS and DOSS design types. Can run on surface or volume data.', typicalUse: 'Surface-based or volume-based group statistical analysis.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_glmfit' }
     ],
     'Morphometry': [
-      { name: 'mris_anatomical_stats', fullName: 'FreeSurfer Surface Anatomical Statistics', function: 'Computes surface-based morphometric measures', typicalUse: 'Extracting thickness, area, volume per region', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_anatomical_stats' },
-      { name: 'mri_segstats', fullName: 'FreeSurfer Segmentation Statistics', function: 'Computes statistics from segmentation', typicalUse: 'Extracting volumes, mean intensities per structure', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segstats' },
-      { name: 'aparcstats2table', fullName: 'FreeSurfer Aparc Stats to Table', function: 'Collects parcellation stats across subjects into table', typicalUse: 'Creating group spreadsheet for statistical analysis', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/aparcstats2table' },
-      { name: 'asegstats2table', fullName: 'FreeSurfer Aseg Stats to Table', function: 'Collects subcortical stats across subjects into table', typicalUse: 'Group analysis of subcortical volumes', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/asegstats2table' }
+      { name: 'mris_anatomical_stats', fullName: 'FreeSurfer Surface Anatomical Statistics', function: 'Computes surface-based morphometric measures (thickness, area, volume, curvature) for each region in a parcellation.', modality: 'FreeSurfer subject directory with completed recon-all.', keyParameters: '-a (annotation file), -f (output stats file), -b (output table format)', keyPoints: 'Outputs per-region cortical thickness, surface area, gray matter volume, and curvature.', typicalUse: 'Extracting regional cortical thickness, area, and volume measures.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mris_anatomical_stats' },
+      { name: 'mri_segstats', fullName: 'FreeSurfer Segmentation Statistics', function: 'Computes volume and intensity statistics for each region in a segmentation volume.', modality: 'Segmentation volume (e.g., aseg.mgz) plus optional intensity volume.', keyParameters: '--seg (segmentation), --i (intensity volume), --ctab (color table), --sum (output summary file), --excludeid 0 (exclude background)', keyPoints: 'Reports volume, mean intensity, and other statistics per region. Can use any segmentation volume.', typicalUse: 'Extracting regional volumes and mean intensities per structure.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/mri_segstats' },
+      { name: 'aparcstats2table', fullName: 'FreeSurfer Cortical Stats to Group Table', function: 'Collects cortical parcellation statistics across multiple subjects into a single table for group analysis.', modality: 'Multiple FreeSurfer subject directories with completed recon-all.', keyParameters: '--subjects (subject list), --hemi (hemisphere), --meas (measure: thickness, area, volume), --tablefile (output table)', keyPoints: 'Creates one row per subject, one column per region. Output table ready for statistical software.', typicalUse: 'Creating group spreadsheet of cortical morphometry for statistical analysis.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/aparcstats2table' },
+      { name: 'asegstats2table', fullName: 'FreeSurfer Subcortical Stats to Group Table', function: 'Collects subcortical segmentation statistics across multiple subjects into a single table.', modality: 'Multiple FreeSurfer subject directories with completed recon-all.', keyParameters: '--subjects (subject list), --meas (measure: volume, mean), --tablefile (output table), --stats (stats file name)', keyPoints: 'Creates one row per subject with subcortical volumes. Default uses aseg.stats.', typicalUse: 'Group analysis of subcortical volumes.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/asegstats2table' }
     ],
     'Diffusion': [
-      { name: 'dmri_postreg', fullName: 'FreeSurfer dMRI Post-Registration', function: 'Post-registration processing for diffusion', typicalUse: 'Part of TRACULA pipeline', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/dmri_postreg' }
+      { name: 'dmri_postreg', fullName: 'FreeSurfer Diffusion Post-Registration Processing', function: 'Post-registration processing for diffusion MRI data as part of the TRACULA tractography pipeline.', modality: 'Registered diffusion MRI data within FreeSurfer/TRACULA directory structure.', keyParameters: '--s (subject), --reg (registration method: bbr or manual)', keyPoints: 'Part of TRACULA pipeline. Handles diffusion-to-structural registration refinement. Usually called by trac-all.', typicalUse: 'Part of TRACULA pipeline for automated tractography.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/dmri_postreg' }
+    ],
+    'PET Processing': [
+      { name: 'mri_gtmpvc', fullName: 'FreeSurfer Geometric Transfer Matrix Partial Volume Correction', function: 'Performs partial volume correction for PET data using the geometric transfer matrix method based on high-resolution anatomical segmentation.', modality: 'PET volume (3D NIfTI/MGZ) plus FreeSurfer segmentation (aparc+aseg).', keyParameters: '--i (input PET), --seg (segmentation), --reg (registration to anatomy), --psf (point spread function FWHM in mm), --o (output directory)', keyPoints: 'Accounts for PET spatial resolution blurring across tissue boundaries. PSF should match scanner resolution (~4-6mm).', typicalUse: 'Partial volume correction of PET data using anatomical segmentation.', docUrl: 'https://surfer.nmr.mgh.harvard.edu/fswiki/PetSurfer' }
     ]
   },
 
   ANTs: {
-    'Registration': [
-      { name: 'antsRegistration', fullName: 'ANTs Registration', function: 'Comprehensive image registration with multiple stages', typicalUse: 'High-quality registration with full control', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
-      { name: 'antsRegistrationSyN.sh', fullName: 'ANTs Symmetric Normalization Registration', function: 'Symmetric normalization with sensible defaults', typicalUse: 'Standard registration with good defaults', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
-      { name: 'antsRegistrationSyNQuick.sh', fullName: 'ANTs Quick Symmetric Normalization', function: 'Fast SyN registration with reduced parameters', typicalUse: 'Quick registration when speed is priority', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
-      { name: 'antsApplyTransforms', fullName: 'ANTs Apply Transforms', function: 'Applies transformations to images', typicalUse: 'Applying registration to data or labels', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
-      { name: 'antsMotionCorr', fullName: 'ANTs Motion Correction', function: 'Motion correction using ANTs registration', typicalUse: 'High-quality motion correction', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsMotionCorr' },
-      { name: 'antsIntermodalityIntrasubject.sh', fullName: 'ANTs Intermodality Intrasubject Registration', function: 'Registration between modalities within subject', typicalUse: 'T1-to-T2, fMRI-to-T1 alignment', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' }
+    'Brain Extraction': [
+      { name: 'antsBrainExtraction.sh', fullName: 'ANTs Template-Based Brain Extraction', function: 'High-quality brain extraction using registration to a brain template and tissue priors for robust skull stripping.', modality: 'T1-weighted 3D NIfTI volume plus brain template and brain probability mask.', keyParameters: '-d (dimension, 3), -a (anatomical image), -e (brain template), -m (brain probability mask), -o (output prefix)', keyPoints: 'More robust than BET for difficult cases. Requires template and prior. Slower but generally more accurate.', typicalUse: 'High-quality skull stripping, especially for challenging datasets.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsBrainExtraction-and-templates' }
     ],
     'Segmentation': [
-      { name: 'Atropos', fullName: 'ANTs Atropos Segmentation', function: 'Probabilistic tissue segmentation using EM algorithm', typicalUse: 'GMM-based brain tissue segmentation', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },
-      { name: 'antsAtroposN4.sh', fullName: 'ANTs Atropos with N4 Bias Correction', function: 'Combined bias correction and segmentation', typicalUse: 'Iterative N4 + segmentation for better results', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },
-      { name: 'antsBrainExtraction.sh', fullName: 'ANTs Brain Extraction', function: 'Brain extraction using registration and templates', typicalUse: 'High-quality skull stripping', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsBrainExtraction-and-templates' },
-      { name: 'antsCorticalThickness.sh', fullName: 'ANTs Cortical Thickness Pipeline', function: 'Complete cortical thickness estimation pipeline', typicalUse: 'DiReCT-based cortical thickness measurement', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' },
-      { name: 'KellyKapowski', fullName: 'DiReCT (Diffeomorphic Registration-based Cortical Thickness)', function: 'Diffeomorphic Registration-based Cortical Thickness', typicalUse: 'Computing cortical thickness from segmentation', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' }
+      { name: 'Atropos', fullName: 'ANTs Atropos Tissue Segmentation', function: 'Probabilistic tissue segmentation using expectation-maximization algorithm with Markov random field spatial prior.', modality: 'Brain-extracted 3D NIfTI volume plus brain mask.', keyParameters: '-d (dimension), -a (input image), -x (mask), -i (initialization: KMeans[N] or PriorProbabilityImages), -c (convergence), -o (output)', keyPoints: 'Initialize with KMeans[3] for basic GM/WM/CSF or use prior probability images. MRF prior improves spatial coherence.', typicalUse: 'GMM-based brain tissue segmentation with spatial regularization.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },
+      { name: 'antsAtroposN4.sh', fullName: 'ANTs Combined Atropos with N4 Bias Correction', function: 'Iteratively combines N4 bias field correction with Atropos segmentation for improved results on biased images.', modality: 'Brain-extracted 3D NIfTI volume plus brain mask.', keyParameters: '-d (dimension), -a (anatomical image), -x (mask), -c (number of classes), -o (output prefix), -n (number of iterations)', keyPoints: 'Iterative approach: N4 correction improves segmentation, which improves next N4 iteration. Superior to running separately.', typicalUse: 'Iterative N4 + segmentation for better results on images with bias field.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' }
     ],
-    'Utilities': [
-      { name: 'N4BiasFieldCorrection', fullName: 'ANTs N4 Bias Field Correction', function: 'Advanced bias field correction using N4 algorithm', typicalUse: 'Removing intensity inhomogeneity', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },
-      { name: 'DenoiseImage', fullName: 'ANTs Denoise Image', function: 'Non-local means denoising', typicalUse: 'Noise reduction while preserving edges', docUrl: 'https://github.com/ANTsX/ANTs/wiki/DenoiseImage' },
-      { name: 'ImageMath', fullName: 'ANTs Image Math', function: 'Various image operations and measurements', typicalUse: 'Mathematical operations, morphological operations', docUrl: 'https://github.com/ANTsX/ANTs/wiki/ImageMath' },
-      { name: 'ThresholdImage', fullName: 'ANTs Threshold Image', function: 'Thresholding with various methods', typicalUse: 'Creating binary masks, Otsu thresholding', docUrl: 'https://github.com/ANTsX/ANTs/wiki' },
-      { name: 'LabelGeometryMeasures', fullName: 'ANTs Label Geometry Measures', function: 'Computes geometric measures for labeled regions', typicalUse: 'Volume, centroid, and shape measures per label', docUrl: 'https://github.com/ANTsX/ANTs/wiki' },
-      { name: 'antsJointLabelFusion.sh', fullName: 'ANTs Joint Label Fusion', function: 'Multi-atlas segmentation with joint label fusion', typicalUse: 'High-accuracy segmentation using multiple atlases', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsJointLabelFusion' }
+    'Registration': [
+      { name: 'antsRegistration', fullName: 'ANTs Multi-Stage Image Registration', function: 'State-of-the-art image registration supporting multiple stages (rigid, affine, SyN) with configurable metrics and convergence.', modality: 'Any 3D NIfTI volume pair (fixed and moving images).', keyParameters: '-d (dimension), -f (fixed), -m (moving), -t (transform type), -c (convergence), -s (smoothing sigmas), -o (output)', keyPoints: 'Multi-stage approach: rigid then affine then SyN. SyN is symmetric diffeomorphic. CC metric best for intra-modal, MI for inter-modal.', typicalUse: 'High-quality multi-stage registration with full parameter control.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
+      { name: 'antsRegistrationSyN.sh', fullName: 'ANTs SyN Registration with Defaults', function: 'Symmetric normalization registration with sensible default parameters for common registration tasks.', modality: 'Any 3D NIfTI volume pair.', keyParameters: '-d (dimension), -f (fixed), -m (moving), -o (output prefix), -t (transform type: s=SyN, b=BSplineSyN, a=affine only)', keyPoints: 'Good defaults for most use cases. Outputs forward/inverse warps and affine. Preferred over raw antsRegistration for simplicity.', typicalUse: 'Standard registration with good defaults for structural normalization.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
+      { name: 'antsRegistrationSyNQuick.sh', fullName: 'ANTs Quick SyN Registration', function: 'Fast SyN registration with reduced iterations and coarser sampling for rapid approximate registration.', modality: 'Any 3D NIfTI volume pair.', keyParameters: '-d (dimension), -f (fixed), -m (moving), -o (output prefix), -t (transform type)', keyPoints: 'Same interface as antsRegistrationSyN.sh but ~4x faster with slightly less accuracy.', typicalUse: 'Quick registration when speed is priority over maximum accuracy.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' },
+      { name: 'antsIntermodalityIntrasubject.sh', fullName: 'ANTs Intermodality Intrasubject Registration', function: 'Specialized registration between different imaging modalities within the same subject.', modality: 'Two different-modality volumes from the same subject (e.g., T1 + T2, or T1 + EPI).', keyParameters: '-d (dimension), -i (input modality 1), -r (reference modality 2), -o (output prefix), -t (transform type)', keyPoints: 'Uses mutual information cost function appropriate for cross-modal registration.', typicalUse: 'T1-to-T2, fMRI-to-T1, or DWI-to-T1 within-subject alignment.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' }
+    ],
+    'Cortical Thickness': [
+      { name: 'antsCorticalThickness.sh', fullName: 'ANTs Cortical Thickness Pipeline', function: 'Complete automated pipeline for cortical thickness estimation using DiReCT, including brain extraction, segmentation, and registration.', modality: 'T1-weighted 3D NIfTI volume plus brain template and tissue priors.', keyParameters: '-d (dimension), -a (anatomical image), -e (brain template), -m (brain probability mask), -p (tissue priors prefix), -o (output prefix)', keyPoints: 'Runs full pipeline: N4, brain extraction, segmentation, registration, thickness. Requires template and priors. Computationally intensive.', typicalUse: 'Complete DiReCT-based cortical thickness measurement pipeline.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' },
+      { name: 'KellyKapowski', fullName: 'ANTs DiReCT Cortical Thickness (KellyKapowski)', function: 'Estimates cortical thickness using the DiReCT algorithm from segmentation data.', modality: 'Tissue segmentation image plus GM and WM probability maps (3D NIfTI).', keyParameters: '-d (dimension), -s (segmentation image), -g (GM probability), -w (WM probability), -o (output thickness map), -c (convergence)', keyPoints: 'Core thickness estimation engine used by antsCorticalThickness.sh. Requires good segmentation as input.', typicalUse: 'Computing cortical thickness from pre-existing tissue segmentation.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsCorticalThickness-and-Templates' }
+    ],
+    'Motion Correction': [
+      { name: 'antsMotionCorr', fullName: 'ANTs Motion Correction', function: 'Motion correction for time series data using ANTs registration framework with rigid or affine transformations.', modality: '4D fMRI or dynamic PET NIfTI time series.', keyParameters: '-d (dimension), -a (compute average), -o (output), -u (use fixed reference), -m (metric)', keyPoints: 'Can compute average image and motion-correct simultaneously. Uses ANTs optimization. Slower than MCFLIRT.', typicalUse: 'High-quality motion correction using ANTs registration framework.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsMotionCorr' }
+    ],
+    'Preprocessing Utilities': [
+      { name: 'N4BiasFieldCorrection', fullName: 'ANTs N4 Bias Field Correction', function: 'Advanced bias field (intensity inhomogeneity) correction using the N4 algorithm with iterative B-spline fitting.', modality: '3D NIfTI volume (any MRI contrast), optional brain mask.', keyParameters: '-d (dimension), -i (input), -o (output [,bias_field]), -x (mask), -s (shrink factor), -c (convergence)', keyPoints: 'Gold standard for bias correction. Use mask to restrict correction to brain. -s 4 speeds up computation.', typicalUse: 'Removing intensity inhomogeneity before segmentation or registration.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Atropos-and-N4' },
+      { name: 'DenoiseImage', fullName: 'ANTs Non-Local Means Denoising', function: 'Reduces noise in MRI images using an adaptive non-local means algorithm that preserves structural details.', modality: '3D NIfTI volume (any MRI contrast).', keyParameters: '-d (dimension), -i (input), -o (output [,noise_image]), -v (verbose)', keyPoints: 'Preserves edges better than Gaussian smoothing. Can output estimated noise image. Apply before bias correction.', typicalUse: 'Noise reduction while preserving structural edges.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/DenoiseImage' }
+    ],
+    'Image Operations': [
+      { name: 'ImageMath', fullName: 'ANTs Image Math Operations', function: 'Versatile tool for image arithmetic, morphological operations, distance transforms, and various measurements.', modality: '3D NIfTI volume(s).', keyParameters: '<dimension> <output> <operation> <input1> [input2] [parameters]', keyPoints: 'Operations include: m (multiply), + (add), ME/MD (erode/dilate), GetLargestComponent, FillHoles, Normalize.', typicalUse: 'Mathematical operations, morphological operations, connected component analysis.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/ImageMath' },
+      { name: 'ThresholdImage', fullName: 'ANTs Image Thresholding', function: 'Applies various thresholding methods to create binary masks, including Otsu and k-means adaptive thresholding.', modality: '3D NIfTI volume.', keyParameters: '<dimension> <input> <output> <lower> <upper> (binary) or Otsu <num_thresholds> (automatic)', keyPoints: 'Otsu mode automatically finds optimal threshold. Binary mode uses explicit lower/upper bounds.', typicalUse: 'Creating binary masks, Otsu-based adaptive thresholding.', docUrl: 'https://github.com/ANTsX/ANTs/wiki' }
+    ],
+    'Label Analysis': [
+      { name: 'LabelGeometryMeasures', fullName: 'ANTs Label Geometry Measures', function: 'Computes geometric properties (volume, centroid, bounding box, eccentricity) for each labeled region in a parcellation.', modality: '3D integer-labeled NIfTI volume (parcellation/segmentation), optional intensity image.', keyParameters: '<dimension> <label_image> [<intensity_image>] [<output_csv>]', keyPoints: 'Outputs CSV with volume, centroid, elongation, roundness per label.', typicalUse: 'Extracting volume, centroid, and shape measures per labeled region.', docUrl: 'https://github.com/ANTsX/ANTs/wiki' },
+      { name: 'antsJointLabelFusion.sh', fullName: 'ANTs Joint Label Fusion', function: 'Multi-atlas segmentation that combines labels from multiple pre-labeled atlases using joint label fusion with local weighting.', modality: 'Target 3D NIfTI volume plus multiple atlas images with corresponding label maps.', keyParameters: '-d (dimension), -t (target image), -g (atlas images), -l (atlas labels), -o (output prefix)', keyPoints: 'More accurate than single-atlas segmentation. Requires multiple registered atlases. Computationally intensive but highly accurate.', typicalUse: 'High-accuracy segmentation using multiple atlas priors.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/antsJointLabelFusion' }
+    ],
+    'Transform Utilities': [
+      { name: 'antsApplyTransforms', fullName: 'ANTs Apply Transforms', function: 'Applies one or more precomputed transformations (affine + warp) to images, applying transforms in reverse order of specification.', modality: '3D or 4D NIfTI volume plus transform files (affine .mat and/or warp .nii.gz).', keyParameters: '-d (dimension), -i (input), -r (reference), -o (output), -t (transforms, applied last-to-first), -n (interpolation: Linear, NearestNeighbor, BSpline)', keyPoints: 'Transforms applied in REVERSE order listed. Use -n NearestNeighbor for label images. -e flag for time series.', typicalUse: 'Applying registration transforms to data, labels, or ROIs.', docUrl: 'https://github.com/ANTsX/ANTs/wiki/Anatomy-of-an-antsRegistration-call' }
+    ]
+  },
+
+  MRtrix3: {
+    'Preprocessing': [
+      { name: 'dwidenoise', fullName: 'MRtrix3 DWI Denoising (MP-PCA)', function: 'Removes thermal noise from diffusion MRI data using Marchenko-Pastur PCA exploiting data redundancy across diffusion directions.', modality: '4D diffusion-weighted NIfTI with multiple diffusion directions (minimum ~30 recommended).', keyParameters: '<input> <output>, -noise (output noise map), -extent (spatial patch size, default 5,5,5), -mask (brain mask)', keyPoints: 'Should be run FIRST, before any other processing. Requires sufficient number of diffusion directions. Noise map useful for QC.', typicalUse: 'First step in DWI preprocessing to improve SNR.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/dwidenoise.html' },
+      { name: 'mrdegibbs', fullName: 'MRtrix3 Gibbs Ringing Removal', function: 'Removes Gibbs ringing artifacts (truncation artifacts) from MRI data using a local subvoxel-shift method.', modality: '3D or 4D NIfTI volume (structural or diffusion).', keyParameters: '<input> <output>, -axes (axes along which data was acquired, default 0,1)', keyPoints: 'Run after dwidenoise but before any interpolation-based processing. Only effective if data was NOT zero-filled in k-space.', typicalUse: 'Removing Gibbs ringing after denoising, before other preprocessing.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/mrdegibbs.html' }
+    ],
+    'Tensor/FOD': [
+      { name: 'dwi2tensor', fullName: 'MRtrix3 Diffusion Tensor Estimation', function: 'Estimates the diffusion tensor model at each voxel from preprocessed DWI data using weighted or ordinary least squares.', modality: '4D diffusion-weighted NIfTI with gradient table (b-values and b-vectors).', keyParameters: '<input> <output>, -mask (brain mask), -b0 (output mean b=0 image), -dkt (output diffusion kurtosis tensor)', keyPoints: 'Assumes single fiber per voxel. Gradient information must be in image header or provided via -fslgrad bvecs bvals.', typicalUse: 'Fitting diffusion tensor to DWI data for FA/MD map generation.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/dwi2tensor.html' },
+      { name: 'tensor2metric', fullName: 'MRtrix3 Tensor Metric Extraction', function: 'Extracts scalar metrics (FA, MD, AD, RD, eigenvalues, eigenvectors) from a fitted diffusion tensor image.', modality: 'Diffusion tensor image (4D NIfTI from dwi2tensor).', keyParameters: '<input>, -fa (output FA map), -adc (output MD map), -ad (output AD), -rd (output RD), -vector (output eigenvectors)', keyPoints: 'Multiple outputs can be generated in a single run. FA range 0-1. Specify each desired output explicitly.', typicalUse: 'Generating FA, MD, and other scalar diffusion maps from tensor.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/tensor2metric.html' },
+      { name: 'dwi2fod', fullName: 'MRtrix3 Fiber Orientation Distribution Estimation', function: 'Estimates fiber orientation distributions (FODs) using constrained spherical deconvolution to resolve crossing fibers.', modality: '4D diffusion-weighted NIfTI with multi-shell or single-shell data, plus tissue response functions.', keyParameters: '<algorithm> <input> <wm_response> <wm_fod> [<gm_response> <gm_fod>] [<csf_response> <csf_fod>], -mask (brain mask)', keyPoints: 'Use msmt_csd for multi-shell data (recommended), csd for single-shell. Response functions from dwi2response.', typicalUse: 'Estimating fiber orientations for subsequent tractography.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/dwi2fod.html' }
+    ],
+    'Tractography': [
+      { name: 'tckgen', fullName: 'MRtrix3 Streamline Tractography Generation', function: 'Generates streamline tractograms using various algorithms (iFOD2, FACT, etc.) from FOD or tensor images.', modality: 'FOD image (from dwi2fod) or tensor image, plus optional seed/mask/ROI images.', keyParameters: '<source> <output.tck>, -algorithm (iFOD2, FACT, etc.), -seed_image (seeding region), -select (target streamline count), -cutoff (FOD amplitude cutoff)', keyPoints: 'iFOD2 (default) is probabilistic and handles crossing fibers. Use -select for target count. -cutoff controls termination.', typicalUse: 'Generating whole-brain or ROI-seeded tractograms.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/tckgen.html' },
+      { name: 'tcksift', fullName: 'MRtrix3 SIFT Tractogram Filtering', function: 'Filters tractograms to improve biological plausibility by matching streamline density to FOD lobe integrals.', modality: 'Tractogram (.tck) plus FOD image used for tractography.', keyParameters: '<input.tck> <output.tck>, -act (ACT image), -term_number (target streamline count)', keyPoints: 'Dramatically improves connectome quantification. Run after tckgen. SIFT2 (tcksift2) outputs weights instead of filtering.', typicalUse: 'Improving tractogram biological accuracy before connectome construction.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/tcksift.html' },
+      { name: 'tck2connectome', fullName: 'MRtrix3 Tractogram to Connectome', function: 'Constructs a structural connectivity matrix by counting streamlines connecting pairs of regions from a parcellation.', modality: 'Tractogram (.tck) plus parcellation volume (integer-labeled 3D NIfTI).', keyParameters: '<input.tck> <parcellation> <output.csv>, -assignment_radial_search (search radius), -scale_length (length scaling)', keyPoints: 'Output is NxN matrix. Use SIFT/SIFT2 filtered tractogram for quantitative connectomics. -symmetric recommended.', typicalUse: 'Building structural connectivity matrices from tractography and parcellation.', docUrl: 'https://mrtrix.readthedocs.io/en/latest/reference/commands/tck2connectome.html' }
+    ]
+  },
+
+  fMRIPrep: {
+    'Pipeline': [
+      { name: 'fmriprep', fullName: 'fMRIPrep: Robust fMRI Preprocessing Pipeline', function: 'Automated, robust preprocessing pipeline for task-based and resting-state fMRI, combining tools from FSL, FreeSurfer, ANTs, and AFNI with best practices.', modality: 'BIDS-formatted dataset containing T1w anatomical and BOLD fMRI data (NIfTI format).', keyParameters: '<bids_dir> <output_dir> participant, --participant-label (subject IDs), --output-spaces (target spaces), --fs-license-file (FreeSurfer license)', keyPoints: 'Requires BIDS-formatted input. Handles brain extraction, segmentation, registration, motion correction, distortion correction, and confound estimation. Generates comprehensive visual QC reports.', typicalUse: 'Complete standardized fMRI preprocessing from BIDS data to analysis-ready outputs.', docUrl: 'https://fmriprep.org/en/stable/' }
+    ]
+  },
+
+  MRIQC: {
+    'Pipeline': [
+      { name: 'mriqc', fullName: 'MRIQC: MRI Quality Control Pipeline', function: 'Automated quality control pipeline that extracts image quality metrics (IQMs) from structural and functional MRI and generates visual reports.', modality: 'BIDS-formatted dataset containing T1w, T2w, and/or BOLD fMRI data (NIfTI format).', keyParameters: '<bids_dir> <output_dir> participant, --participant-label (subject IDs), --modalities (T1w, T2w, bold), --no-sub (skip submission to web API)', keyPoints: 'Requires BIDS-formatted input. Computes dozens of IQMs (SNR, CNR, EFC, FBER, motion metrics). Generates individual and group-level visual reports.', typicalUse: 'Automated quality assessment of MRI data before preprocessing.', docUrl: 'https://mriqc.readthedocs.io/en/stable/' }
     ]
   }
 };
 
-export const libraryOrder = ['FSL', 'AFNI', 'SPM', 'FreeSurfer', 'ANTs'];
+export const libraryOrder = ['FSL', 'AFNI', 'SPM', 'FreeSurfer', 'ANTs', 'MRtrix3', 'fMRIPrep', 'MRIQC'];
 
 /**
  * Dummy nodes for visual workflow representation.
@@ -200,21 +622,30 @@ export const dummyNodes = {
  */
 export const DOCKER_TAGS = {
     // brainlife/fsl - https://hub.docker.com/r/brainlife/fsl/tags
-    FSL: ['latest', '6.0.4-patched2', '6.0.4-patched', '6.0.4', '6.0.4-xenial', '6.0.1', '6.0.0', '5.0.11', '5.0.9'],
+    FSL: ['latest', '6.0.4-patched2', '6.0.4-patched', '6.0.4', '6.0.4-xenial', '5.0.11', '6.0.0', '6.0.1', '5.0.9'],
 
     // brainlife/afni - https://hub.docker.com/r/brainlife/afni/tags
     AFNI: ['latest', '16.3.0'],
 
     // antsx/ants - https://hub.docker.com/r/antsx/ants/tags
-    ANTs: ['latest', 'v2.6.5', 'v2.6.4', 'v2.6.3', 'v2.6.2', 'v2.6.1', 'v2.6.0', 'v2.5.4', 'v2.5.3', 'v2.5.2'],
+    ANTs: ['latest', 'master', 'v2.6.5', '2.6.5', 'v2.6.4', '2.6.4', 'v2.6.3', '2.6.3', 'v2.6.2', '2.6.2', 'v2.6.1', '2.6.1', 'v2.6.0', '2.6.0', 'v2.5.4'],
 
     // freesurfer/freesurfer - https://hub.docker.com/r/freesurfer/freesurfer/tags
-    FreeSurfer: ['latest', '8.1.0', '8.0.0', '7.4.1', '7.3.2', '7.3.1', '7.3.0', '7.2.0', '7.1.1', '6.0']
+    FreeSurfer: ['latest', '8.1.0', '8.0.0', '7.2.0', '7.3.0', '7.3.1', '7.3.2', '7.4.1', '7.1.1', '6.0'],
+
+    // mrtrix3/mrtrix3 - https://hub.docker.com/r/mrtrix3/mrtrix3/tags
+    MRtrix3: ['latest', '3.0.8', '3.0.7', '3.0.5', '3.0.4', '3.0.3'],
+
+    // nipreps/fmriprep - https://hub.docker.com/r/nipreps/fmriprep/tags
+    fMRIPrep: ['latest', 'unstable', '25.2.4', 'premask', '25.2.3', '25.2.2', '25.2.1', '25.2.0', 'pre-release', '25.1.4', '25.1.3', '25.1.2', '25.1.1', '25.1.0', '25.0.0'],
+
+    // nipreps/mriqc - https://hub.docker.com/r/nipreps/mriqc/tags
+    MRIQC: ['latest', 'experimental', '25.0.0rc0', '24.0.2', '24.0.1', '24.0.0', '24.0.0rc8', '24.0.0rc7', '24.0.0rc6', '24.0.0rc5', '24.0.0rc4', '24.0.0rc3', '24.0.0rc2', '24.0.0rc1', '23.1.1']
 };
 
 /**
  * Pre-computed Map for O(1) tool lookup by name.
- * Replaces triple-nested O(L×C×T) lookups with O(1).
+ * Replaces triple-nested O(L*C*T) lookups with O(1).
  */
 export const toolByName = new Map();
 
@@ -231,4 +662,170 @@ for (const category of Object.values(dummyNodes)) {
     for (const tool of category) {
         toolByName.set(tool.name, tool);
     }
+}
+
+/**
+ * Modality ordering for the workflow menu.
+ */
+export const modalityOrder = [
+  'Structural MRI', 'Functional MRI', 'Diffusion MRI',
+  'Arterial Spin Labeling', 'PET', 'Multimodal', 'Utilities'
+];
+
+/**
+ * Modality assignments: maps Modality -> Library -> Category -> [tool names].
+ * Tools are resolved to object references from toolByName at build time.
+ */
+const MODALITY_ASSIGNMENTS = {
+  'Structural MRI': {
+    FSL: {
+      'Brain Extraction': ['bet'],
+      'Tissue Segmentation': ['fast', 'run_first_all'],
+      'Registration': ['flirt', 'fnirt'],
+      'Pipelines': ['fsl_anat', 'siena', 'sienax']
+    },
+    ANTs: {
+      'Brain Extraction': ['antsBrainExtraction.sh'],
+      'Segmentation': ['Atropos', 'antsAtroposN4.sh'],
+      'Registration': ['antsRegistration', 'antsRegistrationSyN.sh', 'antsRegistrationSyNQuick.sh'],
+      'Cortical Thickness': ['antsCorticalThickness.sh', 'KellyKapowski']
+    },
+    FreeSurfer: {
+      'Surface Reconstruction': ['mri_convert', 'mri_watershed', 'mri_normalize', 'mri_segment', 'mris_inflate', 'mris_sphere'],
+      'Parcellation': ['mri_aparc2aseg', 'mri_annotation2label', 'mris_ca_label', 'mri_label2vol'],
+      'Morphometry': ['mris_anatomical_stats', 'mri_segstats', 'aparcstats2table', 'asegstats2table']
+    },
+    AFNI: {
+      'Brain Extraction': ['3dSkullStrip', '@SSwarper'],
+      'Bias Correction': ['3dUnifize'],
+      'Registration': ['3dAllineate', '3dQwarp', '@auto_tlrc']
+    }
+  },
+  'Functional MRI': {
+    FSL: {
+      'Motion Correction': ['mcflirt'],
+      'Slice Timing': ['slicetimer'],
+      'Distortion Correction': ['fugue', 'topup'],
+      'Smoothing': ['susan'],
+      'Statistical Analysis': ['film_gls', 'flameo', 'randomise'],
+      'ICA/Denoising': ['melodic', 'dual_regression']
+    },
+    AFNI: {
+      'Motion Correction': ['3dvolreg'],
+      'Slice Timing': ['3dTshift'],
+      'Denoising': ['3dDespike', '3dBandpass'],
+      'Smoothing': ['3dBlurToFWHM', '3dmerge'],
+      'Masking': ['3dAutomask'],
+      'Registration': ['align_epi_anat.py'],
+      'Statistical Analysis': ['3dDeconvolve', '3dREMLfit', '3dMEMA', '3dANOVA', '3dANOVA2', '3dANOVA3', '3dttest++', '3dMVM', '3dLME', '3dLMEr'],
+      'Multiple Comparisons': ['3dClustSim', '3dFWHMx'],
+      'Connectivity': ['3dNetCorr', '3dTcorr1D', '3dTcorrMap', '3dRSFC'],
+      'ROI Analysis': ['3dROIstats', '3dmaskave']
+    },
+    FreeSurfer: {
+      'Functional Analysis': ['bbregister', 'mri_vol2surf', 'mri_surf2vol', 'mris_preproc', 'mri_glmfit']
+    },
+    ANTs: {
+      'Motion Correction': ['antsMotionCorr']
+    },
+    fMRIPrep: {
+      'Pipeline': ['fmriprep']
+    },
+    MRIQC: {
+      'Pipeline': ['mriqc']
+    }
+  },
+  'Diffusion MRI': {
+    FSL: {
+      'Preprocessing': ['eddy', 'topup'],
+      'Tensor Fitting': ['dtifit'],
+      'Tractography': ['bedpostx', 'probtrackx2'],
+      'TBSS': ['tbss_1_preproc', 'tbss_2_reg', 'tbss_3_postreg', 'tbss_4_prestats']
+    },
+    MRtrix3: {
+      'Preprocessing': ['dwidenoise', 'mrdegibbs'],
+      'Tensor/FOD': ['dwi2tensor', 'tensor2metric', 'dwi2fod'],
+      'Tractography': ['tckgen', 'tcksift', 'tck2connectome']
+    },
+    FreeSurfer: {
+      'Diffusion': ['dmri_postreg']
+    }
+  },
+  'Arterial Spin Labeling': {
+    FSL: {
+      'ASL Processing': ['oxford_asl', 'basil', 'asl_calib']
+    }
+  },
+  'PET': {
+    FreeSurfer: {
+      'PET Processing': ['mri_gtmpvc']
+    }
+  },
+  'Multimodal': {
+    ANTs: {
+      'Intermodal Registration': ['antsIntermodalityIntrasubject.sh']
+    }
+  },
+  'Utilities': {
+    FSL: {
+      'Image Math': ['fslmaths', 'fslstats', 'fslroi', 'fslmeants'],
+      'Volume Operations': ['fslsplit', 'fslmerge', 'fslreorient2std'],
+      'Warp Utilities': ['applywarp', 'invwarp', 'convertwarp'],
+      'Clustering': ['cluster']
+    },
+    AFNI: {
+      'Image Math': ['3dcalc', '3dTstat'],
+      'Dataset Operations': ['3dinfo', '3dcopy', '3dZeropad', '3dTcat'],
+      'ROI Utilities': ['3dUndump', 'whereami', '3dresample', '3dfractionize'],
+      'Warp Utilities': ['3dNwarpApply', '3dNwarpCat']
+    },
+    ANTs: {
+      'Preprocessing Utilities': ['N4BiasFieldCorrection', 'DenoiseImage'],
+      'Image Operations': ['ImageMath', 'ThresholdImage'],
+      'Label Analysis': ['LabelGeometryMeasures', 'antsJointLabelFusion.sh'],
+      'Transform Utilities': ['antsApplyTransforms']
+    },
+    FreeSurfer: {
+      'Format Conversion': ['mri_convert']
+    }
+  }
+};
+
+/**
+ * Builder function: resolves tool names to object references from toolByName.
+ * Tools are shared by object reference (no duplication in memory).
+ */
+function buildToolsByModality(assignments) {
+  const result = {};
+  for (const [modality, libraries] of Object.entries(assignments)) {
+    result[modality] = {};
+    for (const [library, categories] of Object.entries(libraries)) {
+      result[modality][library] = {};
+      for (const [category, toolNames] of Object.entries(categories)) {
+        result[modality][library][category] = toolNames
+          .map(name => toolByName.get(name))
+          .filter(Boolean);
+      }
+    }
+  }
+  return result;
+}
+
+export const toolsByModality = buildToolsByModality(MODALITY_ASSIGNMENTS);
+
+// Dev-time validation: warn if any tool in toolsByLibrary is not in any modality
+if (typeof process === 'undefined' || process.env?.NODE_ENV !== 'production') {
+  const modalityToolNames = new Set();
+  for (const libraries of Object.values(MODALITY_ASSIGNMENTS)) {
+    for (const categories of Object.values(libraries)) {
+      for (const toolNames of Object.values(categories)) {
+        toolNames.forEach(name => modalityToolNames.add(name));
+      }
+    }
+  }
+  for (const [name, tool] of toolByName.entries()) {
+    if (!tool.isDummy && !modalityToolNames.has(name)) {
+      console.warn(`[toolData] Tool "${name}" exists in toolsByLibrary but is not assigned to any modality`);
+    }
+  }
 }

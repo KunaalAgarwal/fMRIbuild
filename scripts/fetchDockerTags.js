@@ -14,7 +14,10 @@ const DOCKER_IMAGES = {
     FSL: 'brainlife/fsl',
     AFNI: 'brainlife/afni',
     ANTs: 'antsx/ants',
-    FreeSurfer: 'freesurfer/freesurfer'
+    FreeSurfer: 'freesurfer/freesurfer',
+    MRtrix3: 'mrtrix3/mrtrix3',
+    fMRIPrep: 'nipreps/fmriprep',
+    MRIQC: 'nipreps/mriqc'
 };
 
 // Maximum number of tags to keep per image

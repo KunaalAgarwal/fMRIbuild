@@ -66,6 +66,24 @@ function WorkflowMenuItem({ name, toolInfo, onDragStart }) {
             <span className="tooltip-label">Function:</span>
             <span className="tooltip-text">{toolInfo.function}</span>
           </div>
+          {toolInfo.modality && (
+            <div className="tooltip-section">
+              <span className="tooltip-label">Expected Input:</span>
+              <span className="tooltip-text">{toolInfo.modality}</span>
+            </div>
+          )}
+          {toolInfo.keyParameters && (
+            <div className="tooltip-section">
+              <span className="tooltip-label">Key Parameters:</span>
+              <span className="tooltip-text">{toolInfo.keyParameters}</span>
+            </div>
+          )}
+          {toolInfo.keyPoints && (
+            <div className="tooltip-section">
+              <span className="tooltip-label">Key Points:</span>
+              <span className="tooltip-text">{toolInfo.keyPoints}</span>
+            </div>
+          )}
           <div className="tooltip-section">
             <span className="tooltip-label">Typical Use:</span>
             <span className="tooltip-text">{toolInfo.typicalUse}</span>

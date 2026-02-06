@@ -24,3 +24,4 @@ tests/work/
 # Claude Code config (local only)
 .claude/
 fmri_tools_reference.md
+neuroimaging_tools_reference.md

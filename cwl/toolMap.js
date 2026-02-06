@@ -24,7 +24,10 @@ export const DOCKER_IMAGES = {
     fsl: 'brainlife/fsl',
     afni: 'brainlife/afni',
     ants: 'antsx/ants',
-    freesurfer: 'freesurfer/freesurfer'
+    freesurfer: 'freesurfer/freesurfer',
+    mrtrix3: 'mrtrix3/mrtrix3',
+    fmriprep: 'nipreps/fmriprep',
+    mriqc: 'nipreps/mriqc'
 };
 
 export const TOOL_MAP = {
@@ -3761,6 +3764,572 @@ export const TOOL_MAP = {
             brain_normalized: { type: 'File', label: 'Normalized brain', glob: ['$(inputs.output_prefix)BrainNormalizedToTemplate.nii.gz'] },
             segmentation_posteriors: { type: 'File[]', label: 'Posteriors', glob: ['$(inputs.output_prefix)BrainSegmentationPosteriors*.nii.gz'] },
             log: { type: 'File', label: 'Log file', glob: ['antsCorticalThickness.log'] }
+        }
+    },
+
+    // ==================== FSL DIFFUSION TOOLS ====================
+
+    'eddy': {
+        id: 'eddy',
+        cwlPath: 'cwl/fsl/eddy.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['corrected_image'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input DWI image', acceptedExtensions: ['.nii', '.nii.gz'] },
+            bvals: { type: 'File', label: 'b-values file' },
+            bvecs: { type: 'File', label: 'b-vectors file' },
+            acqp: { type: 'File', label: 'Acquisition parameters file' },
+            index: { type: 'File', label: 'Index file mapping volumes to acquisition parameters' },
+            mask: { type: 'File', label: 'Brain mask' },
+            output: { type: 'string', label: 'Output basename' }
+        },
+
+        optionalInputs: {
+            topup: { type: 'string', label: 'Topup results basename', flag: '--topup=' },
+            repol: { type: 'boolean', label: 'Detect and replace outlier slices', flag: '--repol' },
+            slm: { type: 'string', label: 'Second level model (none/linear/quadratic)', flag: '--slm=' },
+            niter: { type: 'int', label: 'Number of iterations', flag: '--niter=' },
+            fwhm: { type: 'string', label: 'FWHM for conditioning regularisation (comma-separated)', flag: '--fwhm=' },
+            flm: { type: 'string', label: 'First level EC model (movement/linear/quadratic/cubic)', flag: '--flm=' },
+            interp: { type: 'string', label: 'Interpolation model (spline/trilinear)', flag: '--interp=' },
+            dont_sep_offs_move: { type: 'boolean', label: 'Do not separate field offset from subject movement', flag: '--dont_sep_offs_move' },
+            data_is_shelled: { type: 'boolean', label: 'Assume data is shelled (skip check)', flag: '--data_is_shelled' }
+        },
+
+        outputs: {
+            corrected_image: { type: 'File', label: 'Eddy-corrected image', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii'] },
+            rotated_bvecs: { type: 'File', label: 'Rotated b-vectors', glob: ['$(inputs.output).eddy_rotated_bvecs'] },
+            parameters: { type: 'File', label: 'Eddy parameters', glob: ['$(inputs.output).eddy_parameters'] },
+            log: { type: 'File', label: 'Log file', glob: ['eddy.log'] }
+        }
+    },
+
+    'dtifit': {
+        id: 'dtifit',
+        cwlPath: 'cwl/fsl/dtifit.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['FA', 'MD'],
+
+        requiredInputs: {
+            data: { type: 'File', passthrough: true, label: 'Input diffusion data', acceptedExtensions: ['.nii', '.nii.gz'] },
+            mask: { type: 'File', label: 'Brain mask' },
+            bvecs: { type: 'File', label: 'b-vectors file' },
+            bvals: { type: 'File', label: 'b-values file' },
+            output: { type: 'string', label: 'Output basename' }
+        },
+
+        optionalInputs: {
+            wls: { type: 'boolean', label: 'Use weighted least squares', flag: '-w' },
+            sse: { type: 'boolean', label: 'Output sum of squared errors', flag: '--sse' },
+            save_tensor: { type: 'boolean', label: 'Save tensor elements', flag: '--save_tensor' }
+        },
+
+        outputs: {
+            FA: { type: 'File', label: 'Fractional anisotropy', glob: ['$(inputs.output)_FA.nii.gz', '$(inputs.output)_FA.nii'] },
+            MD: { type: 'File', label: 'Mean diffusivity', glob: ['$(inputs.output)_MD.nii.gz', '$(inputs.output)_MD.nii'] },
+            L1: { type: 'File?', label: 'First eigenvalue', glob: ['$(inputs.output)_L1.nii.gz', '$(inputs.output)_L1.nii'] },
+            L2: { type: 'File?', label: 'Second eigenvalue', glob: ['$(inputs.output)_L2.nii.gz', '$(inputs.output)_L2.nii'] },
+            L3: { type: 'File?', label: 'Third eigenvalue', glob: ['$(inputs.output)_L3.nii.gz', '$(inputs.output)_L3.nii'] },
+            V1: { type: 'File?', label: 'First eigenvector', glob: ['$(inputs.output)_V1.nii.gz', '$(inputs.output)_V1.nii'] },
+            V2: { type: 'File?', label: 'Second eigenvector', glob: ['$(inputs.output)_V2.nii.gz', '$(inputs.output)_V2.nii'] },
+            V3: { type: 'File?', label: 'Third eigenvector', glob: ['$(inputs.output)_V3.nii.gz', '$(inputs.output)_V3.nii'] },
+            tensor: { type: 'File?', label: 'Tensor image', glob: ['$(inputs.output)_tensor.nii.gz', '$(inputs.output)_tensor.nii'], requires: 'save_tensor' },
+            log: { type: 'File', label: 'Log file', glob: ['dtifit.log'] }
+        }
+    },
+
+    'bedpostx': {
+        id: 'bedpostx',
+        cwlPath: 'cwl/fsl/bedpostx.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['output_directory'],
+
+        requiredInputs: {
+            data_dir: { type: 'Directory', passthrough: true, label: 'Input data directory (must contain data, bvals, bvecs, nodif_brain_mask)' }
+        },
+
+        optionalInputs: {
+            nfibres: { type: 'int', label: 'Number of fibres per voxel (default 3)', flag: '-n' },
+            model: { type: 'int', label: 'Deconvolution model (1=monoexp, 2=multiexp, 3=zeppelin)', flag: '-model' },
+            rician: { type: 'boolean', label: 'Use Rician noise modelling', flag: '--rician' }
+        },
+
+        outputs: {
+            output_directory: { type: 'Directory', label: 'BedpostX output directory', glob: ['$(inputs.data_dir.basename).bedpostX'] },
+            merged_samples: { type: 'File[]', label: 'Merged samples', glob: ['$(inputs.data_dir.basename).bedpostX/merged_*samples.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['bedpostx.log'] }
+        }
+    },
+
+    // ==================== FSL TBSS TOOLS ====================
+
+    'tbss_1_preproc': {
+        id: 'tbss_1_preproc',
+        cwlPath: 'cwl/fsl/tbss_1_preproc.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['FA_directory'],
+
+        requiredInputs: {
+            fa_images: { type: 'File[]', passthrough: true, label: 'Input FA images' }
+        },
+
+        optionalInputs: {},
+
+        outputs: {
+            FA_directory: { type: 'Directory', label: 'Preprocessed FA directory', glob: ['FA'] },
+            log: { type: 'File', label: 'Log file', glob: ['tbss_1_preproc.log'] }
+        }
+    },
+
+    'tbss_2_reg': {
+        id: 'tbss_2_reg',
+        cwlPath: 'cwl/fsl/tbss_2_reg.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['FA_directory'],
+
+        requiredInputs: {
+            fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from tbss_1_preproc' }
+        },
+
+        optionalInputs: {
+            use_fmrib_target: { type: 'boolean', label: 'Use FMRIB58_FA standard-space image as target', flag: '-T' },
+            target_image: { type: 'File', label: 'Use specified image as target', flag: '-t' },
+            find_best_target: { type: 'boolean', label: 'Find best target from all subjects', flag: '-n' }
+        },
+
+        outputs: {
+            FA_directory: { type: 'Directory', label: 'Registered FA directory', glob: ['FA'] },
+            log: { type: 'File', label: 'Log file', glob: ['tbss_2_reg.log'] }
+        }
+    },
+
+    'tbss_3_postreg': {
+        id: 'tbss_3_postreg',
+        cwlPath: 'cwl/fsl/tbss_3_postreg.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['mean_FA', 'mean_FA_skeleton', 'all_FA'],
+
+        requiredInputs: {
+            fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from tbss_2_reg' }
+        },
+
+        optionalInputs: {
+            study_specific: { type: 'boolean', label: 'Derive mean FA and skeleton from study data', flag: '-S' },
+            use_fmrib: { type: 'boolean', label: 'Use FMRIB58_FA mean FA and skeleton', flag: '-T' }
+        },
+
+        outputs: {
+            mean_FA: { type: 'File', label: 'Mean FA image', glob: ['stats/mean_FA.nii.gz'] },
+            mean_FA_skeleton: { type: 'File', label: 'Mean FA skeleton', glob: ['stats/mean_FA_skeleton.nii.gz'] },
+            all_FA: { type: 'File', label: 'All FA data (4D)', glob: ['stats/all_FA.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['tbss_3_postreg.log'] }
+        }
+    },
+
+    'tbss_4_prestats': {
+        id: 'tbss_4_prestats',
+        cwlPath: 'cwl/fsl/tbss_4_prestats.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['all_FA_skeletonised'],
+
+        requiredInputs: {
+            threshold: { type: 'double', label: 'FA threshold for skeleton (e.g., 0.2)' },
+            fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from tbss_3_postreg' }
+        },
+
+        optionalInputs: {},
+
+        outputs: {
+            all_FA_skeletonised: { type: 'File', label: 'Skeletonised FA data (4D)', glob: ['stats/all_FA_skeletonised.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['tbss_4_prestats.log'] }
+        }
+    },
+
+    // ==================== FSL ASL TOOLS ====================
+
+    'oxford_asl': {
+        id: 'oxford_asl',
+        cwlPath: 'cwl/fsl/oxford_asl.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['output_directory'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input ASL data', acceptedExtensions: ['.nii', '.nii.gz'] },
+            output_dir: { type: 'string', label: 'Output directory name' }
+        },
+
+        optionalInputs: {
+            structural: { type: 'File', label: 'Structural (T1) image', flag: '-s' },
+            casl: { type: 'boolean', label: 'Data is CASL/pCASL (continuous ASL)', flag: '--casl' },
+            pasl: { type: 'boolean', label: 'Data is PASL (pulsed ASL)', flag: '--pasl' },
+            iaf: { type: 'string', label: 'Input ASL format (tc/ct/diff)', flag: '--iaf' },
+            tis: { type: 'string', label: 'Inversion times (comma-separated)', flag: '--tis' },
+            bolus: { type: 'double', label: 'Bolus duration (seconds)', flag: '--bolus' },
+            bat: { type: 'double', label: 'Bolus arrival time (seconds)', flag: '--bat' },
+            calib: { type: 'File', label: 'Calibration (M0) image', flag: '-c' },
+            wp: { type: 'boolean', label: 'Use white paper quantification', flag: '--wp' }
+        },
+
+        outputs: {
+            output_directory: { type: 'Directory', label: 'Output directory', glob: ['$(inputs.output_dir)'] },
+            perfusion: { type: 'File?', label: 'Perfusion image', glob: ['$(inputs.output_dir)/native_space/perfusion.nii.gz'] },
+            arrival: { type: 'File?', label: 'Arrival time image', glob: ['$(inputs.output_dir)/native_space/arrival.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['oxford_asl.log'] }
+        }
+    },
+
+    'basil': {
+        id: 'basil',
+        cwlPath: 'cwl/fsl/basil.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['output_directory'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input ASL difference data', acceptedExtensions: ['.nii', '.nii.gz'] },
+            output_dir: { type: 'string', label: 'Output directory name' }
+        },
+
+        optionalInputs: {
+            casl: { type: 'boolean', label: 'Data is CASL/pCASL', flag: '--casl' },
+            pasl: { type: 'boolean', label: 'Data is PASL', flag: '--pasl' },
+            tis: { type: 'string', label: 'Inversion times (comma-separated)', flag: '--tis' },
+            bolus: { type: 'double', label: 'Bolus duration (seconds)', flag: '--bolus' },
+            bat: { type: 'double', label: 'Bolus arrival time (seconds)', flag: '--bat' },
+            mask: { type: 'File', label: 'Brain mask', flag: '-m' },
+            spatial: { type: 'boolean', label: 'Use spatial regularisation', flag: '--spatial' }
+        },
+
+        outputs: {
+            output_directory: { type: 'Directory', label: 'Output directory', glob: ['$(inputs.output_dir)'] },
+            perfusion: { type: 'File?', label: 'Perfusion image', glob: ['$(inputs.output_dir)/mean_ftiss.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['basil.log'] }
+        }
+    },
+
+    'asl_calib': {
+        id: 'asl_calib',
+        cwlPath: 'cwl/fsl/asl_calib.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['calibrated_perfusion'],
+
+        requiredInputs: {
+            perfusion: { type: 'File', passthrough: true, label: 'Input perfusion image (relative units)', acceptedExtensions: ['.nii', '.nii.gz'] },
+            calib_image: { type: 'File', label: 'Calibration (M0) image' },
+            output: { type: 'string', label: 'Output filename' }
+        },
+
+        optionalInputs: {
+            structural: { type: 'File', label: 'Structural (T1) image', flag: '-s' },
+            mode: { type: 'string', label: 'Calibration mode (voxel/longtr/satrecov)', flag: '--mode' },
+            tr: { type: 'double', label: 'TR of calibration image (seconds)', flag: '--tr' },
+            te: { type: 'double', label: 'TE of calibration image (ms)', flag: '--te' },
+            cgain: { type: 'double', label: 'Calibration gain', flag: '--cgain' }
+        },
+
+        outputs: {
+            calibrated_perfusion: { type: 'File', label: 'Calibrated perfusion image', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii'] },
+            log: { type: 'File', label: 'Log file', glob: ['asl_calib.log'] }
+        }
+    },
+
+    // ==================== MRTRIX3 TOOLS ====================
+
+    'dwidenoise': {
+        id: 'dwidenoise',
+        cwlPath: 'cwl/mrtrix3/dwidenoise.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['denoised'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input DWI image', acceptedExtensions: ['.nii', '.nii.gz', '.mif'] },
+            output: { type: 'string', label: 'Output denoised image filename' }
+        },
+
+        optionalInputs: {
+            noise: { type: 'string', label: 'Output noise map filename', flag: '-noise' },
+            extent: { type: 'string', label: 'Sliding window extent (e.g., 5,5,5)', flag: '-extent' },
+            mask: { type: 'File', label: 'Processing mask', flag: '-mask' }
+        },
+
+        outputs: {
+            denoised: { type: 'File', label: 'Denoised image', glob: ['$(inputs.output)'] },
+            noise_map: { type: 'File?', label: 'Noise map', glob: ['$(inputs.noise)'], requires: 'noise' },
+            log: { type: 'File', label: 'Log file', glob: ['dwidenoise.log'] }
+        }
+    },
+
+    'mrdegibbs': {
+        id: 'mrdegibbs',
+        cwlPath: 'cwl/mrtrix3/mrdegibbs.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['degibbs'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input image', acceptedExtensions: ['.nii', '.nii.gz', '.mif'] },
+            output: { type: 'string', label: 'Output corrected image filename' }
+        },
+
+        optionalInputs: {
+            axes: { type: 'string', label: 'Slice axes (comma-separated, e.g., 0,1)', flag: '-axes' },
+            nshifts: { type: 'int', label: 'Number of sub-voxel shifts', flag: '-nshifts' },
+            minW: { type: 'int', label: 'Minimum window size', flag: '-minW' },
+            maxW: { type: 'int', label: 'Maximum window size', flag: '-maxW' }
+        },
+
+        outputs: {
+            degibbs: { type: 'File', label: 'Gibbs-corrected image', glob: ['$(inputs.output)'] },
+            log: { type: 'File', label: 'Log file', glob: ['mrdegibbs.log'] }
+        }
+    },
+
+    'dwi2tensor': {
+        id: 'dwi2tensor',
+        cwlPath: 'cwl/mrtrix3/dwi2tensor.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['tensor'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input DWI image', acceptedExtensions: ['.nii', '.nii.gz', '.mif'] },
+            output: { type: 'string', label: 'Output tensor image filename' }
+        },
+
+        optionalInputs: {
+            mask: { type: 'File', label: 'Processing mask', flag: '-mask' },
+            b0: { type: 'string', label: 'Output mean b=0 image filename', flag: '-b0' },
+            dkt: { type: 'string', label: 'Output diffusion kurtosis tensor filename', flag: '-dkt' },
+            ols: { type: 'boolean', label: 'Use ordinary least squares estimator', flag: '-ols' },
+            iter: { type: 'int', label: 'Number of iteratively-reweighted LS iterations', flag: '-iter' }
+        },
+
+        outputs: {
+            tensor: { type: 'File', label: 'Tensor image', glob: ['$(inputs.output)'] },
+            b0_image: { type: 'File?', label: 'Mean b=0 image', glob: ['$(inputs.b0)'], requires: 'b0' },
+            kurtosis_tensor: { type: 'File?', label: 'Kurtosis tensor image', glob: ['$(inputs.dkt)'], requires: 'dkt' },
+            log: { type: 'File', label: 'Log file', glob: ['dwi2tensor.log'] }
+        }
+    },
+
+    'tensor2metric': {
+        id: 'tensor2metric',
+        cwlPath: 'cwl/mrtrix3/tensor2metric.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['fa_map'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input tensor image', acceptedExtensions: ['.nii', '.nii.gz', '.mif'] }
+        },
+
+        optionalInputs: {
+            fa: { type: 'string', label: 'Output FA map filename', flag: '-fa' },
+            adc: { type: 'string', label: 'Output mean diffusivity (ADC) map filename', flag: '-adc' },
+            ad: { type: 'string', label: 'Output axial diffusivity map filename', flag: '-ad' },
+            rd: { type: 'string', label: 'Output radial diffusivity map filename', flag: '-rd' },
+            vector: { type: 'string', label: 'Output eigenvector map filename', flag: '-vector' },
+            value: { type: 'string', label: 'Output eigenvalue map filename', flag: '-value' },
+            mask: { type: 'File', label: 'Processing mask', flag: '-mask' }
+        },
+
+        outputs: {
+            fa_map: { type: 'File?', label: 'Fractional anisotropy map', glob: ['$(inputs.fa)'], requires: 'fa' },
+            md_map: { type: 'File?', label: 'Mean diffusivity map', glob: ['$(inputs.adc)'], requires: 'adc' },
+            ad_map: { type: 'File?', label: 'Axial diffusivity map', glob: ['$(inputs.ad)'], requires: 'ad' },
+            rd_map: { type: 'File?', label: 'Radial diffusivity map', glob: ['$(inputs.rd)'], requires: 'rd' },
+            log: { type: 'File', label: 'Log file', glob: ['tensor2metric.log'] }
+        }
+    },
+
+    'dwi2fod': {
+        id: 'dwi2fod',
+        cwlPath: 'cwl/mrtrix3/dwi2fod.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['wm_fod_image'],
+
+        requiredInputs: {
+            algorithm: { type: 'string', label: 'FOD algorithm (csd/msmt_csd)' },
+            input: { type: 'File', passthrough: true, label: 'Input DWI image', acceptedExtensions: ['.nii', '.nii.gz', '.mif'] },
+            wm_response: { type: 'File', label: 'White matter response function' },
+            wm_fod: { type: 'string', label: 'Output WM FOD image filename' }
+        },
+
+        optionalInputs: {
+            gm_response: { type: 'File', label: 'Grey matter response function' },
+            gm_fod: { type: 'string', label: 'Output GM FOD image filename' },
+            csf_response: { type: 'File', label: 'CSF response function' },
+            csf_fod: { type: 'string', label: 'Output CSF FOD image filename' },
+            mask: { type: 'File', label: 'Processing mask', flag: '-mask' }
+        },
+
+        outputs: {
+            wm_fod_image: { type: 'File', label: 'WM fibre orientation distribution', glob: ['$(inputs.wm_fod)'] },
+            gm_fod_image: { type: 'File?', label: 'GM FOD image', glob: ['$(inputs.gm_fod)'] },
+            csf_fod_image: { type: 'File?', label: 'CSF FOD image', glob: ['$(inputs.csf_fod)'] },
+            log: { type: 'File', label: 'Log file', glob: ['dwi2fod.log'] }
+        }
+    },
+
+    'tckgen': {
+        id: 'tckgen',
+        cwlPath: 'cwl/mrtrix3/tckgen.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['tractogram'],
+
+        requiredInputs: {
+            source: { type: 'File', passthrough: true, label: 'Input FOD or tensor image', acceptedExtensions: ['.nii', '.nii.gz', '.mif'] },
+            output: { type: 'string', label: 'Output tractogram filename' }
+        },
+
+        optionalInputs: {
+            algorithm: { type: 'string', label: 'Tracking algorithm (iFOD2/Tensor_Det/Tensor_Prob)', flag: '-algorithm' },
+            seed_image: { type: 'File', label: 'Seed image for tractography', flag: '-seed_image' },
+            select: { type: 'int', label: 'Number of streamlines to select', flag: '-select' },
+            cutoff: { type: 'double', label: 'FOD amplitude cutoff for termination', flag: '-cutoff' },
+            act: { type: 'File', label: 'ACT tissue-segmented image', flag: '-act' },
+            step: { type: 'double', label: 'Step size (mm)', flag: '-step' },
+            angle: { type: 'double', label: 'Maximum angle between steps (degrees)', flag: '-angle' },
+            maxlength: { type: 'double', label: 'Maximum streamline length (mm)', flag: '-maxlength' }
+        },
+
+        outputs: {
+            tractogram: { type: 'File', label: 'Tractogram', glob: ['$(inputs.output)'] },
+            log: { type: 'File', label: 'Log file', glob: ['tckgen.log'] }
+        }
+    },
+
+    'tcksift': {
+        id: 'tcksift',
+        cwlPath: 'cwl/mrtrix3/tcksift.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['filtered_tractogram'],
+
+        requiredInputs: {
+            input_tracks: { type: 'File', passthrough: true, label: 'Input tractogram', acceptedExtensions: ['.tck'] },
+            fod: { type: 'File', label: 'FOD image for filtering' },
+            output: { type: 'string', label: 'Output filtered tractogram filename' }
+        },
+
+        optionalInputs: {
+            act: { type: 'File', label: 'ACT tissue-segmented image', flag: '-act' },
+            term_number: { type: 'int', label: 'Target number of streamlines', flag: '-term_number' },
+            term_ratio: { type: 'double', label: 'Target ratio of streamlines to keep', flag: '-term_ratio' }
+        },
+
+        outputs: {
+            filtered_tractogram: { type: 'File', label: 'Filtered tractogram', glob: ['$(inputs.output)'] },
+            log: { type: 'File', label: 'Log file', glob: ['tcksift.log'] }
+        }
+    },
+
+    'tck2connectome': {
+        id: 'tck2connectome',
+        cwlPath: 'cwl/mrtrix3/tck2connectome.cwl',
+        dockerImage: DOCKER_IMAGES.mrtrix3,
+        primaryOutputs: ['connectome'],
+
+        requiredInputs: {
+            input_tracks: { type: 'File', passthrough: true, label: 'Input tractogram', acceptedExtensions: ['.tck'] },
+            parcellation: { type: 'File', label: 'Parcellation image (atlas)' },
+            output: { type: 'string', label: 'Output connectivity matrix filename' }
+        },
+
+        optionalInputs: {
+            assignment_radial_search: { type: 'double', label: 'Radial search distance for node assignment (mm)', flag: '-assignment_radial_search' },
+            scale_length: { type: 'boolean', label: 'Scale by streamline length', flag: '-scale_length' },
+            scale_invlength: { type: 'boolean', label: 'Scale by inverse streamline length', flag: '-scale_invlength' },
+            scale_invnodevol: { type: 'boolean', label: 'Scale by inverse node volume', flag: '-scale_invnodevol' },
+            stat_edge: { type: 'string', label: 'Edge statistic (sum/mean/min/max)', flag: '-stat_edge' },
+            symmetric: { type: 'boolean', label: 'Make matrix symmetric', flag: '-symmetric' },
+            zero_diagonal: { type: 'boolean', label: 'Zero the diagonal of the matrix', flag: '-zero_diagonal' }
+        },
+
+        outputs: {
+            connectome: { type: 'File', label: 'Connectivity matrix', glob: ['$(inputs.output)'] },
+            log: { type: 'File', label: 'Log file', glob: ['tck2connectome.log'] }
+        }
+    },
+
+    // ==================== PIPELINE TOOLS ====================
+
+    'fmriprep': {
+        id: 'fmriprep',
+        cwlPath: 'cwl/fmriprep/fmriprep.cwl',
+        dockerImage: DOCKER_IMAGES.fmriprep,
+        primaryOutputs: ['output_directory'],
+
+        requiredInputs: {
+            bids_dir: { type: 'Directory', passthrough: true, label: 'BIDS dataset directory' },
+            output_dir: { type: 'string', label: 'Output directory' },
+            analysis_level: { type: 'string', label: 'Analysis level (participant)' }
+        },
+
+        optionalInputs: {
+            participant_label: { type: 'string', label: 'Participant label (without sub- prefix)', flag: '--participant-label' },
+            output_spaces: { type: 'string', label: 'Output spaces (e.g., MNI152NLin2009cAsym)', flag: '--output-spaces' },
+            fs_license_file: { type: 'File', label: 'FreeSurfer license file', flag: '--fs-license-file' },
+            nprocs: { type: 'int', label: 'Number of processors', flag: '--nprocs' },
+            mem_mb: { type: 'int', label: 'Memory limit (MB)', flag: '--mem-mb' },
+            skip_bids_validation: { type: 'boolean', label: 'Skip BIDS validation', flag: '--skip-bids-validation' }
+        },
+
+        outputs: {
+            output_directory: { type: 'Directory', label: 'fMRIPrep output directory', glob: ['$(inputs.output_dir)'] },
+            log: { type: 'File', label: 'Log file', glob: ['fmriprep.log'] }
+        }
+    },
+
+    'mriqc': {
+        id: 'mriqc',
+        cwlPath: 'cwl/mriqc/mriqc.cwl',
+        dockerImage: DOCKER_IMAGES.mriqc,
+        primaryOutputs: ['output_directory'],
+
+        requiredInputs: {
+            bids_dir: { type: 'Directory', passthrough: true, label: 'BIDS dataset directory' },
+            output_dir: { type: 'string', label: 'Output directory' },
+            analysis_level: { type: 'string', label: 'Analysis level (participant/group)' }
+        },
+
+        optionalInputs: {
+            participant_label: { type: 'string', label: 'Participant label (without sub- prefix)', flag: '--participant-label' },
+            modalities: { type: 'string', label: 'Modalities to process (T1w/T2w/bold)', flag: '--modalities' },
+            no_sub: { type: 'boolean', label: 'Disable submission of quality metrics', flag: '--no-sub' },
+            nprocs: { type: 'int', label: 'Number of processors', flag: '--nprocs' },
+            mem_gb: { type: 'int', label: 'Memory limit (GB)', flag: '--mem-gb' }
+        },
+
+        outputs: {
+            output_directory: { type: 'Directory', label: 'MRIQC output directory', glob: ['$(inputs.output_dir)'] },
+            log: { type: 'File', label: 'Log file', glob: ['mriqc.log'] }
+        }
+    },
+
+    // ==================== FREESURFER PET TOOLS ====================
+
+    'mri_gtmpvc': {
+        id: 'mri_gtmpvc',
+        cwlPath: 'cwl/freesurfer/mri_gtmpvc.cwl',
+        dockerImage: DOCKER_IMAGES.freesurfer,
+        primaryOutputs: ['output_directory'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input PET image', acceptedExtensions: ['.nii', '.nii.gz', '.mgz'] },
+            psf: { type: 'double', label: 'Point spread function FWHM (mm)' },
+            seg: { type: 'File', label: 'Segmentation file' },
+            output_dir: { type: 'string', label: 'Output directory' }
+        },
+
+        optionalInputs: {
+            auto_mask: { type: 'double', label: 'Auto-mask threshold', flag: '--auto-mask' },
+            reg: { type: 'File', label: 'Registration file (LTA or reg.dat)', flag: '--reg' },
+            regheader: { type: 'boolean', label: 'Assume registration is identity (header registration)', flag: '--regheader' },
+            no_rescale: { type: 'boolean', label: 'Do not global rescale', flag: '--no-rescale' },
+            no_reduce_fov: { type: 'boolean', label: 'Do not reduce FOV', flag: '--no-reduce-fov' }
+        },
+
+        outputs: {
+            output_directory: { type: 'Directory', label: 'GTM PVC output directory', glob: ['$(inputs.output_dir)'] },
+            gtm_stats: { type: 'File?', label: 'GTM statistics', glob: ['$(inputs.output_dir)/gtm.stats.dat'] },
+            log: { type: 'File', label: 'Log file', glob: ['mri_gtmpvc.log'] }
         }
     }
 };

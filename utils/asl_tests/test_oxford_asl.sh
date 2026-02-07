@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Test: FSL oxford_asl (Complete ASL processing pipeline)
-# Runs 3 parameter sets: pCASL minimal, pCASL with calibration+structural, PASL mode
+# Runs 3 parameter sets: pCASL minimal, pCASL with calibration+structural, pASL mode (default)
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_common.sh"
@@ -22,7 +22,6 @@ input:
   path: "${ASL_4D}"
 output_dir: "oxford_asl_pcasl"
 casl: true
-iaf: "tc"
 tis: "3.6"
 bolus: 1.8
 EOF
@@ -40,7 +39,6 @@ structural:
   class: File
   path: "${T1W_STRUCTURAL}"
 casl: true
-iaf: "tc"
 tis: "3.6"
 bolus: 1.8
 bat: 1.3
@@ -51,15 +49,13 @@ EOF
 
 run_tool "${TOOL}_calib" "${JOB_DIR}/${TOOL}_calib.yml" "$CWL"
 
-# ── Parameter Set C: PASL mode ────────────────────────────────────
+# ── Parameter Set C: pASL mode (default, no --casl flag) ──────────
 
 cat > "${JOB_DIR}/${TOOL}_pasl.yml" <<EOF
 input:
   class: File
   path: "${ASL_4D}"
 output_dir: "oxford_asl_pasl"
-pasl: true
-iaf: "tc"
 tis: "1.8"
 bolus: 0.7
 bat: 0.7

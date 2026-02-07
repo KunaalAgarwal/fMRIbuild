@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
 # Test: FSL basil (Bayesian Inference for Arterial Spin Labeling)
-# Runs 3 parameter sets: pCASL minimal, pCASL with spatial+mask, PASL mode
+# Runs 3 parameter sets: pCASL minimal, pCASL with spatial, pASL mode (default)
 # Uses ASL difference data (control - tag) as input
+# Model parameters are passed via FABBER options files (-@)
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_common.sh"
@@ -15,6 +16,30 @@ prepare_asl_data
 # Generate template for reference
 make_template "$CWL" "$TOOL"
 
+# ── Create FABBER options files ────────────────────────────────────
+
+OPTS_PCASL="${JOB_DIR}/basil_pcasl_opts.txt"
+cat > "$OPTS_PCASL" <<'OPTS'
+--casl
+--ti1=3.6
+--tau=1.8
+OPTS
+
+OPTS_SPATIAL="${JOB_DIR}/basil_spatial_opts.txt"
+cat > "$OPTS_SPATIAL" <<'OPTS'
+--casl
+--ti1=3.6
+--tau=1.8
+--bat=1.3
+OPTS
+
+OPTS_PASL="${JOB_DIR}/basil_pasl_opts.txt"
+cat > "$OPTS_PASL" <<'OPTS'
+--ti1=1.8
+--tau=0.7
+--bat=0.7
+OPTS
+
 # ── Parameter Set A: Minimal pCASL ────────────────────────────────
 
 cat > "${JOB_DIR}/${TOOL}_pcasl.yml" <<EOF
@@ -22,43 +47,47 @@ input:
   class: File
   path: "${ASL_DIFF}"
 output_dir: "basil_pcasl"
-casl: true
-tis: "3.6"
-bolus: 1.8
+mask:
+  class: File
+  path: "${BRAIN_MASK}"
+options_file:
+  class: File
+  path: "${OPTS_PCASL}"
 EOF
 
 run_tool "${TOOL}_pcasl" "${JOB_DIR}/${TOOL}_pcasl.yml" "$CWL"
 
-# ── Parameter Set B: pCASL with spatial regularisation + mask ─────
+# ── Parameter Set B: pCASL with spatial regularisation ────────────
 
 cat > "${JOB_DIR}/${TOOL}_spatial.yml" <<EOF
 input:
   class: File
   path: "${ASL_DIFF}"
 output_dir: "basil_spatial"
-casl: true
-tis: "3.6"
-bolus: 1.8
-bat: 1.3
 mask:
   class: File
   path: "${BRAIN_MASK}"
+options_file:
+  class: File
+  path: "${OPTS_SPATIAL}"
 spatial: true
 EOF
 
 run_tool "${TOOL}_spatial" "${JOB_DIR}/${TOOL}_spatial.yml" "$CWL"
 
-# ── Parameter Set C: PASL mode ────────────────────────────────────
+# ── Parameter Set C: pASL mode (default, no --casl in opts) ───────
 
 cat > "${JOB_DIR}/${TOOL}_pasl.yml" <<EOF
 input:
   class: File
   path: "${ASL_DIFF}"
 output_dir: "basil_pasl"
-pasl: true
-tis: "1.8"
-bolus: 0.7
-bat: 0.7
+mask:
+  class: File
+  path: "${BRAIN_MASK}"
+options_file:
+  class: File
+  path: "${OPTS_PASL}"
 EOF
 
 run_tool "${TOOL}_pasl" "${JOB_DIR}/${TOOL}_pasl.yml" "$CWL"
@@ -73,13 +102,18 @@ for variant in pcasl spatial pasl; do
 
     # Check files exist and are non-empty
     verify_files_nonempty "$tool_out" \
-      "basil_${variant}/mean_ftiss.nii.gz" \
       "basil.log" \
       || echo "  WARN: some files missing or empty for ${variant}"
 
-    # Check NIfTI headers are readable
-    verify_nifti_headers "$tool_out" \
-      "basil_${variant}/mean_ftiss.nii.gz" \
-      || echo "  WARN: NIfTI header check failed for ${variant}"
+    # Check for perfusion map in step subdirectories
+    perfusion_file="$(find "$tool_out" -name 'mean_ftiss.nii.gz' -print -quit 2>/dev/null || true)"
+    if [[ -n "$perfusion_file" ]]; then
+      echo "  OK: mean_ftiss.nii.gz found at ${perfusion_file}"
+      verify_nifti_headers "$(dirname "$perfusion_file")" \
+        "mean_ftiss.nii.gz" \
+        || echo "  WARN: NIfTI header check failed for ${variant}"
+    else
+      echo "  WARN: mean_ftiss.nii.gz not found for ${variant}"
+    fi
   fi
 done

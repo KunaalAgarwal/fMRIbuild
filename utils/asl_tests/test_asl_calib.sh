@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Test: FSL asl_calib (ASL calibration to absolute CBF units)
-# Runs 2 parameter sets: voxelwise mode, long TR mode
+# Runs 2 parameter sets: default longtr mode, longtr with structural
 # Depends on oxford_asl perfusion output; runs oxford_asl first if needed
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -37,46 +37,57 @@ if [[ -z "$PERFUSION_IMG" ]]; then
   PERFUSION_IMG="$ASL_DIFF"
 fi
 
-# ── Parameter Set A: Voxelwise calibration ────────────────────────
-
-cat > "${JOB_DIR}/${TOOL}_voxel.yml" <<EOF
-perfusion:
-  class: File
-  path: "${PERFUSION_IMG}"
-calib_image:
-  class: File
-  path: "${M0_CALIB}"
-output: "calib_voxel"
-mode: "voxel"
-tr: 4.8
-EOF
-
-run_tool "${TOOL}_voxel" "${JOB_DIR}/${TOOL}_voxel.yml" "$CWL"
-
-# ── Parameter Set B: Long TR mode with structural ─────────────────
+# ── Parameter Set A: longtr with mask (bypasses structural requirement) ─
 
 cat > "${JOB_DIR}/${TOOL}_longtr.yml" <<EOF
-perfusion:
-  class: File
-  path: "${PERFUSION_IMG}"
 calib_image:
   class: File
   path: "${M0_CALIB}"
-output: "calib_longtr"
-structural:
+perfusion:
   class: File
-  path: "${T1W_STRUCTURAL}"
+  path: "${PERFUSION_IMG}"
+mask:
+  class: File
+  path: "${BRAIN_MASK}"
+output_file: "calib_longtr"
 mode: "longtr"
-tr: 6.0
-te: 14.0
-cgain: 1.0
 EOF
 
 run_tool "${TOOL}_longtr" "${JOB_DIR}/${TOOL}_longtr.yml" "$CWL"
 
+# ── Parameter Set B: longtr with structural + identity transform ──
+
+# Create identity transform matrix (ASL and structural are both MNI152_T1_2mm)
+IDENTITY_MAT="${JOB_DIR}/identity.mat"
+cat > "$IDENTITY_MAT" <<'MAT'
+1 0 0 0
+0 1 0 0
+0 0 1 0
+0 0 0 1
+MAT
+
+cat > "${JOB_DIR}/${TOOL}_struct.yml" <<EOF
+calib_image:
+  class: File
+  path: "${M0_CALIB}"
+perfusion:
+  class: File
+  path: "${PERFUSION_IMG}"
+structural:
+  class: File
+  path: "${T1W_BRAIN}"
+transform:
+  class: File
+  path: "${IDENTITY_MAT}"
+output_file: "calib_struct"
+mode: "longtr"
+EOF
+
+run_tool "${TOOL}_struct" "${JOB_DIR}/${TOOL}_struct.yml" "$CWL"
+
 # ── Output validation ─────────────────────────────────────────────
 
-for variant in voxel longtr; do
+for variant in longtr struct; do
   tool_out="${OUT_DIR}/${TOOL}_${variant}"
   if [[ -d "$tool_out" ]]; then
     echo ""

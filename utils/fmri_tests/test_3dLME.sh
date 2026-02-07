@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+# Test: AFNI 3dLME (Linear Mixed-Effects Modeling)
+set -euo pipefail
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/_common.sh"
+
+TOOL="3dLME"
+LIB="afni"
+CWL="${CWL_DIR}/${LIB}/${TOOL}.cwl"
+
+CWLTOOL_ARGS+=(--disable-pull)
+CWLTOOL_ARGS+=(--preserve-environment AFNI_OUTPUT_TYPE)
+
+prepare_afni_fmri_data
+
+make_template "$CWL" "$TOOL"
+
+cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
+prefix: "lme_out"
+table:
+  - subj: "S1"
+    cond: "A"
+    input_file:
+      class: File
+      path: "${SUBJ1_A}"
+  - subj: "S1"
+    cond: "B"
+    input_file:
+      class: File
+      path: "${SUBJ1_B}"
+  - subj: "S2"
+    cond: "A"
+    input_file:
+      class: File
+      path: "${SUBJ2_A}"
+  - subj: "S2"
+    cond: "B"
+    input_file:
+      class: File
+      path: "${SUBJ2_B}"
+model: "Cond"
+ranEff: "~1|Subj"
+mask:
+  class: File
+  path: "${LME_MASK}"
+jobs: 1
+EOF
+
+run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"

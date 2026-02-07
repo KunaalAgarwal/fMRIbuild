@@ -9,12 +9,27 @@ baseCommand: 'mri_gtmpvc'
 
 hints:
   DockerRequirement:
-    dockerPull: freesurfer/freesurfer:latest
+    dockerPull: freesurfer/freesurfer:7.4.1
+
+requirements:
+  EnvVarRequirement:
+    envDef:
+      - envName: SUBJECTS_DIR
+        envValue: $(inputs.subjects_dir.path)
+      - envName: FS_LICENSE
+        envValue: $(inputs.fs_license.path)
 
 stdout: mri_gtmpvc.log
-stderr: mri_gtmpvc.log
+stderr: mri_gtmpvc.err.log
 
 inputs:
+  subjects_dir:
+    type: Directory
+    label: FreeSurfer SUBJECTS_DIR
+  fs_license:
+    type: File
+    label: FreeSurfer license file
+
   input:
     type: File
     label: Input PET image
@@ -80,3 +95,7 @@ outputs:
     type: File
     outputBinding:
       glob: mri_gtmpvc.log
+  err_log:
+    type: File
+    outputBinding:
+      glob: mri_gtmpvc.err.log

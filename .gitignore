@@ -20,6 +20,30 @@ notes/
 # Testing artifacts (downloaded datasets and tool outputs)
 tests/data/
 tests/work/
+utils/structural_mri_tests/jobs/
+utils/structural_mri_tests/out/
+utils/structural_mri_tests/logs/
+utils/structural_mri_tests/data/
+utils/structural_mri_tests/derived/
+utils/structural_mri_tests/summary.tsv
+utils/asl_tests/jobs/
+utils/asl_tests/out/
+utils/asl_tests/logs/
+utils/asl_tests/data/
+utils/asl_tests/derived/
+utils/asl_tests/summary.tsv
+utils/mm_tests/jobs/
+utils/mm_tests/out/
+utils/mm_tests/logs/
+utils/mm_tests/data/
+utils/mm_tests/derived/
+utils/mm_tests/summary.tsv
+utils/pet_tests/jobs/
+utils/pet_tests/out/
+utils/pet_tests/logs/
+utils/pet_tests/data/
+utils/pet_tests/derived/
+utils/pet_tests/summary.tsv
 
 # Claude Code config (local only)
 .claude/

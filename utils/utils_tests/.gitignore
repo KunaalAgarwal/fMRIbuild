@@ -1,0 +1,7 @@
+# Test outputs and intermediate files
+out/
+logs/
+jobs/
+data/
+derived/
+summary.tsv

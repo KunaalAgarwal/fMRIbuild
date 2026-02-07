@@ -4329,7 +4329,8 @@ export const TOOL_MAP = {
         outputs: {
             output_directory: { type: 'Directory', label: 'GTM PVC output directory', glob: ['$(inputs.output_dir)'] },
             gtm_stats: { type: 'File?', label: 'GTM statistics', glob: ['$(inputs.output_dir)/gtm.stats.dat'] },
-            log: { type: 'File', label: 'Log file', glob: ['mri_gtmpvc.log'] }
+            log: { type: 'File', label: 'Log file', glob: ['mri_gtmpvc.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['mri_gtmpvc.err.log'] }
         }
     }
 };

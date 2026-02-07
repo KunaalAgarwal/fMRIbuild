@@ -13,7 +13,10 @@ make_template "$CWL" "$TOOL"
 
 # ── Test 1: Single coordinate lookup (MNI origin) ────────────
 cat > "${JOB_DIR}/${TOOL}_coord.yml" <<EOF
-coord: "0 0 0"
+coord:
+  - 0.0
+  - 0.0
+  - 0.0
 space: MNI
 EOF
 run_tool "${TOOL}_coord" "${JOB_DIR}/${TOOL}_coord.yml" "$CWL"

@@ -46,6 +46,6 @@ for f in "${OUT_DIR}/${TOOL}_index"/*.nii*; do
   if [[ ! -s "$f" ]]; then
     echo "  WARN: zero-byte index image: $f"
   else
-    echo "  Index header: $(docker_fsl fslhd "$f" 2>&1 | head -2 || true)"
+    echo "  Index header: $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
   fi
 done

@@ -59,7 +59,7 @@ for t in bin smooth thr mul; do
     if [[ ! -s "$f" ]]; then
       echo "  WARN: zero-byte output: $f"
     else
-      echo "  Header (${t}): $(docker_fsl fslhd "$f" 2>&1 | head -2 || true)"
+      echo "  Header (${t}): $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
     fi
   done
 done

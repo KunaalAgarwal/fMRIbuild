@@ -29,14 +29,26 @@ dimension: t
 EOF
 run_tool "${TOOL}_time" "${JOB_DIR}/${TOOL}_time.yml" "$CWL"
 
+# ── Test 2: Split along z ──────────────────────────────────
+cat > "${JOB_DIR}/${TOOL}_z.yml" <<EOF
+input:
+  class: File
+  path: ${MERGED_4D}
+output_basename: split_z
+dimension: z
+EOF
+run_tool "${TOOL}_z" "${JOB_DIR}/${TOOL}_z.yml" "$CWL"
+
 # ── Verify split produced expected number of volumes ─────────
-dir="${OUT_DIR}/${TOOL}_time"
-count=0
-for f in "$dir"/*.nii*; do
-  [[ -f "$f" ]] || continue
-  count=$((count + 1))
-  if [[ ! -s "$f" ]]; then
-    echo "  WARN: zero-byte split volume: $f"
-  fi
+for t in time z; do
+  dir="${OUT_DIR}/${TOOL}_${t}"
+  count=0
+  for f in "$dir"/*.nii*; do
+    [[ -f "$f" ]] || continue
+    count=$((count + 1))
+    if [[ ! -s "$f" ]]; then
+      echo "  WARN: zero-byte split volume: $f"
+    fi
+  done
+  echo "  ${t}-split produced ${count} volumes"
 done
-echo "  Split produced ${count} volumes (expected 3)"

@@ -14,7 +14,7 @@ make_template "$CWL" "$TOOL"
 
 # ── Prepare: need a warp from 3dQwarp ────────────────────────
 QWARP_PREFIX="${DERIVED_DIR}/qwarp_test"
-QWARP_WARP="${QWARP_PREFIX}_WARP.nii.gz"
+QWARP_WARP="${QWARP_PREFIX}_WARP+orig.HEAD"
 if [[ ! -f "$QWARP_WARP" ]]; then
   echo "Generating 3dQwarp warp field (coarse, for testing)..."
   docker_afni 3dQwarp \
@@ -24,7 +24,6 @@ if [[ ! -f "$QWARP_WARP" ]]; then
     -workhard:0:0 || {
     echo "  WARN: 3dQwarp failed — generating identity warp fallback"
     docker_afni 3dcalc -a "$T1W_2MM" -expr 'a*0' -prefix "${QWARP_PREFIX}_WARP"
-    QWARP_WARP="${QWARP_PREFIX}_WARP+orig.HEAD"
   }
 fi
 

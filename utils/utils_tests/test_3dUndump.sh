@@ -36,13 +36,28 @@ srad: 3.0
 EOF
 run_tool "${TOOL}_master" "${JOB_DIR}/${TOOL}_master.yml" "$CWL"
 
+# ── Test 2: With explicit dimensions ───────────────────────
+cat > "${JOB_DIR}/${TOOL}_dimen.yml" <<EOF
+input:
+  class: File
+  path: ${COORD_FILE}
+prefix: undump_dimen
+dimen: "91 109 91"
+datum: float
+srad: 3.0
+xyz: true
+EOF
+run_tool "${TOOL}_dimen" "${JOB_DIR}/${TOOL}_dimen.yml" "$CWL"
+
 # ── Verify ────────────────────────────────────────────────────
-dir="${OUT_DIR}/${TOOL}_master"
-for f in "$dir"/*.HEAD; do
-  [[ -f "$f" ]] || continue
-  if [[ ! -s "$f" ]]; then
-    echo "  WARN: zero-byte: $f"
-  else
-    echo "  Header: $(docker_afni 3dinfo "$f" 2>&1 | head -3 || true)"
-  fi
+for t in master dimen; do
+  dir="${OUT_DIR}/${TOOL}_${t}"
+  for f in "$dir"/*.HEAD; do
+    [[ -f "$f" ]] || continue
+    if [[ ! -s "$f" ]]; then
+      echo "  WARN: zero-byte: $f"
+    else
+      echo "  Header (${t}): $(docker_afni 3dinfo "$f" 2>&1 | head -3 || true)"
+    fi
+  done
 done

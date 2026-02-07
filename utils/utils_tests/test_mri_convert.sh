@@ -10,13 +10,24 @@ LIB="freesurfer"
 CWL="${CWL_DIR}/${LIB}/${TOOL}.cwl"
 
 prepare_fsl_data
-make_template "$CWL" "$TOOL"
 
-# Note: FreeSurfer tools require a license file.
-# If FS_LICENSE is not set, these tests will fail.
+# FreeSurfer CWL requires subjects_dir and fs_license
+if [[ -z "${FS_LICENSE:-}" ]]; then
+  die "FreeSurfer license not found. Set FS_LICENSE env var."
+fi
+FS_SUBJECTS="${DERIVED_DIR}/fs_subjects"
+mkdir -p "$FS_SUBJECTS"
+
+make_template "$CWL" "$TOOL"
 
 # ── Test 1: NIfTI to MGZ conversion ─────────────────────────
 cat > "${JOB_DIR}/${TOOL}_mgz.yml" <<EOF
+subjects_dir:
+  class: Directory
+  path: ${FS_SUBJECTS}
+fs_license:
+  class: File
+  path: ${FS_LICENSE}
 input:
   class: File
   path: ${T1W}
@@ -26,6 +37,12 @@ run_tool "${TOOL}_mgz" "${JOB_DIR}/${TOOL}_mgz.yml" "$CWL"
 
 # ── Test 2: With conform (resample to 256^3 1mm iso) ────────
 cat > "${JOB_DIR}/${TOOL}_conform.yml" <<EOF
+subjects_dir:
+  class: Directory
+  path: ${FS_SUBJECTS}
+fs_license:
+  class: File
+  path: ${FS_LICENSE}
 input:
   class: File
   path: ${T1W}
@@ -36,6 +53,12 @@ run_tool "${TOOL}_conform" "${JOB_DIR}/${TOOL}_conform.yml" "$CWL"
 
 # ── Test 3: Change orientation to LPI ────────────────────────
 cat > "${JOB_DIR}/${TOOL}_orient.yml" <<EOF
+subjects_dir:
+  class: Directory
+  path: ${FS_SUBJECTS}
+fs_license:
+  class: File
+  path: ${FS_LICENSE}
 input:
   class: File
   path: ${T1W}

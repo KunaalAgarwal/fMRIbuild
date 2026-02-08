@@ -11,6 +11,10 @@ hints:
   DockerRequirement:
     dockerPull: khanlab/connectome-workbench:latest
 
+requirements:
+  ShellCommandRequirement: {}
+  InlineJavascriptRequirement: {}
+
 stdout: wb_cifti_separate.log
 stderr: wb_cifti_separate.err.log
 
@@ -45,14 +49,24 @@ inputs:
     type: ['null', string]
     label: Output metric file for left cortex
     inputBinding:
-      prefix: -metric CORTEX_LEFT
       position: 5
+      valueFrom: |
+        ${
+          if (self) return "-metric CORTEX_LEFT " + self;
+          return "";
+        }
+      shellQuote: false
   metric_right:
     type: ['null', string]
     label: Output metric file for right cortex
     inputBinding:
-      prefix: -metric CORTEX_RIGHT
       position: 6
+      valueFrom: |
+        ${
+          if (self) return "-metric CORTEX_RIGHT " + self;
+          return "";
+        }
+      shellQuote: false
 
 outputs:
   volume_output:

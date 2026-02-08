@@ -17,8 +17,12 @@ hints:
 requirements:
   EnvVarRequirement:
     envDef:
-      SUBJECTS_DIR: $(inputs.subjects_dir.path)
+      SUBJECTS_DIR: $(runtime.outdir)
       FS_LICENSE: $(inputs.fs_license.path)
+  InitialWorkDirRequirement:
+    listing:
+      - entry: $(inputs.subjects_dir)
+        writable: true
   InlineJavascriptRequirement: {}
 
 stdout: recon-all.log

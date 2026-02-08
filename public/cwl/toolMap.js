@@ -4451,11 +4451,13 @@ export const TOOL_MAP = {
             labelslices: { type: 'boolean', label: '2D labeling with 3D unwrapping', flag: '--labelslices' },
             force3d: { type: 'boolean', label: 'Force full 3D processing', flag: '--force3D' },
             removeramps: { type: 'boolean', label: 'Remove phase ramps', flag: '--removeramps' },
+            savemask: { type: 'string', label: 'Save the generated mask volume', flag: '--savemask=' },
             verbose: { type: 'boolean', label: 'Verbose output', flag: '-v' }
         },
 
         outputs: {
             unwrapped_phase: { type: 'File', label: 'Unwrapped phase image', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii', '$(inputs.output)'] },
+            saved_mask: { type: 'File?', label: 'Saved mask volume', glob: ['$(inputs.savemask).nii.gz', '$(inputs.savemask).nii'] },
             log: { type: 'File', label: 'Log file', glob: ['prelude.log'] },
             err_log: { type: 'File', label: 'Error log file', glob: ['prelude.err.log'] }
         }
@@ -4487,6 +4489,8 @@ export const TOOL_MAP = {
             selectpts: { type: 'string', label: 'Non-lesion point selection (any/noborder/surround)', flag: '--selectpts' },
             trainingpts: { type: 'string', label: 'Max lesion training points per subject', flag: '--trainingpts' },
             nonlespts: { type: 'int', label: 'Max non-lesion points per subject', flag: '--nonlespts' },
+            saveclassifierdata: { type: 'string', label: 'Save training data to file', flag: '--saveclassifierdata=' },
+            loadclassifierdata: { type: 'string', label: 'Load pre-saved classifier data', flag: '--loadclassifierdata=' },
             verbose: { type: 'boolean', label: 'Verbose output', flag: '-v' }
         },
 

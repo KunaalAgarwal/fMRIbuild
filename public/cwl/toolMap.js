@@ -1949,8 +1949,21 @@ export const TOOL_MAP = {
 
         optionalInputs: {
             no_ss: { type: 'boolean', label: 'Do not skull strip', flag: '-no_ss' },
-            dxyz: { type: 'double', label: 'Voxel size (mm)', flag: '-dxyz' },
-            xform: { type: 'string', label: 'Warp type', flag: '-xform', options: ['affine_general', 'shift_rotate_scale'] }
+            warp_orig_vol: { type: 'boolean', label: 'Warp original volume (preserve skull)', flag: '-warp_orig_vol' },
+            dxyz: { type: 'double', label: 'Cubic voxel size (mm)', flag: '-dxyz' },
+            dx: { type: 'double', label: 'X voxel dimension (mm)', flag: '-dx' },
+            dy: { type: 'double', label: 'Y voxel dimension (mm)', flag: '-dy' },
+            dz: { type: 'double', label: 'Z voxel dimension (mm)', flag: '-dz' },
+            pad_base: { type: 'double', label: 'Padding in mm', flag: '-pad_base' },
+            xform: { type: 'string', label: 'Warp type', flag: '-xform', options: ['affine_general', 'shift_rotate_scale'] },
+            suffix: { type: 'string', label: 'Output suffix', flag: '-suffix' },
+            init_xform: { type: 'File', label: 'Initial affine transform', flag: '-init_xform' },
+            maxite: { type: 'int', label: 'Max iterations', flag: '-maxite' },
+            use_3dAllineate: { type: 'boolean', label: 'Use 3dAllineate', flag: '-3dAllineate' },
+            apar: { type: 'File', label: 'Reference anatomical for transform', flag: '-apar' },
+            onewarp: { type: 'boolean', label: 'Single interpolation', flag: '-onewarp' },
+            twowarp: { type: 'boolean', label: 'Dual interpolation', flag: '-twowarp' },
+            overwrite: { type: 'boolean', label: 'Overwrite existing', flag: '-overwrite' }
         },
 
         outputs: {

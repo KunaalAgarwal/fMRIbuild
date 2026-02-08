@@ -6,6 +6,7 @@
 cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'recon-all'
+successCodes: [0, 137]
 
 hints:
   DockerRequirement:

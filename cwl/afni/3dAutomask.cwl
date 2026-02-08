@@ -95,21 +95,27 @@ outputs:
   mask:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   masked_input:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.apply_prefix)+orig.HEAD
+      glob:
+        - $(inputs.apply_prefix)+orig.HEAD
+        - $(inputs.apply_prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   depth_map:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.depth)+orig.HEAD
+      glob:
+        - $(inputs.depth)+orig.HEAD
+        - $(inputs.depth)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

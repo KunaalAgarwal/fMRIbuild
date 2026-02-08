@@ -213,7 +213,9 @@ outputs:
   stats:
     type: File
     outputBinding:
-      glob: $(inputs.bucket)+orig.HEAD
+      glob:
+        - $(inputs.bucket)+orig.HEAD
+        - $(inputs.bucket)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
@@ -228,14 +230,18 @@ outputs:
   fitted:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.fitts)+orig.HEAD
+      glob:
+        - $(inputs.fitts)+orig.HEAD
+        - $(inputs.fitts)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
   residuals:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.errts)+orig.HEAD
+      glob:
+        - $(inputs.errts)+orig.HEAD
+        - $(inputs.errts)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz

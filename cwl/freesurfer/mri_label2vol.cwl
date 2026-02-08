@@ -6,6 +6,7 @@
 cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'mri_label2vol'
+successCodes: [0, 137]
 
 hints:
   DockerRequirement:

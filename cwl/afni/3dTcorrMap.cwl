@@ -91,21 +91,27 @@ outputs:
   mean_corr:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.Mean)+orig.HEAD
+      glob:
+        - $(inputs.Mean)+orig.HEAD
+        - $(inputs.Mean)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   zmean_corr:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.Zmean)+orig.HEAD
+      glob:
+        - $(inputs.Zmean)+orig.HEAD
+        - $(inputs.Zmean)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   corrmap:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.CorrMap)+orig.HEAD
+      glob:
+        - $(inputs.CorrMap)+orig.HEAD
+        - $(inputs.CorrMap)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

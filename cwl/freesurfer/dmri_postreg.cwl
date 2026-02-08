@@ -52,14 +52,14 @@ requirements:
             exit 1
           fi
 
-          mri_convert "$in" "$out" >/dev/null 2>&1
+          mri_convert "$in" "$out"
 
 arguments:
   - valueFrom: dmri_postreg
     position: 0
 
 stdout: dmri_postreg.log
-stderr: dmri_postreg.log
+stderr: dmri_postreg_stderr.log
 
 inputs:
   subjects_dir:

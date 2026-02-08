@@ -6,12 +6,17 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: ['xvfb-run', '-a', '@SSwarper']
 
+requirements:
+  InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 4096
+
 hints:
   DockerRequirement:
-    dockerPull: nibuild/afni-test:latest
+    dockerPull: afni/afni_make_build:latest
 
 stdout: $(inputs.subid)_SSwarper.log
-stderr: $(inputs.subid)_SSwarper.log
+stderr: $(inputs.subid)_SSwarper.err
 
 inputs:
   input:

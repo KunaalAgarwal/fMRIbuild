@@ -1507,6 +1507,16 @@ export const TOOL_MAP = {
                 label: 'SIENA report',
                 glob: ['*_to_*_siena/report.siena']
             },
+            edge_points: {
+                type: 'File[]?',
+                label: 'Edge point images',
+                glob: ['*_to_*_siena/*_edge*.nii.gz', '*_to_*_siena/*_edge*.nii']
+            },
+            flow_images: {
+                type: 'File[]?',
+                label: 'Flow images',
+                glob: ['*_to_*_siena/*_flow*.nii.gz', '*_to_*_siena/*_flow*.nii']
+            },
             log: {
                 type: 'File',
                 label: 'Log file',
@@ -1647,7 +1657,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            skull_stripped: { type: 'File', label: 'Skull-stripped output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            skull_stripped: { type: 'File', label: 'Skull-stripped output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             mask: { type: 'File?', label: 'Brain mask', glob: ['$(inputs.prefix)_mask*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
@@ -1673,7 +1683,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            registered: { type: 'File', label: 'Registered output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            registered: { type: 'File', label: 'Registered output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             motion_params: { type: 'File?', label: 'Motion parameters', glob: ['$(inputs.dfile)'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
@@ -1698,7 +1708,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            shifted: { type: 'File', label: 'Time-shifted output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            shifted: { type: 'File', label: 'Time-shifted output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1722,7 +1732,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            despiked: { type: 'File', label: 'Despiked output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            despiked: { type: 'File', label: 'Despiked output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1748,7 +1758,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            filtered: { type: 'File', label: 'Bandpassed output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            filtered: { type: 'File', label: 'Bandpassed output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1772,7 +1782,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            blurred: { type: 'File', label: 'Blurred output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            blurred: { type: 'File', label: 'Blurred output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1796,7 +1806,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            merged: { type: 'File', label: 'Merged output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            merged: { type: 'File', label: 'Merged output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1822,7 +1832,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            aligned: { type: 'File', label: 'Aligned output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            aligned: { type: 'File', label: 'Aligned output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             matrix: { type: 'File?', label: 'Transformation matrix', glob: ['$(inputs.oned_matrix_save)'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
@@ -1848,8 +1858,8 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            warped: { type: 'File?', label: 'Warped output', glob: ['$(inputs.prefix)+*.*', '$(inputs.prefix).nii*'] },
-            warp: { type: 'File?', label: 'Warp field', glob: ['$(inputs.prefix)_WARP+*.*', '$(inputs.prefix)_WARP.nii*'] },
+            warped: { type: 'File?', label: 'Warped output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
+            warp: { type: 'File?', label: 'Warp field', glob: ['$(inputs.prefix)_WARP+orig.*', '$(inputs.prefix)_WARP+tlrc.*', '$(inputs.prefix)_WARP.nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1872,7 +1882,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            unifized: { type: 'File', label: 'Unifized output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            unifized: { type: 'File', label: 'Unifized output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1896,7 +1906,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            mask: { type: 'File', label: 'Output mask', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            mask: { type: 'File', label: 'Output mask', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1919,7 +1929,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            concatenated: { type: 'File', label: 'Concatenated output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            concatenated: { type: 'File', label: 'Concatenated output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -1942,7 +1952,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            tlrc_anat: { type: 'File', label: 'TLRC-aligned anatomical', glob: ['*+tlrc.*'] },
+            tlrc_anat: { type: 'File', label: 'TLRC-aligned anatomical', glob: ['*+orig.*', '*+tlrc.*', '*.nii*'] },
             transform: { type: 'File?', label: 'Transform file', glob: ['*.Xat.1D'] },
             log: { type: 'File?', label: 'Log file', glob: ['*.log'] }
         }
@@ -1967,9 +1977,9 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            skull_stripped: { type: 'File', label: 'Skull-stripped output', glob: ['anatSS.$(inputs.subid).*'] },
-            warped: { type: 'File', label: 'Warped to template', glob: ['anatQQ.$(inputs.subid).*'] },
-            warp: { type: 'File', label: 'Warp field', glob: ['anatQQ.$(inputs.subid)_WARP.*'] },
+            skull_stripped: { type: 'File', label: 'Skull-stripped output', glob: ['anatSS.$(inputs.subid)+orig.*', 'anatSS.$(inputs.subid)+tlrc.*', 'anatSS.$(inputs.subid).nii*'] },
+            warped: { type: 'File', label: 'Warped to template', glob: ['anatQQ.$(inputs.subid)+orig.*', 'anatQQ.$(inputs.subid)+tlrc.*', 'anatQQ.$(inputs.subid).nii*'] },
+            warp: { type: 'File', label: 'Warp field', glob: ['anatQQ.$(inputs.subid)_WARP+orig.*', 'anatQQ.$(inputs.subid)_WARP+tlrc.*', 'anatQQ.$(inputs.subid)_WARP.nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.subid)_SSwarper.log'] }
         }
     },
@@ -1994,8 +2004,8 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            aligned_anat: { type: 'File?', label: 'Aligned anatomical', glob: ['*_al+orig.*', '*_al.nii*'] },
-            aligned_epi: { type: 'File?', label: 'Aligned EPI', glob: ['*_al_reg+orig.*'] },
+            aligned_anat: { type: 'File?', label: 'Aligned anatomical', glob: ['*_al+orig.*', '*_al+tlrc.*', '*_al.nii*'] },
+            aligned_epi: { type: 'File?', label: 'Aligned EPI', glob: ['*_al_reg+orig.*', '*_al_reg+tlrc.*', '*_al_reg.nii*'] },
             transform_matrix: { type: 'File?', label: 'Transform matrix', glob: ['*.aff12.1D'] },
             log: { type: 'File', label: 'Log file', glob: ['align_epi_anat.log'] }
         }
@@ -2024,7 +2034,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'Statistics output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket).nii*'] },
+            stats: { type: 'File', label: 'Statistics output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket)+tlrc.*', '$(inputs.bucket).nii*'] },
             design_matrix: { type: 'File?', label: 'Design matrix', glob: ['$(inputs.x1D)'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.bucket).log'] }
         }
@@ -2050,7 +2060,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'REML statistics', glob: ['$(inputs.Rbuck)+orig.*', '$(inputs.Rbuck).nii*'] },
+            stats: { type: 'File', label: 'REML statistics', glob: ['$(inputs.Rbuck)+orig.*', '$(inputs.Rbuck)+tlrc.*', '$(inputs.Rbuck).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.Rbuck).log'] }
         }
     },
@@ -2075,7 +2085,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'T-test output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            stats: { type: 'File', label: 'T-test output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2097,7 +2107,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'ANOVA output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket).nii*'] },
+            stats: { type: 'File', label: 'ANOVA output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket)+tlrc.*', '$(inputs.bucket).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.bucket).log'] }
         }
     },
@@ -2120,7 +2130,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'ANOVA2 output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket).nii*'] },
+            stats: { type: 'File', label: 'ANOVA2 output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket)+tlrc.*', '$(inputs.bucket).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.bucket).log'] }
         }
     },
@@ -2144,7 +2154,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'ANOVA3 output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket).nii*'] },
+            stats: { type: 'File', label: 'ANOVA3 output', glob: ['$(inputs.bucket)+orig.*', '$(inputs.bucket)+tlrc.*', '$(inputs.bucket).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.bucket).log'] }
         }
     },
@@ -2214,7 +2224,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'MEMA output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            stats: { type: 'File', label: 'MEMA output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2238,7 +2248,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'MVM output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            stats: { type: 'File', label: 'MVM output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2263,7 +2273,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'LME output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            stats: { type: 'File', label: 'LME output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2286,7 +2296,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'LMEr output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            stats: { type: 'File', label: 'LMEr output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2337,7 +2347,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            correlation: { type: 'File', label: 'Correlation output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            correlation: { type: 'File', label: 'Correlation output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2360,8 +2370,8 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            mean_corr: { type: 'File?', label: 'Mean correlation', glob: ['$(inputs.Mean)+orig.*', '$(inputs.Mean).nii*'] },
-            zmean_corr: { type: 'File?', label: 'Fisher Z mean', glob: ['$(inputs.Zmean)+orig.*', '$(inputs.Zmean).nii*'] },
+            mean_corr: { type: 'File?', label: 'Mean correlation', glob: ['$(inputs.Mean)+orig.*', '$(inputs.Mean)+tlrc.*', '$(inputs.Mean).nii*'] },
+            zmean_corr: { type: 'File?', label: 'Fisher Z mean', glob: ['$(inputs.Zmean)+orig.*', '$(inputs.Zmean)+tlrc.*', '$(inputs.Zmean).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['3dTcorrMap.log'] }
         }
     },
@@ -2386,7 +2396,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            filtered: { type: 'File', label: 'Bandpassed output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            filtered: { type: 'File', label: 'Bandpassed output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             alff: { type: 'File?', label: 'ALFF output', glob: ['$(inputs.prefix)_ALFF*'] },
             falff: { type: 'File?', label: 'fALFF output', glob: ['$(inputs.prefix)_fALFF*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
@@ -2461,7 +2471,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            dataset: { type: 'File', label: 'Output dataset', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            dataset: { type: 'File', label: 'Output dataset', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2506,7 +2516,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            resampled: { type: 'File', label: 'Resampled output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            resampled: { type: 'File', label: 'Resampled output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2529,7 +2539,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            fractionized: { type: 'File', label: 'Fractionized output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            fractionized: { type: 'File', label: 'Fractionized output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2555,7 +2565,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            result: { type: 'File', label: 'Calculated output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            result: { type: 'File', label: 'Calculated output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2581,7 +2591,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            stats: { type: 'File', label: 'Statistics output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            stats: { type: 'File', label: 'Statistics output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2626,7 +2636,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            copied: { type: 'File', label: 'Copied dataset', glob: ['$(inputs.new_prefix)+orig.*', '$(inputs.new_prefix).nii*'] },
+            copied: { type: 'File', label: 'Copied dataset', glob: ['$(inputs.new_prefix)+orig.*', '$(inputs.new_prefix)+tlrc.*', '$(inputs.new_prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.new_prefix).log'] }
         }
     },
@@ -2653,7 +2663,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            padded: { type: 'File', label: 'Padded output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            padded: { type: 'File', label: 'Padded output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2677,7 +2687,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            warped: { type: 'File', label: 'Warped output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            warped: { type: 'File', label: 'Warped output', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -2701,7 +2711,7 @@ export const TOOL_MAP = {
         },
 
         outputs: {
-            concatenated_warp: { type: 'File', label: 'Combined warp', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix).nii*'] },
+            concatenated_warp: { type: 'File', label: 'Combined warp', glob: ['$(inputs.prefix)+orig.*', '$(inputs.prefix)+tlrc.*', '$(inputs.prefix).nii*'] },
             log: { type: 'File', label: 'Log file', glob: ['$(inputs.prefix).log'] }
         }
     },
@@ -3923,6 +3933,8 @@ export const TOOL_MAP = {
             mean_FA: { type: 'File', label: 'Mean FA image', glob: ['stats/mean_FA.nii.gz'] },
             mean_FA_skeleton: { type: 'File', label: 'Mean FA skeleton', glob: ['stats/mean_FA_skeleton.nii.gz'] },
             all_FA: { type: 'File', label: 'All FA data (4D)', glob: ['stats/all_FA.nii.gz'] },
+            FA_directory: { type: 'Directory', label: 'FA directory', glob: ['FA'] },
+            stats_directory: { type: 'Directory', label: 'Stats directory', glob: ['stats'] },
             log: { type: 'File', label: 'Log file', glob: ['tbss_3_postreg.log'] }
         }
     },
@@ -3935,7 +3947,8 @@ export const TOOL_MAP = {
 
         requiredInputs: {
             threshold: { type: 'double', label: 'FA threshold for skeleton (e.g., 0.2)' },
-            fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from tbss_3_postreg' }
+            fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from tbss_3_postreg' },
+            stats_directory: { type: 'Directory', label: 'Stats directory from tbss_3_postreg' }
         },
 
         optionalInputs: {},
@@ -4319,11 +4332,15 @@ export const TOOL_MAP = {
         },
 
         optionalInputs: {
-            auto_mask: { type: 'double', label: 'Auto-mask threshold', flag: '--auto-mask' },
+            auto_mask_fwhm: { type: 'double', label: 'Auto-mask smoothing FWHM (mm)', flag: '--auto-mask' },
+            auto_mask_thresh: { type: 'double', label: 'Auto-mask threshold (use with auto_mask_fwhm)' },
             reg: { type: 'File', label: 'Registration file (LTA or reg.dat)', flag: '--reg' },
             regheader: { type: 'boolean', label: 'Assume registration is identity (header registration)', flag: '--regheader' },
             no_rescale: { type: 'boolean', label: 'Do not global rescale', flag: '--no-rescale' },
-            no_reduce_fov: { type: 'boolean', label: 'Do not reduce FOV', flag: '--no-reduce-fov' }
+            no_reduce_fov: { type: 'boolean', label: 'Do not reduce FOV', flag: '--no-reduce-fov' },
+            default_seg_merge: { type: 'boolean', label: 'Use default scheme to merge hemispheres and set tissue types', flag: '--default-seg-merge' },
+            ctab_default: { type: 'boolean', label: 'Use default FreeSurfer color table with tissue types', flag: '--ctab-default' },
+            vg_thresh: { type: 'double', label: 'Volume geometry threshold for registration check', flag: '--vg-thresh' }
         },
 
         outputs: {

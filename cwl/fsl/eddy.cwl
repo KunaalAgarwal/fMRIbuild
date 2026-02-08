@@ -9,10 +9,13 @@ baseCommand: 'eddy'
 
 hints:
   DockerRequirement:
-    dockerPull: brainlife/fsl:latest
+    dockerPull: brainlife/fsl:6.0.4-patched2
+  ResourceRequirement:
+    ramMin: 4096
+    coresMin: 1
 
 stdout: eddy.log
-stderr: eddy.log
+stderr: eddy_stderr.log
 
 inputs:
   input:
@@ -112,6 +115,12 @@ inputs:
     label: Do not separate field offset from subject movement
     inputBinding:
       prefix: --dont_sep_offs_move
+  nvoxhp:
+    type: ['null', int]
+    label: Number of voxels for hyperparameter estimation (default 1000)
+    inputBinding:
+      prefix: --nvoxhp=
+      separate: false
   data_is_shelled:
     type: ['null', boolean]
     label: Assume data is shelled (skip check)

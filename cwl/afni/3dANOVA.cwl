@@ -112,14 +112,18 @@ outputs:
   stats:
     type: File
     outputBinding:
-      glob: $(inputs.bucket)+orig.HEAD
+      glob:
+        - $(inputs.bucket)+orig.HEAD
+        - $(inputs.bucket)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
   f_stat:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.ftr)+orig.HEAD
+      glob:
+        - $(inputs.ftr)+orig.HEAD
+        - $(inputs.ftr)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz

@@ -132,14 +132,18 @@ outputs:
   aligned_anat:
     type: ['null', File]
     outputBinding:
-      glob: "*_al+orig.HEAD"
+      glob:
+        - "*_al+orig.HEAD"
+        - "*_al+tlrc.HEAD"
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   aligned_epi:
     type: ['null', File]
     outputBinding:
-      glob: "*_al_reg+orig.HEAD"
+      glob:
+        - "*_al_reg+orig.HEAD"
+        - "*_al_reg+tlrc.HEAD"
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
@@ -153,7 +157,9 @@ outputs:
   volreg_output:
     type: ['null', File]
     outputBinding:
-      glob: "*_vr+orig.HEAD"
+      glob:
+        - "*_vr+orig.HEAD"
+        - "*_vr+tlrc.HEAD"
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

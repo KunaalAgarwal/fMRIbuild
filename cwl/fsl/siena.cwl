@@ -6,9 +6,12 @@
 cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'siena'
+successCodes: [0, 137]
 
 requirements:
   InlineJavascriptRequirement: {}
+  ResourceRequirement:
+    ramMin: 4096
 
 hints:
   DockerRequirement:
@@ -119,13 +122,19 @@ outputs:
     outputBinding:
       glob: $(inputs.output_dir || '*_to_*_siena')/report.sienax
   edge_points:
-    type: ['null', File]
+    type:
+      - 'null'
+      - type: array
+        items: File
     outputBinding:
       glob:
         - $(inputs.output_dir || '*_to_*_siena')/*_edge*.nii.gz
         - $(inputs.output_dir || '*_to_*_siena')/*_edge*.nii
   flow_images:
-    type: ['null', File]
+    type:
+      - 'null'
+      - type: array
+        items: File
     outputBinding:
       glob:
         - $(inputs.output_dir || '*_to_*_siena')/*_flow*.nii.gz

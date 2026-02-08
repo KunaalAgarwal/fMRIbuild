@@ -161,21 +161,27 @@ outputs:
   stats:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
   residuals:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.resid)+orig.HEAD
+      glob:
+        - $(inputs.resid)+orig.HEAD
+        - $(inputs.resid)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz
   random_effects:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.REprefix)+orig.HEAD
+      glob:
+        - $(inputs.REprefix)+orig.HEAD
+        - $(inputs.REprefix)+tlrc.HEAD
     secondaryFiles:
       - ^.BRIK
       - ^.BRIK.gz

@@ -141,7 +141,9 @@ outputs:
   stats:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

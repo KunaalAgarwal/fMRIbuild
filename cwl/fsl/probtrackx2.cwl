@@ -7,21 +7,28 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'probtrackx2'
 
+requirements:
+  InlineJavascriptRequirement: {}
+
 hints:
   DockerRequirement:
-    dockerPull: brainlife/fsl:latest
+    dockerPull: brainlife/fsl:6.0.4-patched2
+  ResourceRequirement:
+    ramMin: 4096
+    coresMin: 1
 
 stdout: probtrackx2.log
-stderr: probtrackx2.log
+stderr: probtrackx2_stderr.log
 
 inputs:
   # Required inputs
-  samples:
-    type: string
-    label: Basename of bedpostX samples (e.g., merged)
+  samples_dir:
+    type: Directory
+    label: bedpostX output directory containing merged samples
     inputBinding:
       prefix: --samples=
       separate: false
+      valueFrom: $(self.path)/merged
   mask:
     type: File
     label: Brain mask in diffusion space

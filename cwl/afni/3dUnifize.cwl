@@ -83,21 +83,27 @@ outputs:
   unifized:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   scale_factors:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.ssave)+orig.HEAD
+      glob:
+        - $(inputs.ssave)+orig.HEAD
+        - $(inputs.ssave)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   automask:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.amsave)+orig.HEAD
+      glob:
+        - $(inputs.amsave)+orig.HEAD
+        - $(inputs.amsave)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

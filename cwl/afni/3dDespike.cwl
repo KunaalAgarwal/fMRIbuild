@@ -79,14 +79,18 @@ outputs:
   despiked:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   spikiness:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.ssave)+orig.HEAD
+      glob:
+        - $(inputs.ssave)+orig.HEAD
+        - $(inputs.ssave)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

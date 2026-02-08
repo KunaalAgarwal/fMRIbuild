@@ -37,7 +37,9 @@ outputs:
   copied:
     type: File
     outputBinding:
-      glob: $(inputs.new_prefix)+orig.HEAD
+      glob:
+        - $(inputs.new_prefix)+orig.HEAD
+        - $(inputs.new_prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

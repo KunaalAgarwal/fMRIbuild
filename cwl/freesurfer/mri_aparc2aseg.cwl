@@ -6,6 +6,7 @@
 cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'mri_aparc2aseg'
+successCodes: [0, 137]
 
 hints:
   DockerRequirement:
@@ -18,6 +19,8 @@ requirements:
         envValue: $(inputs.subjects_dir.path)
       - envName: FS_LICENSE
         envValue: $(inputs.fs_license.path)
+  ResourceRequirement:
+    ramMin: 4096
 
 stdout: mri_aparc2aseg.log
 stderr: mri_aparc2aseg.log

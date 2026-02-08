@@ -8,7 +8,7 @@ baseCommand: ['xvfb-run', '-a', '3dSkullStrip']
 
 hints:
   DockerRequirement:
-    dockerPull: nibuild/afni-test:latest
+    dockerPull: afni/afni_make_build:latest
 
 stdout: $(inputs.prefix).log
 stderr: $(inputs.prefix).log
@@ -143,14 +143,18 @@ outputs:
   skull_stripped:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   mask:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)_mask+orig.HEAD
+      glob:
+        - $(inputs.prefix)_mask+orig.HEAD
+        - $(inputs.prefix)_mask+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

@@ -11,6 +11,16 @@ hints:
   DockerRequirement:
     dockerPull: brainlife/fsl:latest
 
+requirements:
+  InitialWorkDirRequirement:
+    listing:
+      - entry: $(inputs.fa_directory)
+        entryname: FA
+        writable: true
+      - entry: $(inputs.stats_directory)
+        entryname: stats
+        writable: true
+
 stdout: tbss_4_prestats.log
 stderr: tbss_4_prestats.log
 
@@ -23,8 +33,9 @@ inputs:
   fa_directory:
     type: Directory
     label: FA directory from tbss_3_postreg
-    inputBinding:
-      position: 2
+  stats_directory:
+    type: Directory
+    label: stats directory from tbss_3_postreg
 
 outputs:
   all_FA_skeletonised:

@@ -11,6 +11,13 @@ hints:
   DockerRequirement:
     dockerPull: brainlife/fsl:latest
 
+requirements:
+  InitialWorkDirRequirement:
+    listing:
+      - entry: $(inputs.fa_directory)
+        entryname: FA
+        writable: true
+
 stdout: tbss_2_reg.log
 stderr: tbss_2_reg.log
 
@@ -18,8 +25,6 @@ inputs:
   fa_directory:
     type: Directory
     label: FA directory from tbss_1_preproc
-    inputBinding:
-      position: 1
 
   # Optional parameters (mutually exclusive)
   use_fmrib_target:

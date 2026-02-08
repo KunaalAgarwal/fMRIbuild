@@ -10,6 +10,9 @@ hints:
   DockerRequirement:
     dockerPull: brainlife/afni:latest
 
+requirements:
+  InlineJavascriptRequirement: {}
+
 stdout: $(inputs.prefix).log
 stderr: $(inputs.prefix).log
 
@@ -29,9 +32,11 @@ inputs:
     label: Master dataset determining output geometry
     inputBinding: {prefix: -master}
   dimen:
-    type: ['null', string]
+    type:
+      - 'null'
+      - type: array
+        items: int
     label: Set output dimensions (I J K voxels)
-    inputBinding: {prefix: -dimen}
 
   # Masking
   mask:
@@ -98,11 +103,23 @@ inputs:
     label: Permit NaN floating-point values
     inputBinding: {prefix: -allow_NaN}
 
+arguments:
+  - valueFrom: |
+      ${
+        if (inputs.dimen) {
+          return ["-dimen"].concat(inputs.dimen.map(function(v){return v.toString();}));
+        }
+        return [];
+      }
+    position: 50
+
 outputs:
   dataset:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)+orig.HEAD
+      glob:
+        - $(inputs.prefix)+orig.HEAD
+        - $(inputs.prefix)+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

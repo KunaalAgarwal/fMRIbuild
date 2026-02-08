@@ -20,7 +20,7 @@ requirements:
         envValue: $(inputs.fs_license.path)
 
 stdout: mris_preproc.log
-stderr: mris_preproc.log
+stderr: mris_preproc.err.log
 
 inputs:
   subjects_dir:

@@ -12,7 +12,7 @@ hints:
     dockerPull: brainlife/fsl:latest
 
 stdout: susan.log
-stderr: susan.log
+stderr: susan.err.log
 
 inputs:
   input:

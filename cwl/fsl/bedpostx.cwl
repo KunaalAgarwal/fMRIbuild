@@ -7,12 +7,22 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'bedpostx'
 
+requirements:
+  InlineJavascriptRequirement: {}
+  InitialWorkDirRequirement:
+    listing:
+      - entry: $(inputs.data_dir)
+        writable: true
+
 hints:
   DockerRequirement:
-    dockerPull: brainlife/fsl:latest
+    dockerPull: brainlife/fsl:6.0.4-patched2
+  ResourceRequirement:
+    ramMin: 4096
+    coresMin: 1
 
 stdout: bedpostx.log
-stderr: bedpostx.log
+stderr: bedpostx_stderr.log
 
 inputs:
   data_dir:
@@ -20,6 +30,7 @@ inputs:
     label: Input data directory (must contain data, bvals, bvecs, nodif_brain_mask)
     inputBinding:
       position: 1
+      valueFrom: $(self.basename)
 
   # Optional parameters
   nfibres:
@@ -27,16 +38,19 @@ inputs:
     label: Number of fibres per voxel (default 3)
     inputBinding:
       prefix: -n
+      position: 2
   model:
     type: ['null', int]
     label: Deconvolution model (1=monoexp, 2=multiexp, 3=zeppelin)
     inputBinding:
       prefix: -model
+      position: 3
   rician:
     type: ['null', boolean]
     label: Use Rician noise modelling
     inputBinding:
       prefix: --rician
+      position: 4
 
 outputs:
   output_directory:

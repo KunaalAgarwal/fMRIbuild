@@ -123,28 +123,36 @@ outputs:
   filtered:
     type: File
     outputBinding:
-      glob: $(inputs.prefix)_LFF+orig.HEAD
+      glob:
+        - $(inputs.prefix)_LFF+orig.HEAD
+        - $(inputs.prefix)_LFF+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   alff:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)_ALFF+orig.HEAD
+      glob:
+        - $(inputs.prefix)_ALFF+orig.HEAD
+        - $(inputs.prefix)_ALFF+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   falff:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)_fALFF+orig.HEAD
+      glob:
+        - $(inputs.prefix)_fALFF+orig.HEAD
+        - $(inputs.prefix)_fALFF+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz
   rsfa:
     type: ['null', File]
     outputBinding:
-      glob: $(inputs.prefix)_RSFA+orig.HEAD
+      glob:
+        - $(inputs.prefix)_RSFA+orig.HEAD
+        - $(inputs.prefix)_RSFA+tlrc.HEAD
     secondaryFiles:
       - .BRIK
       - .BRIK.gz

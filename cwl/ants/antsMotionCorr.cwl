@@ -14,7 +14,7 @@ requirements:
   InlineJavascriptRequirement: {}
 
 stdout: antsMotionCorr.log
-stderr: antsMotionCorr.log
+stderr: antsMotionCorr.err.log
 
 inputs:
   dimensionality:

@@ -68,6 +68,10 @@ run_test "${SCRIPT_DIR}/test_asegstats2table.sh" "$@"
 # AFNI
 run_test "${SCRIPT_DIR}/test_3dSkullStrip.sh" "$@"
 run_test "${SCRIPT_DIR}/test_SSwarper.sh" "$@"
+run_test "${SCRIPT_DIR}/test_3dUnifize.sh" "$@"
+run_test "${SCRIPT_DIR}/test_3dAllineate.sh" "$@"
+run_test "${SCRIPT_DIR}/test_3dQwarp.sh" "$@"
+run_test "${SCRIPT_DIR}/test_auto_tlrc.sh" "$@"
 
 # ── Phase 2: Depends on Phase 1 ───────────────────────────────────
 

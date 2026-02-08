@@ -12,8 +12,8 @@ hints:
 requirements:
   InlineJavascriptRequirement: {}
 
-stdout: auto_tlrc.log
-stderr: auto_tlrc.log
+stdout: auto_tlrc_stdout.log
+stderr: auto_tlrc_stderr.log
 
 inputs:
   input:
@@ -143,10 +143,13 @@ outputs:
     outputBinding:
       glob:
         - "*+tlrc.HEAD"
-        - "*+tlrc.BRIK"
-        - "*+tlrc.BRIK.gz"
         - "*_at.nii"
         - "*_at.nii.gz"
+    secondaryFiles:
+      - pattern: .BRIK
+        required: false
+      - pattern: .BRIK.gz
+        required: false
   transform:
     type: ['null', File]
     outputBinding:
@@ -154,4 +157,4 @@ outputs:
   log:
     type: ['null', File]
     outputBinding:
-      glob: auto_tlrc.log
+      glob: auto_tlrc_stdout.log

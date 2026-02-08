@@ -27,7 +27,9 @@ export const DOCKER_IMAGES = {
     freesurfer: 'freesurfer/freesurfer',
     mrtrix3: 'mrtrix3/mrtrix3',
     fmriprep: 'nipreps/fmriprep',
-    mriqc: 'nipreps/mriqc'
+    mriqc: 'nipreps/mriqc',
+    connectome_workbench: 'khanlab/connectome-workbench',
+    amico: 'cookpa/amico-noddi'
 };
 
 export const TOOL_MAP = {
@@ -4348,6 +4350,383 @@ export const TOOL_MAP = {
             gtm_stats: { type: 'File?', label: 'GTM statistics', glob: ['$(inputs.output_dir)/gtm.stats.dat'] },
             log: { type: 'File', label: 'Log file', glob: ['mri_gtmpvc.log'] },
             err_log: { type: 'File', label: 'Error log file', glob: ['mri_gtmpvc.err.log'] }
+        }
+    },
+
+    // ==================== FSL TBSS NON-FA ====================
+
+    'tbss_non_FA': {
+        id: 'tbss_non_FA',
+        cwlPath: 'cwl/fsl/tbss_non_FA.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['skeletonised_data'],
+
+        requiredInputs: {
+            measure: { type: 'string', label: 'Non-FA measure name (e.g., MD, AD, RD)' },
+            fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from TBSS pipeline' },
+            stats_directory: { type: 'Directory', label: 'Stats directory containing all_<measure>.nii.gz' }
+        },
+
+        optionalInputs: {},
+
+        outputs: {
+            skeletonised_data: { type: 'File', label: 'Skeletonised non-FA data (4D)', glob: ['stats/all_$(inputs.measure)_skeletonised.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['tbss_non_FA.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['tbss_non_FA.err.log'] }
+        }
+    },
+
+    // ==================== FSL DISTORTION CORRECTION ====================
+
+    'applytopup': {
+        id: 'applytopup',
+        cwlPath: 'cwl/fsl/applytopup.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['corrected_images'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input image(s) to correct', acceptedExtensions: ['.nii', '.nii.gz'] },
+            topup_prefix: { type: 'string', label: 'Basename of topup output (field coefficients)' },
+            encoding_file: { type: 'File', label: 'Acquisition parameters file' },
+            inindex: { type: 'string', label: 'Comma-separated indices into encoding file' },
+            output: { type: 'string', label: 'Output basename for corrected images' }
+        },
+
+        optionalInputs: {
+            method: { type: 'string', label: 'Resampling method (jac or lsr)', flag: '--method' },
+            interp: { type: 'string', label: 'Interpolation method (trilinear or spline)', flag: '--interp' },
+            datatype: { type: 'string', label: 'Force output data type', flag: '--datatype' },
+            verbose: { type: 'boolean', label: 'Verbose output', flag: '-v' }
+        },
+
+        outputs: {
+            corrected_images: { type: 'File', label: 'Distortion-corrected images', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii'] },
+            log: { type: 'File', label: 'Log file', glob: ['applytopup.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['applytopup.err.log'] }
+        }
+    },
+
+    'fsl_prepare_fieldmap': {
+        id: 'fsl_prepare_fieldmap',
+        cwlPath: 'cwl/fsl/fsl_prepare_fieldmap.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['fieldmap'],
+
+        requiredInputs: {
+            scanner: { type: 'string', label: 'Scanner type (e.g., SIEMENS)' },
+            phase_image: { type: 'File', passthrough: true, label: 'Phase difference image', acceptedExtensions: ['.nii', '.nii.gz'] },
+            magnitude_image: { type: 'File', label: 'Brain-extracted magnitude image', acceptedExtensions: ['.nii', '.nii.gz'] },
+            output: { type: 'string', label: 'Output fieldmap filename' },
+            delta_TE: { type: 'double', label: 'Echo time difference in milliseconds' }
+        },
+
+        optionalInputs: {
+            nocheck: { type: 'boolean', label: 'Suppress sanity checking', flag: '--nocheck' }
+        },
+
+        outputs: {
+            fieldmap: { type: 'File', label: 'Fieldmap in rad/s', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii', '$(inputs.output)'] },
+            log: { type: 'File', label: 'Log file', glob: ['fsl_prepare_fieldmap.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['fsl_prepare_fieldmap.err.log'] }
+        }
+    },
+
+    'prelude': {
+        id: 'prelude',
+        cwlPath: 'cwl/fsl/prelude.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['unwrapped_phase'],
+
+        requiredInputs: {
+            phase: { type: 'File', passthrough: true, label: 'Wrapped phase image', acceptedExtensions: ['.nii', '.nii.gz'] },
+            output: { type: 'string', label: 'Output unwrapped phase image filename' }
+        },
+
+        optionalInputs: {
+            magnitude: { type: 'File', label: 'Magnitude image (for masking)', flag: '-a' },
+            complex_input: { type: 'File', label: 'Complex input image', flag: '-c' },
+            mask: { type: 'File', label: 'Brain mask image', flag: '-m' },
+            num_partitions: { type: 'int', label: 'Number of phase partitions', flag: '-n' },
+            process2d: { type: 'boolean', label: 'Do 2D processing (slice by slice)', flag: '-s' },
+            labelslices: { type: 'boolean', label: '2D labeling with 3D unwrapping', flag: '--labelslices' },
+            force3d: { type: 'boolean', label: 'Force full 3D processing', flag: '--force3D' },
+            removeramps: { type: 'boolean', label: 'Remove phase ramps', flag: '--removeramps' },
+            savemask: { type: 'string', label: 'Save the generated mask volume', flag: '--savemask=' },
+            verbose: { type: 'boolean', label: 'Verbose output', flag: '-v' }
+        },
+
+        outputs: {
+            unwrapped_phase: { type: 'File', label: 'Unwrapped phase image', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii', '$(inputs.output)'] },
+            saved_mask: { type: 'File?', label: 'Saved mask volume', glob: ['$(inputs.savemask).nii.gz', '$(inputs.savemask).nii'] },
+            log: { type: 'File', label: 'Log file', glob: ['prelude.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['prelude.err.log'] }
+        }
+    },
+
+    // ==================== FSL LESION SEGMENTATION ====================
+
+    'bianca': {
+        id: 'bianca',
+        cwlPath: 'cwl/fsl/bianca.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['wmh_map'],
+
+        requiredInputs: {
+            singlefile: { type: 'File', passthrough: true, label: 'Master file listing subjects, images, masks, and transformations' },
+            querysubjectnum: { type: 'int', label: 'Row number for subject to segment' },
+            brainmaskfeaturenum: { type: 'int', label: 'Column number containing brain mask' },
+            labelfeaturenum: { type: 'int', label: 'Column number containing manual lesion mask' },
+            trainingnums: { type: 'string', label: 'Training subject row numbers (comma-separated or "all")' },
+            output_name: { type: 'string', label: 'Output file basename' }
+        },
+
+        optionalInputs: {
+            featuresubset: { type: 'string', label: 'Column numbers for intensity features (comma-separated)', flag: '--featuresubset' },
+            matfeaturenum: { type: 'int', label: 'Column number containing MNI transformation matrices', flag: '--matfeaturenum' },
+            spatialweight: { type: 'double', label: 'Weighting for MNI spatial coordinates (default 1)', flag: '--spatialweight' },
+            patchsizes: { type: 'string', label: 'Patch sizes in voxels (comma-separated)', flag: '--patchsizes' },
+            patch3D: { type: 'boolean', label: 'Enable 3D patch processing', flag: '--patch3D' },
+            selectpts: { type: 'string', label: 'Non-lesion point selection (any/noborder/surround)', flag: '--selectpts' },
+            trainingpts: { type: 'string', label: 'Max lesion training points per subject', flag: '--trainingpts' },
+            nonlespts: { type: 'int', label: 'Max non-lesion points per subject', flag: '--nonlespts' },
+            saveclassifierdata: { type: 'string', label: 'Save training data to file', flag: '--saveclassifierdata=' },
+            loadclassifierdata: { type: 'string', label: 'Load pre-saved classifier data', flag: '--loadclassifierdata=' },
+            verbose: { type: 'boolean', label: 'Verbose output', flag: '-v' }
+        },
+
+        outputs: {
+            wmh_map: { type: 'File', label: 'WMH probability map', glob: ['$(inputs.output_name).nii.gz', '$(inputs.output_name)'] },
+            log: { type: 'File', label: 'Log file', glob: ['bianca.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['bianca.err.log'] }
+        }
+    },
+
+    // ==================== FSL UTILITIES ====================
+
+    'robustfov': {
+        id: 'robustfov',
+        cwlPath: 'cwl/fsl/robustfov.cwl',
+        dockerImage: DOCKER_IMAGES.fsl,
+        primaryOutputs: ['cropped_image'],
+
+        requiredInputs: {
+            input: { type: 'File', passthrough: true, label: 'Input image (full head coverage)', acceptedExtensions: ['.nii', '.nii.gz'] },
+            output: { type: 'string', label: 'Output cropped image filename' }
+        },
+
+        optionalInputs: {
+            matrix_output: { type: 'string', label: 'Output transformation matrix filename', flag: '-m' },
+            brain_size: { type: 'int', label: 'Brain size estimate in mm (default 170)', flag: '-b' }
+        },
+
+        outputs: {
+            cropped_image: { type: 'File', label: 'Cropped image', glob: ['$(inputs.output).nii.gz', '$(inputs.output).nii', '$(inputs.output)'] },
+            transform_matrix: { type: 'File?', label: 'Transformation matrix', glob: ['$(inputs.matrix_output)'] },
+            log: { type: 'File', label: 'Log file', glob: ['robustfov.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['robustfov.err.log'] }
+        }
+    },
+
+    // ==================== FREESURFER RECON-ALL ====================
+
+    'recon-all': {
+        id: 'recon-all',
+        cwlPath: 'cwl/freesurfer/recon-all.cwl',
+        dockerImage: DOCKER_IMAGES.freesurfer,
+        primaryOutputs: ['subjects_output_dir'],
+
+        requiredInputs: {
+            subjects_dir: { type: 'Directory', label: 'FreeSurfer subjects directory' },
+            fs_license: { type: 'File', label: 'FreeSurfer license file' },
+            subject_id: { type: 'string', label: 'Subject identifier' },
+            input_t1: { type: 'File', passthrough: true, label: 'Input T1-weighted image', acceptedExtensions: ['.nii', '.nii.gz', '.mgz'] }
+        },
+
+        optionalInputs: {
+            run_all: { type: 'boolean', label: 'Run full pipeline', flag: '-all' },
+            autorecon1: { type: 'boolean', label: 'Run autorecon1 (skull stripping, Talairach)', flag: '-autorecon1' },
+            autorecon2: { type: 'boolean', label: 'Run autorecon2 (segmentation, surfaces)', flag: '-autorecon2' },
+            autorecon3: { type: 'boolean', label: 'Run autorecon3 (parcellation, statistics)', flag: '-autorecon3' },
+            t2_image: { type: 'File', label: 'T2-weighted image for pial refinement', flag: '-T2' },
+            flair_image: { type: 'File', label: 'FLAIR image for pial refinement', flag: '-FLAIR' },
+            t2pial: { type: 'boolean', label: 'Use T2 for pial surface placement', flag: '-T2pial' },
+            flair_pial: { type: 'boolean', label: 'Use FLAIR for pial surface placement', flag: '-FLAIRpial' },
+            openmp: { type: 'int', label: 'Number of OpenMP threads', flag: '-openmp' },
+            parallel: { type: 'boolean', label: 'Enable parallel processing', flag: '-parallel' }
+        },
+
+        outputs: {
+            subjects_output_dir: { type: 'Directory', label: 'Reconstructed subject directory', glob: ['$(inputs.subject_id)'] },
+            log: { type: 'File', label: 'Log file', glob: ['recon-all.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['recon-all.err.log'] }
+        }
+    },
+
+    // ==================== CONNECTOME WORKBENCH ====================
+
+    'wb_command_cifti_create_dense_timeseries': {
+        id: 'wb_command_cifti_create_dense_timeseries',
+        cwlPath: 'cwl/connectome_workbench/wb_command_cifti_create_dense_timeseries.cwl',
+        dockerImage: DOCKER_IMAGES.connectome_workbench,
+        primaryOutputs: ['cifti_output'],
+
+        requiredInputs: {
+            cifti_out: { type: 'string', label: 'Output CIFTI dense timeseries file (.dtseries.nii)' }
+        },
+
+        optionalInputs: {
+            volume_data: { type: 'File', label: 'Volume file for all volume structures', flag: '-volume' },
+            structure_label_volume: { type: 'File', label: 'Label volume identifying CIFTI structures' },
+            left_metric: { type: 'File', label: 'Left cortical surface metric', flag: '-left-metric' },
+            roi_left: { type: 'File', label: 'Left surface ROI', flag: '-roi-left' },
+            right_metric: { type: 'File', label: 'Right cortical surface metric', flag: '-right-metric' },
+            roi_right: { type: 'File', label: 'Right surface ROI', flag: '-roi-right' },
+            cerebellum_metric: { type: 'File', label: 'Cerebellum surface metric', flag: '-cerebellum-metric' },
+            timestep: { type: 'double', label: 'Time step between frames (seconds, default 1.0)', flag: '-timestep' },
+            timestart: { type: 'double', label: 'Starting time (seconds, default 0.0)', flag: '-timestart' },
+            unit: { type: 'string', label: 'Unit of timestep (SECOND, HERTZ, METER, RADIAN)', flag: '-unit' }
+        },
+
+        outputs: {
+            cifti_output: { type: 'File', label: 'CIFTI dense timeseries file', glob: ['$(inputs.cifti_out)'] },
+            log: { type: 'File', label: 'Log file', glob: ['wb_cifti_create_dense_timeseries.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['wb_cifti_create_dense_timeseries.err.log'] }
+        }
+    },
+
+    'wb_command_cifti_separate': {
+        id: 'wb_command_cifti_separate',
+        cwlPath: 'cwl/connectome_workbench/wb_command_cifti_separate.cwl',
+        dockerImage: DOCKER_IMAGES.connectome_workbench,
+        primaryOutputs: ['volume_output'],
+
+        requiredInputs: {
+            cifti_in: { type: 'File', passthrough: true, label: 'Input CIFTI file to separate' },
+            direction: { type: 'string', label: 'Separation direction (ROW or COLUMN)' }
+        },
+
+        optionalInputs: {
+            volume_all: { type: 'string', label: 'Output volume file for all volume structures', flag: '-volume-all' },
+            volume_all_crop: { type: 'boolean', label: 'Crop volume to data size', flag: '-crop' },
+            metric_left: { type: 'string', label: 'Output metric file for left cortex', flag: '-metric CORTEX_LEFT' },
+            metric_right: { type: 'string', label: 'Output metric file for right cortex', flag: '-metric CORTEX_RIGHT' }
+        },
+
+        outputs: {
+            volume_output: { type: 'File?', label: 'Separated volume data', glob: ['$(inputs.volume_all)'] },
+            left_metric_output: { type: 'File?', label: 'Left cortex metric data', glob: ['$(inputs.metric_left)'] },
+            right_metric_output: { type: 'File?', label: 'Right cortex metric data', glob: ['$(inputs.metric_right)'] },
+            log: { type: 'File', label: 'Log file', glob: ['wb_cifti_separate.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['wb_cifti_separate.err.log'] }
+        }
+    },
+
+    'wb_command_cifti_smoothing': {
+        id: 'wb_command_cifti_smoothing',
+        cwlPath: 'cwl/connectome_workbench/wb_command_cifti_smoothing.cwl',
+        dockerImage: DOCKER_IMAGES.connectome_workbench,
+        primaryOutputs: ['smoothed_cifti'],
+
+        requiredInputs: {
+            cifti_in: { type: 'File', passthrough: true, label: 'Input CIFTI file' },
+            surface_kernel: { type: 'double', label: 'Gaussian surface smoothing kernel (mm)' },
+            volume_kernel: { type: 'double', label: 'Gaussian volume smoothing kernel (mm)' },
+            direction: { type: 'string', label: 'Smoothing dimension (ROW or COLUMN)' },
+            cifti_out: { type: 'string', label: 'Output smoothed CIFTI file' }
+        },
+
+        optionalInputs: {
+            fwhm: { type: 'boolean', label: 'Interpret kernel sizes as FWHM', flag: '-fwhm' },
+            left_surface: { type: 'File', label: 'Left cortical surface file', flag: '-left-surface' },
+            right_surface: { type: 'File', label: 'Right cortical surface file', flag: '-right-surface' },
+            cerebellum_surface: { type: 'File', label: 'Cerebellum surface file', flag: '-cerebellum-surface' },
+            fix_zeros_volume: { type: 'boolean', label: 'Treat volume zeros as missing data', flag: '-fix-zeros-volume' },
+            fix_zeros_surface: { type: 'boolean', label: 'Treat surface zeros as missing data', flag: '-fix-zeros-surface' },
+            merged_volume: { type: 'boolean', label: 'Smooth across subcortical boundaries', flag: '-merged-volume' },
+            cifti_roi: { type: 'File', label: 'CIFTI ROI to restrict smoothing', flag: '-cifti-roi' }
+        },
+
+        outputs: {
+            smoothed_cifti: { type: 'File', label: 'Smoothed CIFTI file', glob: ['$(inputs.cifti_out)'] },
+            log: { type: 'File', label: 'Log file', glob: ['wb_cifti_smoothing.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['wb_cifti_smoothing.err.log'] }
+        }
+    },
+
+    'wb_command_metric_smoothing': {
+        id: 'wb_command_metric_smoothing',
+        cwlPath: 'cwl/connectome_workbench/wb_command_metric_smoothing.cwl',
+        dockerImage: DOCKER_IMAGES.connectome_workbench,
+        primaryOutputs: ['smoothed_metric'],
+
+        requiredInputs: {
+            surface: { type: 'File', passthrough: true, label: 'Surface file (.surf.gii)' },
+            metric_in: { type: 'File', label: 'Input metric file to smooth' },
+            smoothing_kernel: { type: 'double', label: 'Gaussian smoothing kernel size (mm)' },
+            metric_out: { type: 'string', label: 'Output smoothed metric file' }
+        },
+
+        optionalInputs: {
+            fwhm: { type: 'boolean', label: 'Interpret kernel as FWHM', flag: '-fwhm' },
+            roi: { type: 'File', label: 'ROI metric to restrict smoothing', flag: '-roi' },
+            fix_zeros: { type: 'boolean', label: 'Treat zeros as missing data', flag: '-fix-zeros' },
+            column: { type: 'string', label: 'Process single column (number or name)', flag: '-column' },
+            corrected_areas: { type: 'File', label: 'Vertex areas metric for group surfaces', flag: '-corrected-areas' },
+            method: { type: 'string', label: 'Smoothing method (GEO_GAUSS_AREA, GEO_GAUSS_EQUAL, GEO_GAUSS)', flag: '-method' }
+        },
+
+        outputs: {
+            smoothed_metric: { type: 'File', label: 'Smoothed metric file', glob: ['$(inputs.metric_out)'] },
+            log: { type: 'File', label: 'Log file', glob: ['wb_metric_smoothing.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['wb_metric_smoothing.err.log'] }
+        }
+    },
+
+    'wb_command_surface_sphere_project_unproject': {
+        id: 'wb_command_surface_sphere_project_unproject',
+        cwlPath: 'cwl/connectome_workbench/wb_command_surface_sphere_project_unproject.cwl',
+        dockerImage: DOCKER_IMAGES.connectome_workbench,
+        primaryOutputs: ['output_sphere'],
+
+        requiredInputs: {
+            sphere_in: { type: 'File', passthrough: true, label: 'Input sphere with desired output mesh' },
+            sphere_project_to: { type: 'File', label: 'Sphere that aligns with sphere-in' },
+            sphere_unproject_from: { type: 'File', label: 'Sphere deformed to desired output space' },
+            sphere_out: { type: 'string', label: 'Output sphere filename' }
+        },
+
+        optionalInputs: {},
+
+        outputs: {
+            output_sphere: { type: 'File', label: 'Resampled sphere', glob: ['$(inputs.sphere_out)'] },
+            log: { type: 'File', label: 'Log file', glob: ['wb_surface_sphere_project_unproject.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['wb_surface_sphere_project_unproject.err.log'] }
+        }
+    },
+
+    // ==================== AMICO NODDI ====================
+
+    'amico_noddi': {
+        id: 'amico_noddi',
+        cwlPath: 'cwl/amico/amico_noddi.cwl',
+        dockerImage: DOCKER_IMAGES.amico,
+        primaryOutputs: ['ndi_map'],
+
+        requiredInputs: {
+            dwi: { type: 'File', passthrough: true, label: 'Multi-shell diffusion MRI 4D image', acceptedExtensions: ['.nii', '.nii.gz'] },
+            bvals: { type: 'File', label: 'b-values file' },
+            bvecs: { type: 'File', label: 'b-vectors file' },
+            mask: { type: 'File', label: 'Brain mask image', acceptedExtensions: ['.nii', '.nii.gz'] }
+        },
+
+        optionalInputs: {},
+
+        outputs: {
+            ndi_map: { type: 'File', label: 'Neurite Density Index (NDI/ICVF) map', glob: ['AMICO/NODDI/FIT_ICVF.nii.gz', 'FIT_ICVF.nii.gz'] },
+            odi_map: { type: 'File', label: 'Orientation Dispersion Index (ODI) map', glob: ['AMICO/NODDI/FIT_OD.nii.gz', 'FIT_OD.nii.gz'] },
+            fiso_map: { type: 'File', label: 'Isotropic Volume Fraction (fISO) map', glob: ['AMICO/NODDI/FIT_ISOVF.nii.gz', 'FIT_ISOVF.nii.gz'] },
+            log: { type: 'File', label: 'Log file', glob: ['amico_noddi.log'] },
+            err_log: { type: 'File', label: 'Error log file', glob: ['amico_noddi.err.log'] }
         }
     }
 };

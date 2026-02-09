@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Test: wb_command -cifti-create-dense-timeseries (Create CIFTI from Volume Data)
+# Test: wb_command -cifti-create-dense-timeseries (Create CIFTI from Surface Data)
 set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "${SCRIPT_DIR}/_common.sh"
@@ -15,12 +15,9 @@ make_template "$CWL" "$TOOL"
 
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 cifti_out: test.dtseries.nii
-volume_data:
+left_metric:
   class: File
-  path: ${WB_TINY_VOL}
-structure_label_volume:
-  class: File
-  path: ${WB_LABEL_VOL}
+  path: ${WB_TS_METRIC_L}
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"

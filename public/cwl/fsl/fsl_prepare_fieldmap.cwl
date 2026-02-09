@@ -45,6 +45,7 @@ inputs:
     label: Suppress sanity checking of image size/range/dimensions
     inputBinding:
       prefix: --nocheck
+      position: 6
 
 outputs:
   fieldmap:

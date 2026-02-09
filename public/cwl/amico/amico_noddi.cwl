@@ -1,16 +1,15 @@
 #!/usr/bin/env cwl-runner
 
-# https://github.com/daducci/AMICO
+# https://github.com/cookpa/amico-noddi
 # AMICO NODDI (Neurite Orientation Dispersion and Density Imaging) fitting
 # Uses convex optimization for fast and robust estimation of NODDI parameters
 
 cwlVersion: v1.2
 class: CommandLineTool
-baseCommand: ['python3', '-c']
 
 hints:
   DockerRequirement:
-    dockerPull: cookpa/amico-noddi:latest
+    dockerPull: cookpa/amico-noddi:0.1.2
 
 requirements:
   InitialWorkDirRequirement:
@@ -18,9 +17,9 @@ requirements:
       - entry: $(inputs.dwi)
         entryname: dwi.nii.gz
       - entry: $(inputs.bvals)
-        entryname: bvals
+        entryname: dwi.bval
       - entry: $(inputs.bvecs)
-        entryname: bvecs
+        entryname: dwi.bvec
       - entry: $(inputs.mask)
         entryname: mask.nii.gz
   InlineJavascriptRequirement: {}
@@ -29,18 +28,14 @@ stdout: amico_noddi.log
 stderr: amico_noddi.err.log
 
 arguments:
-  - position: 1
-    valueFrom: |
-      import amico
-      import os
-      amico.core.setup()
-      ae = amico.Evaluation('.', '.')
-      ae.load_data('dwi.nii.gz', 'bvals', 'bvecs', mask_filename='mask.nii.gz')
-      ae.set_model('NODDI')
-      ae.generate_kernels()
-      ae.load_kernels()
-      ae.fit()
-      ae.save_results()
+  - prefix: --dwi-root
+    valueFrom: dwi
+  - prefix: --brain-mask
+    valueFrom: mask.nii.gz
+  - prefix: --output-root
+    valueFrom: output/NODDI
+  - prefix: --work-dir
+    valueFrom: /tmp/amico_work
 
 inputs:
   dwi:
@@ -55,28 +50,51 @@ inputs:
   mask:
     type: File
     label: Brain mask image
+  num_threads:
+    type: ['null', int]
+    label: Maximum number of CPU threads (default 1)
+    inputBinding:
+      prefix: --num-threads
+  b0_threshold:
+    type: ['null', int]
+    label: Threshold for considering measurements b=0 (default 10)
+    inputBinding:
+      prefix: --b0-threshold
+  csf_diffusivity:
+    type: ['null', double]
+    label: CSF diffusivity in mm^2/s (default 0.003)
+    inputBinding:
+      prefix: --csf-diffusivity
+  parallel_diffusivity:
+    type: ['null', double]
+    label: Intracellular diffusivity parallel to neurites in mm^2/s (default 0.0017)
+    inputBinding:
+      prefix: --parallel-diffusivity
+  ex_vivo:
+    type: ['null', boolean]
+    label: Use ex-vivo AMICO model
+    inputBinding:
+      prefix: --ex-vivo
+      valueFrom: '$(self ? "1" : "0")'
 
 outputs:
   ndi_map:
     type: File
     outputBinding:
       glob:
-        - AMICO/NODDI/FIT_ICVF.nii.gz
-        - FIT_ICVF.nii.gz
+        - output/NODDI*ICVF.nii.gz
     label: Neurite Density Index (NDI/ICVF) map
   odi_map:
     type: File
     outputBinding:
       glob:
-        - AMICO/NODDI/FIT_OD.nii.gz
-        - FIT_OD.nii.gz
+        - output/NODDI*OD.nii.gz
     label: Orientation Dispersion Index (ODI) map
   fiso_map:
     type: File
     outputBinding:
       glob:
-        - AMICO/NODDI/FIT_ISOVF.nii.gz
-        - FIT_ISOVF.nii.gz
+        - output/NODDI*ISOVF.nii.gz
     label: Isotropic Volume Fraction (fISO) map
   log:
     type: File

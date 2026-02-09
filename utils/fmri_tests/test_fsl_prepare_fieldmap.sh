@@ -21,8 +21,9 @@ fi
 
 if [[ ! -f "$SYNTH_PHASEDIFF" ]]; then
   echo "Creating synthetic phase difference image..."
-  # Phase difference should be in radians; create a small constant value
-  docker_fsl fslmaths "$STANDARD_BRAIN" -mul 0 -add 0.5 "$SYNTH_PHASEDIFF"
+  # SIEMENS phase difference images have values in range 0-4096 (mapping to 0-2pi radians)
+  # Create a synthetic image with values centered around 2048 (pi) with some spatial variation
+  docker_fsl fslmaths "$STANDARD_BRAIN" -bin -mul 2048 "$SYNTH_PHASEDIFF"
 fi
 
 make_template "$CWL" "$TOOL"

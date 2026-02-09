@@ -22,7 +22,6 @@ metric_in:
   path: ${WB_METRIC_L}
 smoothing_kernel: 2.0
 metric_out: smoothed.func.gii
-fwhm: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"

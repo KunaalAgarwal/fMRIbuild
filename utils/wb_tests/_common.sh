@@ -3,7 +3,7 @@
 # Source this file at the top of every test_*.sh script.
 
 # Chain to the structural MRI common infrastructure
-source "$(cd "$(dirname "${BASH_SOURCE[1]:-${BASH_SOURCE[0]}")")/../structural_mri_tests" && pwd)/_common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[1]:-${BASH_SOURCE[0]}}")"/../structural_mri_tests && pwd)/_common.sh"
 
 # Docker image
 WB_IMAGE="${WB_DOCKER_IMAGE:-khanlab/connectome-workbench:latest}"
@@ -92,8 +92,34 @@ try:
     affine = np.eye(4) * 2.0
     affine[3, 3] = 1.0
     img = nib.Nifti1Image(data, affine)
+    # Set intent code to LABEL (1002) so wb_command recognizes it
+    img.header['intent_code'] = 1002
     nib.save(img, sys.argv[1])
-    print("  Created 10x10x10 label volume")
+    print("  Created 10x10x10 label volume (intent=LABEL)")
+except ImportError:
+    print("  nibabel not available")
+    sys.exit(1)
+PY
+  fi
+
+  # Create multi-timepoint metric (3 columns) for dense timeseries
+  local ts_metric="${wb_data}/timeseries.L.func.gii"
+  if [[ ! -f "$ts_metric" ]]; then
+    echo "Creating timeseries metric file..."
+    python3 - "$ts_metric" <<'PY'
+import sys
+import numpy as np
+try:
+    import nibabel as nib
+    darrays = []
+    for i in range(3):
+        data = np.random.rand(642).astype(np.float32)
+        da = nib.gifti.GiftiDataArray(data, intent='NIFTI_INTENT_TIME_SERIES',
+                                       datatype='NIFTI_TYPE_FLOAT32')
+        darrays.append(da)
+    gii = nib.gifti.GiftiImage(darrays=darrays)
+    nib.save(gii, sys.argv[1])
+    print("  Created timeseries metric with 642 vertices x 3 timepoints")
 except ImportError:
     print("  nibabel not available")
     sys.exit(1)
@@ -104,6 +130,7 @@ PY
   WB_SPHERE_L="$sphere_l"
   WB_SPHERE_R="$sphere_r"
   WB_METRIC_L="$metric_l"
+  WB_TS_METRIC_L="$ts_metric"
   WB_TINY_VOL="$tiny_vol"
   WB_LABEL_VOL="$label_vol"
 }

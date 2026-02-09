@@ -3,10 +3,10 @@
 # Source this file at the top of every test_*.sh script.
 
 # Chain to the structural MRI common infrastructure
-source "$(cd "$(dirname "${BASH_SOURCE[1]:-${BASH_SOURCE[0]}"}")/../structural_mri_tests" && pwd)/_common.sh"
+source "$(cd "$(dirname "${BASH_SOURCE[1]:-${BASH_SOURCE[0]}}")"/../structural_mri_tests && pwd)/_common.sh"
 
 # Docker image
-AMICO_IMAGE="${AMICO_DOCKER_IMAGE:-cookpa/amico-noddi:latest}"
+AMICO_IMAGE="${AMICO_DOCKER_IMAGE:-cookpa/amico-noddi:0.1.2}"
 
 docker_amico() {
   _docker_run "$AMICO_IMAGE" "$@"

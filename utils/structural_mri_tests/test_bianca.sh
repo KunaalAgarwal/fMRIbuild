@@ -12,27 +12,33 @@ CWL="${CWL_DIR}/${LIB}/${TOOL}.cwl"
 setup_dirs
 prepare_fsl_data
 
-# ── Data prep: create synthetic training data ─────────────────
-SYNTH_LESION="${DERIVED_DIR}/synth_lesion_mask.nii.gz"
-IDENTITY_MAT="${DERIVED_DIR}/identity.mat"
+# ── Data prep: create training data directory with all needed files ──
+BIANCA_DATA="${DERIVED_DIR}/bianca_training"
 MASTERFILE="${DERIVED_DIR}/bianca_masterfile.txt"
 
-# Create synthetic lesion mask by thresholding the brain image high
-if [[ ! -f "$SYNTH_LESION" ]]; then
-  echo "Creating synthetic lesion mask..."
-  docker_fsl fslmaths "$T1W_2MM_BRAIN" -thr 8000 -bin "$SYNTH_LESION"
+if [[ ! -d "$BIANCA_DATA" ]]; then
+  echo "Creating synthetic training data directory..."
+  mkdir -p "$BIANCA_DATA"
+
+  # Create 2 subjects (BIANCA needs at least 2: one for training, one for query)
+  for subj in sub01 sub02; do
+    mkdir -p "$BIANCA_DATA/$subj"
+    cp "$T1W_2MM" "$BIANCA_DATA/$subj/t1.nii.gz"
+    cp "$T1W_2MM_BRAIN" "$BIANCA_DATA/$subj/brain.nii.gz"
+    # Synthetic lesion mask: threshold brain at 7000 to get sparse pseudo-lesions
+    docker_fsl fslmaths "$BIANCA_DATA/$subj/brain.nii.gz" -thr 7000 -bin "$BIANCA_DATA/$subj/lesion.nii.gz"
+    # Identity transformation matrix
+    printf "1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1\n" > "$BIANCA_DATA/$subj/identity.mat"
+  done
 fi
 
-# Create identity transformation matrix
-if [[ ! -f "$IDENTITY_MAT" ]]; then
-  printf "1 0 0 0\n0 1 0 0\n0 0 1 0\n0 0 0 1\n" > "$IDENTITY_MAT"
-fi
-
-# Create master file: each line is space-separated paths
-# Format: T1_image brain_mask lesion_mask transformation_matrix
-if [[ ! -f "$MASTERFILE" ]]; then
-  echo "${T1W_2MM} ${T1W_2MM_BRAIN} ${SYNTH_LESION} ${IDENTITY_MAT}" > "$MASTERFILE"
-fi
+# Create master file with paths relative to the training_data directory name
+# InitialWorkDirRequirement stages the directory as its basename in the working dir
+DATADIR_NAME="$(basename "$BIANCA_DATA")"
+cat > "$MASTERFILE" <<EOF
+${DATADIR_NAME}/sub01/t1.nii.gz ${DATADIR_NAME}/sub01/brain.nii.gz ${DATADIR_NAME}/sub01/lesion.nii.gz ${DATADIR_NAME}/sub01/identity.mat
+${DATADIR_NAME}/sub02/t1.nii.gz ${DATADIR_NAME}/sub02/brain.nii.gz ${DATADIR_NAME}/sub02/lesion.nii.gz ${DATADIR_NAME}/sub02/identity.mat
+EOF
 
 # ── Run BIANCA CWL ───────────────────────────────────────────
 make_template "$CWL" "$TOOL"
@@ -41,6 +47,9 @@ cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 singlefile:
   class: File
   path: ${MASTERFILE}
+training_data:
+  class: Directory
+  path: ${BIANCA_DATA}
 querysubjectnum: 1
 brainmaskfeaturenum: 2
 labelfeaturenum: 3

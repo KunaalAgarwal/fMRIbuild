@@ -31,13 +31,13 @@ EOF
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 
 # ── Verify outputs ─────────────────────────────────────────────
+# AMICO output naming uses 'x' separator: NODDIFITxICVF.nii.gz
 dir="${OUT_DIR}/${TOOL}"
-expected_outputs=("FIT_ICVF.nii.gz" "FIT_OD.nii.gz" "FIT_ISOVF.nii.gz")
+expected_patterns=("NODDI*ICVF.nii.gz" "NODDI*OD.nii.gz" "NODDI*ISOVF.nii.gz")
 
-for expected in "${expected_outputs[@]}"; do
-  # Check in both AMICO/NODDI/ subdirectory and top-level
+for pattern in "${expected_patterns[@]}"; do
   found_file=""
-  for candidate in "${dir}/AMICO/NODDI/${expected}" "${dir}/${expected}"; do
+  for candidate in "${dir}"/${pattern} "${dir}"/output/${pattern}; do
     if [[ -f "$candidate" ]]; then
       found_file="$candidate"
       break
@@ -48,8 +48,8 @@ for expected in "${expected_outputs[@]}"; do
     if [[ ! -s "$found_file" ]]; then
       echo "  FAIL: zero-byte output: $found_file"; exit 1
     fi
-    echo "  OK: ${expected} ($(wc -c < "$found_file") bytes)"
+    echo "  OK: $(basename "$found_file") ($(wc -c < "$found_file") bytes)"
   else
-    echo "  WARN: ${expected} not found"
+    echo "  WARN: ${pattern} not found"
   fi
 done

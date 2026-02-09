@@ -40,13 +40,9 @@ surface_kernel: 2.0
 volume_kernel: 2.0
 direction: COLUMN
 cifti_out: smoothed.dtseries.nii
-fwhm: true
 left_surface:
   class: File
   path: ${WB_SPHERE_L}
-right_surface:
-  class: File
-  path: ${WB_SPHERE_R}
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"

@@ -84,7 +84,12 @@ cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 input:
   class: File
   path: ${B0_AP}
-topup_prefix: ${TOPUP_PREFIX}
+topup_fieldcoef:
+  class: File
+  path: ${TOPUP_FIELDCOEF}
+topup_movpar:
+  class: File
+  path: ${TOPUP_MOVPAR}
 encoding_file:
   class: File
   path: ${ACQPARAMS}

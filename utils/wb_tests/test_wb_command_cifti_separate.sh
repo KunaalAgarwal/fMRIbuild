@@ -32,12 +32,13 @@ fi
 
 make_template "$CWL" "$TOOL"
 
+# CIFTI was created with left-hemisphere surface data only, extract as metric
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 cifti_in:
   class: File
   path: ${CIFTI_PATH}
 direction: COLUMN
-volume_all: separated_vol.nii.gz
+metric_left: separated_left.func.gii
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -45,7 +46,7 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 # ── Verify outputs ─────────────────────────────────────────────
 dir="${OUT_DIR}/${TOOL}"
 found=0
-for f in "$dir"/separated_vol*; do
+for f in "$dir"/separated_left*; do
   [[ -f "$f" ]] || continue
   [[ "$(basename "$f")" == *.log ]] && continue
   found=1
@@ -56,5 +57,5 @@ for f in "$dir"/separated_vol*; do
 done
 
 if [[ "$found" -eq 0 ]]; then
-  echo "  WARN: no separated volume found"
+  echo "  WARN: no separated metric found"
 fi

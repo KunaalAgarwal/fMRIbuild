@@ -4377,7 +4377,8 @@ export const TOOL_MAP = {
         requiredInputs: {
             measure: { type: 'string', label: 'Non-FA measure name (e.g., MD, AD, RD)' },
             fa_directory: { type: 'Directory', passthrough: true, label: 'FA directory from TBSS pipeline' },
-            stats_directory: { type: 'Directory', label: 'Stats directory containing all_<measure>.nii.gz' }
+            stats_directory: { type: 'Directory', label: 'Stats directory (mean_FA_skeleton, skeleton_mask, all_FA, all_FA_skeletonised)' },
+            measure_directory: { type: 'Directory', label: 'Directory with per-subject non-FA images (names matching FA subjects without _FA suffix)' }
         },
 
         optionalInputs: {},
@@ -4399,7 +4400,8 @@ export const TOOL_MAP = {
 
         requiredInputs: {
             input: { type: 'File', passthrough: true, label: 'Input image(s) to correct', acceptedExtensions: ['.nii', '.nii.gz'] },
-            topup_prefix: { type: 'string', label: 'Basename of topup output (field coefficients)' },
+            topup_fieldcoef: { type: 'File', label: 'Topup field coefficients file (_fieldcoef.nii.gz)', acceptedExtensions: ['.nii', '.nii.gz'] },
+            topup_movpar: { type: 'File', label: 'Topup movement parameters file (_movpar.txt)', acceptedExtensions: ['.txt'] },
             encoding_file: { type: 'File', label: 'Acquisition parameters file' },
             inindex: { type: 'string', label: 'Comma-separated indices into encoding file' },
             output: { type: 'string', label: 'Output basename for corrected images' }
@@ -4486,14 +4488,15 @@ export const TOOL_MAP = {
 
         requiredInputs: {
             singlefile: { type: 'File', passthrough: true, label: 'Master file listing subjects, images, masks, and transformations' },
+            training_data: { type: 'Directory', label: 'Directory containing all subject data files referenced in master file' },
             querysubjectnum: { type: 'int', label: 'Row number for subject to segment' },
             brainmaskfeaturenum: { type: 'int', label: 'Column number containing brain mask' },
             labelfeaturenum: { type: 'int', label: 'Column number containing manual lesion mask' },
-            trainingnums: { type: 'string', label: 'Training subject row numbers (comma-separated or "all")' },
-            output_name: { type: 'string', label: 'Output file basename' }
+            trainingnums: { type: 'string', label: 'Training subject row numbers (comma-separated or "all")' }
         },
 
         optionalInputs: {
+            output_name: { type: 'string', label: 'Output file basename (default: bianca_output)' },
             featuresubset: { type: 'string', label: 'Column numbers for intensity features (comma-separated)', flag: '--featuresubset' },
             matfeaturenum: { type: 'int', label: 'Column number containing MNI transformation matrices', flag: '--matfeaturenum' },
             spatialweight: { type: 'double', label: 'Weighting for MNI spatial coordinates (default 1)', flag: '--spatialweight' },
@@ -4732,12 +4735,18 @@ export const TOOL_MAP = {
             mask: { type: 'File', label: 'Brain mask image', acceptedExtensions: ['.nii', '.nii.gz'] }
         },
 
-        optionalInputs: {},
+        optionalInputs: {
+            num_threads: { type: 'int', label: 'Maximum number of CPU threads (default 1)' },
+            b0_threshold: { type: 'int', label: 'Threshold for considering measurements b=0 (default 10)' },
+            csf_diffusivity: { type: 'double', label: 'CSF diffusivity in mm^2/s (default 0.003)' },
+            parallel_diffusivity: { type: 'double', label: 'Intracellular diffusivity parallel to neurites in mm^2/s (default 0.0017)' },
+            ex_vivo: { type: 'boolean', label: 'Use ex-vivo AMICO model' }
+        },
 
         outputs: {
-            ndi_map: { type: 'File', label: 'Neurite Density Index (NDI/ICVF) map', glob: ['AMICO/NODDI/FIT_ICVF.nii.gz', 'FIT_ICVF.nii.gz'] },
-            odi_map: { type: 'File', label: 'Orientation Dispersion Index (ODI) map', glob: ['AMICO/NODDI/FIT_OD.nii.gz', 'FIT_OD.nii.gz'] },
-            fiso_map: { type: 'File', label: 'Isotropic Volume Fraction (fISO) map', glob: ['AMICO/NODDI/FIT_ISOVF.nii.gz', 'FIT_ISOVF.nii.gz'] },
+            ndi_map: { type: 'File', label: 'Neurite Density Index (NDI/ICVF) map', glob: ['output/NODDI*ICVF.nii.gz'] },
+            odi_map: { type: 'File', label: 'Orientation Dispersion Index (ODI) map', glob: ['output/NODDI*OD.nii.gz'] },
+            fiso_map: { type: 'File', label: 'Isotropic Volume Fraction (fISO) map', glob: ['output/NODDI*ISOVF.nii.gz'] },
             log: { type: 'File', label: 'Log file', glob: ['amico_noddi.log'] },
             err_log: { type: 'File', label: 'Error log file', glob: ['amico_noddi.err.log'] }
         }

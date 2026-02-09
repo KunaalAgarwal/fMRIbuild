@@ -11,6 +11,15 @@ hints:
   DockerRequirement:
     dockerPull: brainlife/fsl:latest
 
+requirements:
+  InlineJavascriptRequirement: {}
+  InitialWorkDirRequirement:
+    listing:
+      - entryname: $(inputs.topup_fieldcoef.basename)
+        entry: $(inputs.topup_fieldcoef)
+      - entryname: $(inputs.topup_movpar.basename)
+        entry: $(inputs.topup_movpar)
+
 stdout: applytopup.log
 stderr: applytopup.err.log
 
@@ -21,12 +30,12 @@ inputs:
     inputBinding:
       prefix: --imain=
       separate: false
-  topup_prefix:
-    type: string
-    label: Basename of the topup output (field coefficients)
-    inputBinding:
-      prefix: --topup=
-      separate: false
+  topup_fieldcoef:
+    type: File
+    label: Topup field coefficients file (_fieldcoef.nii.gz from topup)
+  topup_movpar:
+    type: File
+    label: Topup movement parameters file (_movpar.txt from topup)
   encoding_file:
     type: File
     label: Acquisition parameters file (same as used for topup)
@@ -78,6 +87,11 @@ inputs:
     label: Verbose output
     inputBinding:
       prefix: -v
+
+arguments:
+  - prefix: --topup=
+    separate: false
+    valueFrom: $(inputs.topup_fieldcoef.basename.replace(/_fieldcoef\.nii\.gz$|_fieldcoef\.nii$/, ''))
 
 outputs:
   corrected_images:

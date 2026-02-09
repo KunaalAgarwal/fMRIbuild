@@ -158,3 +158,7 @@ outputs:
     type: ['null', File]
     outputBinding:
       glob: auto_tlrc_stdout.log
+  err_log:
+    type: ['null', File]
+    outputBinding:
+      glob: auto_tlrc_stderr.log

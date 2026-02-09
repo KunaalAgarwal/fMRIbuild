@@ -9,7 +9,14 @@ baseCommand: 'bianca'
 
 hints:
   DockerRequirement:
-    dockerPull: brainlife/fsl:latest
+    dockerPull: brainlife/fsl:6.0.4-patched2
+
+requirements:
+  InlineJavascriptRequirement: {}
+  InitialWorkDirRequirement:
+    listing:
+      - entry: $(inputs.training_data)
+        writable: false
 
 stdout: bianca.log
 stderr: bianca.err.log
@@ -21,6 +28,9 @@ inputs:
     inputBinding:
       prefix: --singlefile=
       separate: false
+  training_data:
+    type: Directory
+    label: Directory containing all subject data files referenced in master file
   querysubjectnum:
     type: int
     label: Row number in master file for the subject to segment

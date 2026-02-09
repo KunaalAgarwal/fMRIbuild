@@ -20,6 +20,9 @@ requirements:
       - entry: $(inputs.stats_directory)
         entryname: stats
         writable: true
+      - entry: $(inputs.measure_directory)
+        entryname: $(inputs.measure)
+        writable: true
 
 stdout: tbss_non_FA.log
 stderr: tbss_non_FA.err.log
@@ -32,10 +35,13 @@ inputs:
       position: 1
   fa_directory:
     type: Directory
-    label: FA directory from TBSS pipeline
+    label: FA directory from TBSS pipeline (contains per-subject FA images and warps)
   stats_directory:
     type: Directory
-    label: stats directory containing all_<measure>.nii.gz
+    label: stats directory (mean_FA_skeleton, skeleton_mask, all_FA, all_FA_skeletonised)
+  measure_directory:
+    type: Directory
+    label: Directory containing per-subject non-FA images (filenames must match FA subjects without _FA suffix)
 
 outputs:
   skeletonised_data:

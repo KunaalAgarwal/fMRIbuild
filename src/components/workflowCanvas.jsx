@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback, useEffect } from 'react';
+import React, { useRef, useState, useCallback, useEffect, useMemo } from 'react';
 import ReactFlow, {
   Background,
   Controls,
@@ -16,6 +16,7 @@ import NodeComponent from './NodeComponent';
 import EdgeMappingModal, { checkTypeCompatibility } from './EdgeMappingModal';
 import { TOOL_MAP } from '../../public/cwl/toolMap.js';
 import { useNodeLookup } from '../hooks/useNodeLookup.js';
+import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
@@ -36,6 +37,35 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   useEffect(() => {
     nodesRef.current = nodes;
   }, [nodes]);
+
+  // Compute which nodes inherit scatter from upstream (BFS propagation).
+  // Used by NodeComponent via ScatterPropagationContext to show badges.
+  const scatterContext = useMemo(() => {
+    // Compute source node IDs (nodes with no incoming edges)
+    const targetIds = new Set(edges.map(e => e.target));
+    const sourceNodeIds = new Set(
+        nodes.filter(n => !targetIds.has(n.id)).map(n => n.id)
+    );
+
+    // BFS propagation: only honor scatterEnabled on source nodes
+    const propagated = new Set();
+    const sources = new Set(
+        nodes.filter(n => n.data?.scatterEnabled && sourceNodeIds.has(n.id)).map(n => n.id)
+    );
+    const visited = new Set(sources);
+    const queue = [...sources];
+    while (queue.length) {
+      const nodeId = queue.shift();
+      for (const edge of edges) {
+        if (edge.source === nodeId && !visited.has(edge.target)) {
+          visited.add(edge.target);
+          propagated.add(edge.target);
+          queue.push(edge.target);
+        }
+      }
+    }
+    return { propagatedIds: propagated, sourceNodeIds };
+  }, [nodes, edges]);
 
   // Edge mapping modal state
   const [showEdgeModal, setShowEdgeModal] = useState(false);
@@ -95,7 +125,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                   data: {
                     ...node.data,
                     parameters: updatedData.params || updatedData,
-                    dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest'
+                    dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest',
+                    scatterEnabled: updatedData.scatterEnabled !== undefined
+                        ? updatedData.scatterEnabled
+                        : (node.data.scatterEnabled || false)
                   }
                 }
               : node
@@ -267,6 +300,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         label: name,
         parameters: '',
         dockerVersion: 'latest',
+        scatterEnabled: false,
         isDummy: isDummy,
         onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(newNode.id, newData),
       },
@@ -351,28 +385,30 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             onDragOver={handleDragOver}
             className="workflow-canvas-container"
         >
-          <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={onNodesChange}
-              onEdgesChange={handleEdgesChange}
-              onConnect={onConnect}
-              onNodesDelete={onNodesDelete}
-              onEdgeDoubleClick={onEdgeDoubleClick}
-              fitView
-              fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
-              nodeTypes={nodeTypes}
-              edgeTypes={edgeTypes}
-              onInit={(instance) => setReactFlowInstance(instance)}
-          >
-            <MiniMap
-              nodeColor="#4a90e2"
-              maskColor="rgba(0, 0, 0, 0.65)"
-              style={{ backgroundColor: '#1a1a1a' }}
-            />
-            <Background variant="dots" gap={12} size={1} />
-            <Controls />
-          </ReactFlow>
+          <ScatterPropagationContext.Provider value={scatterContext}>
+            <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={onNodesChange}
+                onEdgesChange={handleEdgesChange}
+                onConnect={onConnect}
+                onNodesDelete={onNodesDelete}
+                onEdgeDoubleClick={onEdgeDoubleClick}
+                fitView
+                fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
+                nodeTypes={nodeTypes}
+                edgeTypes={edgeTypes}
+                onInit={(instance) => setReactFlowInstance(instance)}
+            >
+              <MiniMap
+                nodeColor="#4a90e2"
+                maskColor="rgba(0, 0, 0, 0.65)"
+                style={{ backgroundColor: '#1a1a1a' }}
+              />
+              <Background variant="dots" gap={12} size={1} />
+              <Controls />
+            </ReactFlow>
+          </ScatterPropagationContext.Provider>
         </div>
 
         {/* Edge Mapping Modal */}

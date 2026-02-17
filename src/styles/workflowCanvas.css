@@ -1,6 +1,8 @@
 .workflow-canvas {
   height: 100%;
   width: 100%;
+  flex: 2;
+  min-width: 0;
 }
 
 .workflow-canvas-container {

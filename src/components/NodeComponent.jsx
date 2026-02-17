@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useMemo, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Handle, Position } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
@@ -6,6 +6,7 @@ import { TOOL_MAP, DOCKER_IMAGES } from '../../public/cwl/toolMap.js';
 import { DOCKER_TAGS, toolByName } from '../data/toolData.js';
 import { useToast } from '../context/ToastContext.jsx';
 import TagDropdown from './TagDropdown.jsx';
+import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import '../styles/workflowItem.css';
 
 // Map DOCKER_IMAGES keys to DOCKER_TAGS keys
@@ -30,9 +31,14 @@ const getLibraryFromDockerImage = (dockerImage) => {
     return null;
 };
 
-const NodeComponent = ({ data }) => {
+const NodeComponent = ({ data, id }) => {
     // Check if this is a dummy node early
     const isDummy = data.isDummy === true;
+
+    // Check scatter propagation and source-node status
+    const { propagatedIds, sourceNodeIds } = useContext(ScatterPropagationContext);
+    const isScatterInherited = propagatedIds.has(id);
+    const isSourceNode = sourceNodeIds.has(id);
 
     const { showError, dismissMessage } = useToast();
     const JSON_ERROR_MSG = 'Invalid JSON entered. Please ensure entry is formatted appropriately.';
@@ -41,6 +47,7 @@ const NodeComponent = ({ data }) => {
     const [dockerVersion, setDockerVersion] = useState(data.dockerVersion || 'latest');
     const [versionValid, setVersionValid] = useState(true);
     const [versionWarning, setVersionWarning] = useState('');
+    const [scatterEnabled, setScatterEnabled] = useState(data.scatterEnabled || false);
 
     // Info tooltip state (hover only, like workflowMenuItem)
     const [showInfoTooltip, setShowInfoTooltip] = useState(false);
@@ -130,6 +137,11 @@ const NodeComponent = ({ data }) => {
     }, [hasDefinedTool, optionalInputs]);
 
     const handleOpenModal = () => {
+        // Auto-enable scatter toggle if inherited from upstream (non-source node)
+        if (!isSourceNode && isScatterInherited && !scatterEnabled) {
+            setScatterEnabled(true);
+        }
+
         let inputValue = textInput;
 
         // Ensure inputValue is always a string before calling trim()
@@ -165,7 +177,8 @@ const NodeComponent = ({ data }) => {
             dismissMessage(JSON_ERROR_MSG);
             data.onSaveParameters({
                 params: JSON.parse(textInput),
-                dockerVersion: finalDockerVersion
+                dockerVersion: finalDockerVersion,
+                scatterEnabled: scatterEnabled
             });
         }
 
@@ -244,6 +257,10 @@ const NodeComponent = ({ data }) => {
                     <span className="node-label">{data.label}</span>
                     <Handle type="source" position={Position.Bottom} />
                 </div>
+
+                {((data.scatterEnabled && isSourceNode) || isScatterInherited) && (
+                    <div className="node-scatter-badge">SCATTER</div>
+                )}
 
                 <div className="node-bottom-row">
                     <span className="node-bottom-spacer"></span>
@@ -343,6 +360,28 @@ const NodeComponent = ({ data }) => {
                                 </div>
                             </Form.Group>
                         )}
+
+                        {/* Scatter Toggle */}
+                        <Form.Group className="scatter-toggle-group">
+                            <div className="scatter-toggle-row">
+                                <Form.Label className="modal-label" style={{ marginBottom: 0 }}>
+                                    Scatter (Batch Processing)
+                                </Form.Label>
+                                <Form.Check
+                                    type="switch"
+                                    id={`scatter-toggle-${data.label}`}
+                                    checked={scatterEnabled}
+                                    onChange={(e) => setScatterEnabled(e.target.checked)}
+                                    disabled={!isSourceNode}
+                                    className="scatter-switch"
+                                />
+                            </div>
+                            <div className="scatter-help-text">
+                                {!isSourceNode
+                                    ? 'Scatter can only be enabled on source nodes (nodes with no incoming connections). Downstream nodes inherit scatter automatically from upstream.'
+                                    : 'Run this step once per input file instead of once total. Enable on the first node to batch-process multiple subjects \u2014 the exported CWL will loop over every file in the input array. Downstream nodes inherit scatter automatically.'}
+                            </div>
+                        </Form.Group>
 
                         <Form.Group className="mb-3">
                             <Form.Label className="modal-label">

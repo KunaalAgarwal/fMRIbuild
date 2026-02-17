@@ -67,6 +67,31 @@
 }
 
 /* ============================================
+   SCATTER TOGGLE (parameter modal)
+   ============================================ */
+.scatter-toggle-group {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.scatter-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.scatter-switch .form-check-input {
+  cursor: pointer;
+}
+
+.scatter-help-text {
+  font-size: 0.7rem;
+  color: #666;
+  margin-top: 6px;
+}
+
+/* ============================================
    NODE STRUCTURE - Streamlined & Responsive
    ============================================ */
 .node-wrapper {
@@ -160,6 +185,23 @@
 /* Bottom-left spacer */
 .node-bottom-spacer {
   min-width: 20px;
+}
+
+/* Scatter badge on canvas node */
+.node-scatter-badge {
+  font-size: 7px;
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  color: #4ac6e2;
+  background-color: rgba(74, 198, 226, 0.12);
+  border: 1px solid rgba(74, 198, 226, 0.3);
+  border-radius: 3px;
+  padding: 1px 6px;
+  text-align: center;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 2px;
+  align-self: center;
 }
 
 /* ============================================

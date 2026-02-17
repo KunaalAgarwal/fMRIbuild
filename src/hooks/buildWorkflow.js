@@ -10,7 +10,11 @@ import { TOOL_MAP } from '../../public/cwl/toolMap.js';
  * - Exposes all outputs from terminal nodes
  * - Excludes dummy nodes (visual-only) from CWL generation
  */
-export function buildCWLWorkflow(graph) {
+/**
+ * Convert the React-Flow graph into a CWL Workflow JS object.
+ * Returns the raw object before YAML serialization.
+ */
+export function buildCWLWorkflowObject(graph) {
     // Filter out dummy nodes before processing
     const dummyNodeIds = new Set(
         graph.nodes.filter(n => n.data?.isDummy).map(n => n.id)
@@ -87,19 +91,50 @@ export function buildCWLWorkflow(graph) {
         return totalCount > 1 ? `${toolId}_${count}` : toolId;
     };
 
+    // Track source nodes (no incoming edges)
+    const sourceNodeIds = new Set(
+        nodes.filter(n => inEdgesOf(n.id).length === 0).map(n => n.id)
+    );
+
+    /* ---------- compute scatter propagation ---------- */
+    // A step scatters if the user enabled it OR any upstream step is scattered.
+    // Forward pass over topological order ensures upstream decisions propagate.
+    const scatteredSteps = new Set();
+    order.forEach((nodeId) => {
+        const node = nodeById(nodeId);
+        // Only honor scatterEnabled on source nodes (no incoming edges)
+        if (node.data?.scatterEnabled && sourceNodeIds.has(nodeId)) {
+            scatteredSteps.add(nodeId);
+            return;
+        }
+        for (const edge of inEdgesOf(nodeId)) {
+            if (scatteredSteps.has(edge.source)) {
+                scatteredSteps.add(nodeId);
+                return;
+            }
+        }
+    });
+
+    /* ---------- helper: wrap a type string in CWL array ---------- */
+    const toArrayType = (typeStr) => {
+        // Strip nullable marker - array can be empty instead
+        const base = (typeStr || 'File').replace(/\?$/, '');
+        return { type: 'array', items: base };
+    };
+
     /* ---------- build CWL skeleton ---------- */
+    const hasScatter = scatteredSteps.size > 0;
     const wf = {
         cwlVersion: 'v1.2',
         class: 'Workflow',
+        ...(hasScatter && { requirements: { ScatterFeatureRequirement: {} } }),
         inputs: {},
         outputs: {},
         steps: {}
     };
 
-    // Track source nodes (no incoming edges)
-    const sourceNodeIds = new Set(
-        nodes.filter(n => inEdgesOf(n.id).length === 0).map(n => n.id)
-    );
+    // Separate map for job template values (not embedded in CWL)
+    const jobDefaults = {};
 
     /* ---------- helper: convert type string to CWL type ---------- */
     const toCWLType = (typeStr, makeNullable = false) => {
@@ -122,6 +157,35 @@ export function buildCWLWorkflow(graph) {
 
         // Plain type
         return makeNullable ? ['null', typeStr] : typeStr;
+    };
+
+    /* ---------- helper: check if a value is YAML-serializable ---------- */
+    const isSerializable = (val) => {
+        if (val === null || val === undefined) return false;
+        const t = typeof val;
+        if (t === 'string' || t === 'number' || t === 'boolean') return true;
+        if (t === 'function') return false;
+        if (Array.isArray(val)) return val.every(isSerializable);
+        if (t === 'object') return Object.values(val).every(isSerializable);
+        return false;
+    };
+
+    /* ---------- helper: safely extract user parameters ---------- */
+    const getUserParams = (nodeData) => {
+        const p = nodeData.parameters;
+        if (p && typeof p === 'object' && !Array.isArray(p)) return p;
+        return null;
+    };
+
+    /* ---------- helper: type-based default for optional inputs ---------- */
+    const defaultForType = (type, inputDef) => {
+        switch (type) {
+            case 'boolean': return false;
+            case 'int':     return inputDef?.bounds ? inputDef.bounds[0] : 0;
+            case 'double':  return inputDef?.bounds ? inputDef.bounds[0] : 0.0;
+            case 'string':  return '';
+            default:        return null;
+        }
     };
 
     /* ---------- helper: generate workflow input name ---------- */
@@ -192,7 +256,11 @@ export function buildCWLWorkflow(graph) {
                     const wfInputName = sourceNodeIds.size === 1
                         ? 'input_file'
                         : `${stepId}_input_file`;
-                    wf.inputs[wfInputName] = { type: toCWLType(type) };
+                    // If scattered, input becomes an array type
+                    const inputType = scatteredSteps.has(nodeId)
+                        ? toArrayType(type)
+                        : toCWLType(type);
+                    wf.inputs[wfInputName] = { type: inputType };
                     step.in[inputName] = wfInputName;
                 }
             } else {
@@ -211,15 +279,33 @@ export function buildCWLWorkflow(graph) {
                 // Skip record types - these are complex types handled by CWL directly
                 if (type === 'record') {
                     const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                    wf.inputs[wfInputName] = { type: ['null', 'Any'] };
+                    const recordEntry = { type: ['null', 'Any'] };
+                    const params = getUserParams(node.data);
+                    const recordValue = params?.[inputName];
+                    if (recordValue !== undefined && recordValue !== null && recordValue !== '' && isSerializable(recordValue)) {
+                        recordEntry.default = recordValue;
+                    }
+                    wf.inputs[wfInputName] = recordEntry;
                     step.in[inputName] = wfInputName;
                     return;
                 }
 
                 const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
 
-                // Make optional inputs nullable
-                wf.inputs[wfInputName] = { type: toCWLType(type, true) };
+                // Make optional inputs nullable (no default in CWL — values go to jobDefaults)
+                const inputEntry = { type: toCWLType(type, true) };
+                const params = getUserParams(node.data);
+                const userValue = params?.[inputName];
+                let value;
+                if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
+                    value = userValue;
+                } else {
+                    value = defaultForType(type, inputDef);
+                }
+                if (value !== null && value !== undefined) {
+                    jobDefaults[wfInputName] = value;
+                }
+                wf.inputs[wfInputName] = inputEntry;
                 step.in[inputName] = wfInputName;
             });
         }
@@ -236,7 +322,55 @@ export function buildCWLWorkflow(graph) {
             };
         }
 
-        wf.steps[stepId] = step;
+        /* ---------- add scatter to step if needed ---------- */
+        if (scatteredSteps.has(nodeId)) {
+            const scatterInputs = [];
+
+            if (sourceNodeIds.has(nodeId)) {
+                // Source node: scatter on passthrough inputs
+                Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
+                    if (inputDef.passthrough) {
+                        scatterInputs.push(inputName);
+                    }
+                });
+            } else {
+                // Downstream node: scatter on inputs wired from scattered upstream
+                incomingEdges.forEach(edge => {
+                    if (!scatteredSteps.has(edge.source)) return;
+                    const mappings = edge.data?.mappings || [];
+                    if (mappings.length > 0) {
+                        mappings.forEach(m => {
+                            if (!scatterInputs.includes(m.targetInput)) {
+                                scatterInputs.push(m.targetInput);
+                            }
+                        });
+                    } else {
+                        // Fallback: scatter on passthrough inputs
+                        Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
+                            if (inputDef.passthrough && !scatterInputs.includes(inputName)) {
+                                scatterInputs.push(inputName);
+                            }
+                        });
+                    }
+                });
+            }
+
+            if (scatterInputs.length > 0) {
+                step.scatter = scatterInputs.length === 1 ? scatterInputs[0] : scatterInputs;
+                if (scatterInputs.length > 1) {
+                    step.scatterMethod = 'dotproduct';
+                }
+            }
+        }
+
+        // Build final step with CWL-conventional property order: run, scatter, in, out, hints
+        const finalStep = { run: step.run };
+        if (step.scatter) finalStep.scatter = step.scatter;
+        if (step.scatterMethod) finalStep.scatterMethod = step.scatterMethod;
+        finalStep.in = step.in;
+        finalStep.out = step.out;
+        if (step.hints) finalStep.hints = step.hints;
+        wf.steps[stepId] = finalStep;
     });
 
     /* ---------- declare ALL outputs from terminal nodes ---------- */
@@ -250,12 +384,17 @@ export function buildCWLWorkflow(graph) {
         const isSingleTerminal = terminalNodes.length === 1;
 
         // Expose ALL outputs from terminal nodes
+        const isScattered = scatteredSteps.has(node.id);
+
         Object.entries(outputs).forEach(([outputName, outputDef]) => {
             const wfOutputName = isSingleTerminal
                 ? outputName
                 : `${stepId}_${outputName}`;
 
-            const outputType = toCWLType(outputDef.type);
+            // If scattered, wrap output type in array
+            const outputType = isScattered
+                ? toArrayType(outputDef.type)
+                : toCWLType(outputDef.type);
 
             wf.outputs[wfOutputName] = {
                 type: outputType,
@@ -264,5 +403,59 @@ export function buildCWLWorkflow(graph) {
         });
     });
 
+    return { wf, jobDefaults };
+}
+
+/**
+ * Convert the React-Flow graph into a CWL Workflow YAML string.
+ */
+export function buildCWLWorkflow(graph) {
+    const { wf } = buildCWLWorkflowObject(graph);
     return YAML.dump(wf, { noRefs: true });
+}
+
+/**
+ * Generate a job input template from a CWL workflow object.
+ * Mirrors the behavior of `cwltool --make-template`.
+ */
+export function buildJobTemplate(wf, jobDefaults = {}) {
+    const placeholderForType = (cwlType) => {
+        if (cwlType == null) return null;
+
+        // Nullable / union: ['null', X] → placeholder for X
+        if (Array.isArray(cwlType)) {
+            const nonNull = cwlType.find(t => t !== 'null');
+            return nonNull ? placeholderForType(nonNull) : null;
+        }
+
+        // Array: { type: 'array', items: T } → [placeholder(T)]
+        if (typeof cwlType === 'object' && cwlType.type === 'array') {
+            return [placeholderForType(cwlType.items)];
+        }
+
+        // Primitive types
+        switch (cwlType) {
+            case 'File':      return { class: 'File', path: 'a/file/path' };
+            case 'Directory':  return { class: 'Directory', path: 'a/directory/path' };
+            case 'string':     return 'a_string';
+            case 'int':
+            case 'long':       return 0;
+            case 'float':
+            case 'double':     return 0.1;
+            case 'boolean':    return false;
+            default:           return null;
+        }
+    };
+
+    const template = {};
+    for (const [name, def] of Object.entries(wf.inputs)) {
+        if (jobDefaults[name] !== undefined) {
+            template[name] = jobDefaults[name];
+        } else if (def.default !== undefined) {
+            template[name] = def.default;
+        } else {
+            template[name] = placeholderForType(def.type);
+        }
+    }
+    return YAML.dump(template, { noRefs: true });
 }

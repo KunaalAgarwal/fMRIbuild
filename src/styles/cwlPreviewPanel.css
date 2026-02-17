@@ -1,0 +1,183 @@
+.cwl-preview-panel {
+    flex: 1;
+    min-width: 0;
+    max-height: 60vh;
+    display: flex;
+    flex-direction: column;
+    margin: 20px;
+    margin-left: 0;
+    border-radius: 12px;
+    background-color: rgba(46, 46, 46, 0.9);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    backdrop-filter: blur(8px);
+    overflow: hidden;
+}
+
+.cwl-preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 14px;
+    background-color: #252525;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.cwl-tab-bar {
+    display: flex;
+    gap: 2px;
+}
+
+.cwl-tab {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 500;
+    padding: 4px 10px;
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    color: #888;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cwl-tab:hover {
+    color: #ccc;
+    background-color: rgba(255, 255, 255, 0.04);
+    transform: none;
+    box-shadow: none;
+}
+
+.cwl-tab.active {
+    color: #e0e0e0;
+    background-color: rgba(74, 144, 226, 0.15);
+    border-color: rgba(74, 144, 226, 0.4);
+}
+
+.cwl-preview-actions {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.cwl-action-btn {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 500;
+    padding: 4px 8px;
+    background-color: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
+    color: #aaa;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.cwl-action-btn:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: #ddd;
+    transform: none;
+    box-shadow: none;
+}
+
+.cwl-action-btn:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+}
+
+.cwl-preview-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 12px;
+}
+
+.cwl-code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    line-height: 1.6;
+    color: #d0d0d0;
+    background-color: #1a1a1a;
+    padding: 12px;
+    border-radius: 6px;
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    margin: 0;
+    white-space: pre;
+    overflow-x: auto;
+    tab-size: 2;
+}
+
+.cwl-code-fullscreen {
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.cwl-key { color: #4a90e2; }
+.cwl-string { color: #4CAF50; }
+.cwl-comment { color: #666; font-style: italic; }
+.cwl-bool { color: #e0a050; }
+
+.cwl-empty-message {
+    color: #666;
+    font-style: italic;
+    font-size: 0.8rem;
+    text-align: center;
+    padding: 40px 20px;
+}
+
+.cwl-error-banner {
+    background-color: rgba(255, 193, 7, 0.15);
+    border: 1px solid rgba(255, 193, 7, 0.4);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 12px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.75rem;
+    color: #ffc107;
+}
+
+.cwl-error-icon {
+    font-weight: 700;
+    font-size: 0.9rem;
+    width: 20px;
+    height: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background-color: rgba(255, 193, 7, 0.3);
+    flex-shrink: 0;
+}
+
+.cwl-fullscreen-modal .modal-content {
+    border-radius: 8px;
+    background-color: #1e1e1e;
+    color: #f5f5f5;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    font-family: 'Inter', sans-serif;
+}
+
+.cwl-fullscreen-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 20px;
+    background-color: #252525;
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.cwl-fullscreen-modal .modal-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 500;
+    color: #e0e0e0;
+}
+
+.cwl-fullscreen-modal .modal-body {
+    padding: 20px;
+    background-color: #1e1e1e;
+}

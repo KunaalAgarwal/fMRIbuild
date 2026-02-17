@@ -7,6 +7,7 @@ import ToggleWorkflowBar from './components/toggleWorkflowBar';
 import WorkflowCanvas from './components/workflowCanvas'
 import WorkflowNameInput from './components/workflowNameInput';
 import Footer from "./components/footer";
+import CWLPreviewPanel from './components/CWLPreviewPanel';
 import { useWorkspaces } from './hooks/useWorkspaces';
 import { useGenerateWorkflow } from './hooks/generateWorkflow';
 import { ToastProvider } from './context/ToastContext.jsx';
@@ -57,6 +58,9 @@ function App() {
                             workflowItems={workspaces[currentWorkspace]}
                             updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
                             onSetWorkflowData={setGetWorkflowData}
+                        />
+                        <CWLPreviewPanel
+                            getWorkflowData={getWorkflowData}
                         />
                     </div>
                     <ToggleWorkflowBar

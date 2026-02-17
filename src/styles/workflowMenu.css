@@ -1,5 +1,6 @@
 .workflow-menu-container {
-  width: clamp(200px, 20vw, 300px);
+  flex: 0.5;
+  min-width: 0;
   max-height: 60vh;
   overflow-y: auto;
   margin: 20px;

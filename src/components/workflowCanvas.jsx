@@ -42,7 +42,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   // Compute which nodes inherit scatter from upstream (BFS propagation).
   // Used by NodeComponent via ScatterPropagationContext to show badges.
   const scatterContext = useMemo(() => {
-    const { scatteredNodeIds, sourceNodeIds } = computeScatteredNodes(nodes, edges);
+    const dummyIds = new Set(nodes.filter(n => n.data?.isDummy).map(n => n.id));
+    const realNodes = nodes.filter(n => !n.data?.isDummy);
+    const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
+    const { scatteredNodeIds, sourceNodeIds } = computeScatteredNodes(realNodes, realEdges);
     return { propagatedIds: scatteredNodeIds, sourceNodeIds };
   }, [nodes, edges]);
 

@@ -44,7 +44,8 @@ function CWLPreviewPanel({ getWorkflowData }) {
             }
             try {
                 const graph = getWorkflowData();
-                if (!graph || !graph.nodes || graph.nodes.length < 2 || !graph.edges || graph.edges.length < 1) {
+                const realNodes = graph.nodes.filter(n => !n.data?.isDummy);
+                if (!graph || !graph.nodes || realNodes.length < 2 || !graph.edges || graph.edges.length < 1) {
                     setCwlOutput('');
                     setJobOutput('');
                     setError(null);

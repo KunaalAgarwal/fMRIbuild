@@ -27,11 +27,10 @@ export function useWorkspaces() {
   useDebouncedStorage('currentWorkspace', currentWorkspace, 300);
 
   const addNewWorkspace = () => {
-    setWorkspaces((prevWorkspaces) => [
-      ...prevWorkspaces,
-      { nodes: [], edges: [], name: '' }
-    ]);
-    setCurrentWorkspace(workspaces.length); // Switch to the new workspace
+    setWorkspaces((prevWorkspaces) => {
+      setCurrentWorkspace(prevWorkspaces.length);
+      return [...prevWorkspaces, { nodes: [], edges: [], name: '' }];
+    });
   };
 
   const clearCurrentWorkspace = () => {

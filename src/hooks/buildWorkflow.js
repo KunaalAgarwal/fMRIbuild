@@ -1,10 +1,10 @@
 import YAML from 'js-yaml';
-import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
 
 /**
  * Convert the React-Flow graph into a CWL Workflow YAML string.
- * Uses static TOOL_MAP metadata to wire inputs/outputs correctly.
+ * Uses CWL-derived tool configs to wire inputs/outputs correctly.
  *
  * - Exposes all required inputs as workflow inputs
  * - Exposes all optional inputs as nullable workflow inputs
@@ -71,7 +71,7 @@ export function buildCWLWorkflowObject(graph) {
 
     order.forEach((nodeId) => {
         const node = nodeById(nodeId);
-        const tool = TOOL_MAP[node.data.label];
+        const tool = getToolConfigSync(node.data.label);
         // Use tool.id if available, otherwise generate from label
         const toolId = tool?.id || node.data.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
@@ -177,7 +177,7 @@ export function buildCWLWorkflowObject(graph) {
     order.forEach((nodeId) => {
         const node = nodeById(nodeId);
         const { label } = node.data;
-        const tool = TOOL_MAP[label];
+        const tool = getToolConfigSync(label);
 
         // Generic fallback for undefined tools
         const genericTool = {
@@ -223,7 +223,7 @@ export function buildCWLWorkflowObject(graph) {
                     } else {
                         // Fallback to primary output (for backward compatibility or generic tools)
                         const srcNode = nodeById(srcEdge.source);
-                        const srcTool = TOOL_MAP[srcNode.data.label];
+                        const srcTool = getToolConfigSync(srcNode.data.label);
                         if (srcTool?.primaryOutputs?.[0]) {
                             step.in[inputName] = `${srcStepId}/${srcTool.primaryOutputs[0]}`;
                         } else {
@@ -357,7 +357,7 @@ export function buildCWLWorkflowObject(graph) {
     const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
 
     terminalNodes.forEach(node => {
-        const tool = TOOL_MAP[node.data.label];
+        const tool = getToolConfigSync(node.data.label);
         // Fallback outputs for undefined tools
         const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
         const stepId = getStepId(node.id);

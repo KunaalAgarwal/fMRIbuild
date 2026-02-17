@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ReactDOM from 'react-dom/client';
 import ActionsBar from './components/actionsBar';
 import HeaderBar from './components/headerBar';
@@ -11,6 +11,9 @@ import CWLPreviewPanel from './components/CWLPreviewPanel';
 import { useWorkspaces } from './hooks/useWorkspaces';
 import { useGenerateWorkflow } from './hooks/generateWorkflow';
 import { ToastProvider } from './context/ToastContext.jsx';
+import { TOOL_ANNOTATIONS } from './utils/toolAnnotations.js';
+import { preloadAllCWL } from './utils/cwlParser.js';
+import { invalidateMergeCache } from './utils/toolRegistry.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
 
@@ -32,6 +35,16 @@ function App() {
     const [getWorkflowData, setGetWorkflowData] = useState(null);
 
     const { generateWorkflow } = useGenerateWorkflow();
+
+    // Preload all CWL files on mount so getToolConfigSync() works synchronously
+    useEffect(() => {
+        const cwlPaths = Object.values(TOOL_ANNOTATIONS)
+            .map(ann => ann.cwlPath)
+            .filter(Boolean);
+        preloadAllCWL(cwlPaths)
+            .then(() => invalidateMergeCache())
+            .catch(err => console.error('[App] CWL preload failed:', err));
+    }, []);
 
     return (
         <div>
@@ -58,6 +71,7 @@ function App() {
                             workflowItems={workspaces[currentWorkspace]}
                             updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
                             onSetWorkflowData={setGetWorkflowData}
+                            currentWorkspaceIndex={currentWorkspace}
                         />
                         <CWLPreviewPanel
                             getWorkflowData={getWorkflowData}

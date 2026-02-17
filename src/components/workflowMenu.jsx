@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef } from 'react';
 import WorkflowMenuItem from './workflowMenuItem';
-import { toolsByModality, modalityOrder, libraryOrder, dummyNodes } from '../data/toolData';
+import ModalityTooltip from './modalityTooltip';
+import { toolsByModality, modalityOrder, modalityDescriptions, libraryOrder, dummyNodes } from '../utils/toolAnnotations';
 import '../styles/workflowMenu.css';
 
 function WorkflowMenu() {
@@ -211,14 +212,16 @@ function WorkflowMenu() {
 
               return (
                 <div key={modality} className="modality-section">
-                  <div
-                    className={`modality-header ${isModalityExpanded ? 'expanded' : ''}`}
-                    onClick={() => toggleSection(modality)}
-                  >
-                    <span className="chevron">{isModalityExpanded ? '▼' : '▶'}</span>
-                    <span className="modality-name">{modality}</span>
-                    <span className="tool-count">{modalityToolCount}</span>
-                  </div>
+                  <ModalityTooltip name={modality} description={modalityDescriptions[modality]}>
+                    <div
+                      className={`modality-header ${isModalityExpanded ? 'expanded' : ''}`}
+                      onClick={() => toggleSection(modality)}
+                    >
+                      <span className="chevron">{isModalityExpanded ? '▼' : '▶'}</span>
+                      <span className="modality-name">{modality}</span>
+                      <span className="tool-count">{modalityToolCount}</span>
+                    </div>
+                  </ModalityTooltip>
 
                   {isModalityExpanded && (
                     <div className="modality-content">

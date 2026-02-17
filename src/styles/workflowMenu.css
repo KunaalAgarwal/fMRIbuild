@@ -3,7 +3,7 @@
   min-width: 0;
   max-height: 60vh;
   overflow-y: auto;
-  margin: 20px;
+  margin: clamp(8px, 1.5vw, 20px);
   padding: 0;
   border-radius: 12px;
   background-color: rgba(46, 46, 46, 0.9);
@@ -16,8 +16,8 @@
 .workflow-menu {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  padding: 15px;
+  gap: clamp(4px, 0.6vw, 8px);
+  padding: clamp(8px, 1vw, 15px);
 }
 
 /* Modality Section Styles */
@@ -29,7 +29,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: clamp(6px, 0.8vw, 10px) clamp(8px, 1vw, 12px);
   background-color: #3a3a3a;
   border-radius: 8px;
   font-weight: 700;
@@ -43,10 +43,11 @@
 }
 
 .modality-header .chevron {
-  margin-right: 8px;
+  margin-right: clamp(4px, 0.5vw, 8px);
   font-size: 0.7em;
   transition: transform 0.2s ease;
   color: #888;
+  flex-shrink: 0;
 }
 
 .modality-header .modality-name {
@@ -65,10 +66,11 @@
   padding: 2px 6px;
   border-radius: 10px;
   white-space: nowrap;
+  margin-left: 8px;
 }
 
 .modality-content {
-  padding: 6px 0 4px 6px;
+  padding: clamp(3px, 0.4vw, 6px) 0 clamp(2px, 0.3vw, 4px) clamp(3px, 0.4vw, 6px);
   display: flex;
   flex-direction: column;
   gap: 4px;
@@ -83,7 +85,7 @@
   cursor: pointer;
   display: flex;
   align-items: center;
-  padding: 10px 12px;
+  padding: clamp(6px, 0.8vw, 10px) clamp(8px, 1vw, 12px);
   background-color: #3a3a3a;
   border-radius: 8px;
   font-weight: 600;
@@ -97,10 +99,11 @@
 }
 
 .library-header .chevron {
-  margin-right: 8px;
+  margin-right: clamp(4px, 0.5vw, 8px);
   font-size: 0.7em;
   transition: transform 0.2s ease;
   color: #888;
+  flex-shrink: 0;
 }
 
 .library-header .library-name {
@@ -122,10 +125,10 @@
 }
 
 .library-tools {
-  padding: 8px 0 4px 8px;
+  padding: clamp(4px, 0.6vw, 8px) 0 clamp(2px, 0.3vw, 4px) clamp(4px, 0.6vw, 8px);
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: clamp(3px, 0.4vw, 6px);
 }
 
 .coming-soon {
@@ -142,9 +145,9 @@
 }
 
 .subsection-header {
-  font-size: 0.7em;
+  font-size: clamp(0.55em, 0.7vw, 0.7em);
   color: #888;
-  padding: 8px 8px 4px;
+  padding: clamp(4px, 0.6vw, 8px) clamp(4px, 0.6vw, 8px) clamp(2px, 0.3vw, 4px);
   text-transform: uppercase;
   letter-spacing: 0.5px;
   font-weight: 500;

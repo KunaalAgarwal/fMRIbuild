@@ -1,8 +1,8 @@
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 import YAML from 'js-yaml';
-import { buildCWLWorkflow } from './buildWorkflow.js';
-import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { buildCWLWorkflowObject, buildJobTemplate } from './buildWorkflow.js';
+import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { useToast } from '../context/ToastContext.jsx';
 
 export function useGenerateWorkflow() {
@@ -55,10 +55,13 @@ export function useGenerateWorkflow() {
 
         const safeWorkflowName = sanitizeFilename(workflowName);
 
-        /* ---------- build CWL workflow ---------- */
+        /* ---------- build CWL workflow + job template ---------- */
         let mainCWL;
+        let jobYml;
         try {
-            mainCWL = buildCWLWorkflow(graph);
+            const { wf, jobDefaults } = buildCWLWorkflowObject(graph);
+            mainCWL = YAML.dump(wf, { noRefs: true });
+            jobYml = buildJobTemplate(wf, jobDefaults);
         } catch (err) {
             showError(`Workflow build failed: ${err.message}`);
             return;
@@ -71,6 +74,7 @@ export function useGenerateWorkflow() {
         /* ---------- prepare ZIP ---------- */
         const zip = new JSZip();
         zip.file(`workflows/${safeWorkflowName}.cwl`, mainCWL);
+        zip.file(`workflows/${safeWorkflowName}_job.yml`, jobYml);
 
         // baseURL ends in "/", ensure single slash join
         const base = (import.meta.env.BASE_URL || '/').replace(/\/?$/, '/');
@@ -88,10 +92,12 @@ export function useGenerateWorkflow() {
         }
 
         /* ---------- build Docker version map for each tool path ---------- */
+        // Filter dummy nodes — they have no tool definitions
+        const realNodes = graph.nodes.filter(n => !n.data?.isDummy);
         // Maps cwlPath -> { dockerImage, dockerVersion }
         const dockerVersionMap = {};
-        graph.nodes.forEach(node => {
-            const tool = TOOL_MAP[node.data.label];
+        realNodes.forEach(node => {
+            const tool = getToolConfigSync(node.data.label);
             if (tool?.cwlPath && tool?.dockerImage) {
                 // Use the node's dockerVersion, defaulting to 'latest'
                 const version = node.data.dockerVersion || 'latest';
@@ -109,7 +115,7 @@ export function useGenerateWorkflow() {
 
         /* ---------- fetch each unique tool file and inject Docker version ---------- */
         const uniquePaths = [
-            ...new Set(graph.nodes.map(n => TOOL_MAP[n.data.label]?.cwlPath).filter(Boolean))
+            ...new Set(realNodes.map(n => getToolConfigSync(n.data.label)?.cwlPath).filter(Boolean))
         ];
 
         try {

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
-import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { parseExtensionsFromGlob, checkExtensionCompatibility } from '../utils/extensionValidation.js';
 import { useToast } from '../context/ToastContext.jsx';
 import '../styles/edgeMappingModal.css';
@@ -77,7 +77,7 @@ const getToolIO = (toolLabel, isDummy = false) => {
             isDummy: true
         };
     }
-    const tool = TOOL_MAP[toolLabel];
+    const tool = getToolConfigSync(toolLabel);
     if (tool) {
         return {
             outputs: Object.entries(tool.outputs).map(([name, def]) => ({
@@ -135,7 +135,7 @@ const EdgeMappingModal = ({
                 const defaultMapping = [];
                 if (sourceIO.outputs.length > 0 && targetIO.inputs.length > 0) {
                     // For defined tools, use primaryOutputs if available
-                    const tool = TOOL_MAP[sourceNode?.label];
+                    const tool = getToolConfigSync(sourceNode?.label);
                     const primaryOutput = tool?.primaryOutputs?.[0] || sourceIO.outputs[0].name;
                     defaultMapping.push({
                         sourceOutput: primaryOutput,

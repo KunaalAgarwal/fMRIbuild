@@ -1,26 +1,14 @@
 #!/usr/bin/env node
 /**
  * Fetches Docker image tags from Docker Hub for neuroimaging libraries.
- * Run with: node scripts/fetchDockerTags.js
+ * Run with: node src/utils/fetchDockerTags.mjs
  *
  * This script queries the Docker Hub API and outputs the tags that should
- * be added to src/data/toolData.js
+ * be added to src/utils/toolAnnotations.js
  */
 
-const https = require('https');
-
-// Docker images to fetch tags for (from toolMap.js)
-const DOCKER_IMAGES = {
-    FSL: 'brainlife/fsl',
-    AFNI: 'brainlife/afni',
-    ANTs: 'antsx/ants',
-    FreeSurfer: 'freesurfer/freesurfer',
-    MRtrix3: 'mrtrix3/mrtrix3',
-    fMRIPrep: 'nipreps/fmriprep',
-    MRIQC: 'nipreps/mriqc',
-    'Connectome Workbench': 'khanlab/connectome-workbench',
-    AMICO: 'cookpa/amico-noddi'
-};
+import https from 'https';
+import { DOCKER_IMAGES } from './toolAnnotations.js';
 
 // Maximum number of tags to keep per image
 const MAX_TAGS = 15;
@@ -100,7 +88,7 @@ async function main() {
     console.log('\n' + '='.repeat(60) + '\n');
 
     if (Object.keys(results).length > 0) {
-        console.log('Add this to src/data/toolData.js:\n');
+        console.log('Add this to src/utils/toolAnnotations.js:\n');
         console.log('export const DOCKER_TAGS = {');
 
         for (const [library, tags] of Object.entries(results)) {

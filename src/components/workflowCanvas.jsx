@@ -14,18 +14,17 @@ import '../styles/actionsBar.css';
 
 import NodeComponent from './NodeComponent';
 import EdgeMappingModal, { checkTypeCompatibility } from './EdgeMappingModal';
-import { TOOL_MAP } from '../../public/cwl/toolMap.js';
+import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
-// Define edge types.
-const edgeTypes = {};
 
-function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkflowData }) {
+function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkflowData, currentWorkspaceIndex }) {
   const reactFlowWrapper = useRef(null);
+  const prevWorkspaceRef = useRef(currentWorkspaceIndex);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -33,11 +32,16 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   // Memoized node lookup for O(1) access
   const nodeMap = useNodeLookup(nodes);
 
-  // Ref to track current nodes for closures (fixes stale closure issue)
+  // Refs to track current nodes/edges for closures (fixes stale closure issue)
   const nodesRef = useRef(nodes);
   useEffect(() => {
     nodesRef.current = nodes;
   }, [nodes]);
+
+  const edgesRef = useRef(edges);
+  useEffect(() => {
+    edgesRef.current = edges;
+  }, [edges]);
 
   // Compute which nodes inherit scatter from upstream (BFS propagation).
   // Used by NodeComponent via ScatterPropagationContext to show badges.
@@ -59,10 +63,13 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   // This effect watches for changes in the persistent workspace.
   // When the clear workspace button is pressed, workflowItems becomes empty,
   // and this effect clears the canvas accordingly.
+  // Also triggers when workspace index changes (switching workspaces).
   useEffect(() => {
     if (workflowItems && typeof workflowItems.nodes !== 'undefined') {
-      // Only update if the count of nodes in the persistent workspace differs from our local state.
-      if (workflowItems.nodes.length !== nodes.length) {
+      const workspaceSwitched = prevWorkspaceRef.current !== currentWorkspaceIndex;
+      prevWorkspaceRef.current = currentWorkspaceIndex;
+
+      if (workspaceSwitched || workflowItems.nodes.length !== nodes.length) {
         const initialNodes = (workflowItems.nodes || []).map((node) => ({
           ...node,
           data: {
@@ -88,7 +95,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         setEdges(initialEdges);
       }
     }
-  }, [workflowItems, nodes.length]);
+  }, [workflowItems, nodes.length, currentWorkspaceIndex]);
 
   // Helper: Update persistent workspace state.
   const updateWorkspaceState = (updatedNodes, updatedEdges) => {
@@ -115,7 +122,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 }
               : node
       );
-      updateWorkspaceState(updatedNodes, edges);
+      updateWorkspaceState(updatedNodes, edgesRef.current);
       return updatedNodes;
     });
   };
@@ -134,8 +141,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         if (sourceNode && targetNode) {
           // Check for type compatibility between source outputs and target inputs
           let hasTypeMismatch = false;
-          const sourceTool = TOOL_MAP[sourceNode.data.label];
-          const targetTool = TOOL_MAP[targetNode.data.label];
+          const sourceTool = getToolConfigSync(sourceNode.data.label);
+          const targetTool = getToolConfigSync(targetNode.data.label);
 
           if (sourceTool && targetTool) {
             // Get primary output type from source
@@ -199,7 +206,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                     ? { ...e, data: { ...e.data, mappings } }
                     : e
             );
-            updateWorkspaceState(nodes, updatedEdges);
+            updateWorkspaceState(nodesRef.current, updatedEdges);
             return updatedEdges;
           });
         } else if (pendingConnection) {
@@ -219,7 +226,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           };
           setEdges((eds) => {
             const newEdges = [...eds, newEdge];
-            updateWorkspaceState(nodes, newEdges);
+            updateWorkspaceState(nodesRef.current, newEdges);
             return newEdges;
           });
         }
@@ -230,7 +237,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         setEditingEdge(null);
         setEdgeModalData(null);
       },
-      [nodes, pendingConnection, editingEdge]
+      [pendingConnection, editingEdge]
   );
 
   // Handle closing edge modal without saving
@@ -289,9 +296,11 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       position: flowPosition,
     };
 
-    const updatedNodes = [...nodes, newNode];
-    setNodes(updatedNodes);
-    updateWorkspaceState(updatedNodes, edges);
+    setNodes((prevNodes) => {
+      const updatedNodes = [...prevNodes, newNode];
+      updateWorkspaceState(updatedNodes, edgesRef.current);
+      return updatedNodes;
+    });
   };
 
   // Delete nodes and corresponding edges.
@@ -379,7 +388,6 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 fitView
                 fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
                 nodeTypes={nodeTypes}
-                edgeTypes={edgeTypes}
                 onInit={(instance) => setReactFlowInstance(instance)}
             >
               <MiniMap

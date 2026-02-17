@@ -4,7 +4,7 @@
     max-height: 60vh;
     display: flex;
     flex-direction: column;
-    margin: 20px;
+    margin: clamp(8px, 1.5vw, 20px);
     margin-left: 0;
     border-radius: 12px;
     background-color: rgba(46, 46, 46, 0.9);
@@ -14,25 +14,58 @@
     overflow: hidden;
 }
 
+.cwl-preview-panel.cwl-collapsed {
+    flex: 0 0 40px;
+    min-width: 40px;
+    max-width: 40px;
+    cursor: pointer;
+}
+
+.cwl-collapsed-strip {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    padding: 12px 0;
+}
+
+.cwl-collapsed-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #888;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+}
+
+.cwl-collapsed-strip:hover .cwl-collapsed-label {
+    color: #ccc;
+}
+
 .cwl-preview-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 10px 14px;
+    padding: clamp(6px, 0.8vw, 10px) clamp(8px, 1vw, 14px);
     background-color: #252525;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    flex-wrap: wrap;
+    gap: 4px;
 }
 
 .cwl-tab-bar {
     display: flex;
     gap: 2px;
+    flex-shrink: 0;
 }
 
 .cwl-tab {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.7rem;
+    font-size: clamp(0.55rem, 0.8vw, 0.7rem);
     font-weight: 500;
-    padding: 4px 10px;
+    padding: clamp(2px, 0.4vw, 4px) clamp(6px, 0.8vw, 10px);
     background-color: transparent;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 4px;
@@ -56,21 +89,24 @@
 
 .cwl-preview-actions {
     display: flex;
-    gap: 6px;
+    gap: clamp(3px, 0.5vw, 6px);
     align-items: center;
+    flex-shrink: 1;
+    min-width: 0;
 }
 
 .cwl-action-btn {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.65rem;
+    font-size: clamp(0.5rem, 0.7vw, 0.65rem);
     font-weight: 500;
-    padding: 4px 8px;
+    padding: clamp(2px, 0.4vw, 4px) clamp(4px, 0.6vw, 8px);
     background-color: transparent;
     border: 1px solid rgba(255, 255, 255, 0.15);
     border-radius: 4px;
     color: #aaa;
     cursor: pointer;
     transition: all 0.15s ease;
+    white-space: nowrap;
 }
 
 .cwl-action-btn:hover {
@@ -89,16 +125,17 @@
 .cwl-preview-body {
     flex: 1;
     overflow-y: auto;
-    padding: 12px;
+    padding: clamp(6px, 0.8vw, 12px);
+    min-height: 0;
 }
 
 .cwl-code {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.7rem;
+    font-size: clamp(0.55rem, 0.8vw, 0.7rem);
     line-height: 1.6;
     color: #d0d0d0;
     background-color: #1a1a1a;
-    padding: 12px;
+    padding: clamp(6px, 0.8vw, 12px);
     border-radius: 6px;
     border: 1px solid rgba(255, 255, 255, 0.06);
     margin: 0;
@@ -120,21 +157,21 @@
 .cwl-empty-message {
     color: #666;
     font-style: italic;
-    font-size: 0.8rem;
+    font-size: clamp(0.65rem, 0.9vw, 0.8rem);
     text-align: center;
-    padding: 40px 20px;
+    padding: clamp(20px, 3vw, 40px) clamp(10px, 1.5vw, 20px);
 }
 
 .cwl-error-banner {
     background-color: rgba(255, 193, 7, 0.15);
     border: 1px solid rgba(255, 193, 7, 0.4);
     border-radius: 6px;
-    padding: 10px 14px;
-    margin-bottom: 12px;
+    padding: clamp(6px, 0.8vw, 10px) clamp(8px, 1vw, 14px);
+    margin-bottom: clamp(6px, 0.8vw, 12px);
     display: flex;
     align-items: center;
-    gap: 10px;
-    font-size: 0.75rem;
+    gap: clamp(6px, 0.7vw, 10px);
+    font-size: clamp(0.6rem, 0.8vw, 0.75rem);
     color: #ffc107;
 }
 

@@ -2,8 +2,8 @@ import React, { useState, useMemo, useRef, useContext } from 'react';
 import { createPortal } from 'react-dom';
 import { Handle, Position } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
-import { TOOL_MAP, DOCKER_IMAGES } from '../../public/cwl/toolMap.js';
-import { DOCKER_TAGS, toolByName } from '../data/toolData.js';
+import { getToolConfigSync } from '../utils/toolRegistry.js';
+import { DOCKER_IMAGES, DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
 import { useToast } from '../context/ToastContext.jsx';
 import TagDropdown from './TagDropdown.jsx';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
@@ -23,8 +23,9 @@ const LIBRARY_MAP = {
 };
 
 const getLibraryFromDockerImage = (dockerImage) => {
+    const baseImage = dockerImage.split(':')[0];
     for (const [key, image] of Object.entries(DOCKER_IMAGES)) {
-        if (image === dockerImage) {
+        if (image === baseImage) {
             return LIBRARY_MAP[key] || null;
         }
     }
@@ -55,7 +56,7 @@ const NodeComponent = ({ data, id }) => {
     const infoIconRef = useRef(null);
 
     // Get tool definition and optional inputs
-    const tool = TOOL_MAP[data.label];
+    const tool = getToolConfigSync(data.label);
     const optionalInputs = tool?.optionalInputs || {};
     const hasDefinedTool = !!tool;
     const dockerImage = tool?.dockerImage || null;
@@ -88,7 +89,7 @@ const NodeComponent = ({ data, id }) => {
     // Find tool info using pre-computed Map for O(1) lookup
     // (Previously O(L×C×T) triple-nested loop)
     const toolInfo = useMemo(() => {
-        return toolByName.get(data.label) || null;
+        return annotationByName.get(data.label) || null;
     }, [data.label]);
 
     // Generate a helpful default JSON showing available optional parameters

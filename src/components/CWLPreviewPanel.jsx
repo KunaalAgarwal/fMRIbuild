@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { Modal } from 'react-bootstrap';
 import { buildCWLWorkflowObject, buildJobTemplate } from '../hooks/buildWorkflow.js';
 import YAML from 'js-yaml';
@@ -33,6 +33,23 @@ function CWLPreviewPanel({ getWorkflowData }) {
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [copied, setCopied] = useState(false);
     const debounceRef = useRef(null);
+
+    const [isCollapsed, setIsCollapsed] = useState(() => {
+        try {
+            const saved = localStorage.getItem('cwlPanelCollapsed');
+            return saved === null ? true : JSON.parse(saved) === true;
+        } catch {
+            return true;
+        }
+    });
+
+    const toggleCollapse = useCallback(() => {
+        setIsCollapsed(prev => {
+            const next = !prev;
+            localStorage.setItem('cwlPanelCollapsed', JSON.stringify(next));
+            return next;
+        });
+    }, []);
 
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -77,65 +94,80 @@ function CWLPreviewPanel({ getWorkflowData }) {
         }).catch(() => {});
     }, [activeContent]);
 
-    const highlightedHtml = activeContent ? highlightYaml(activeContent) : '';
+    const highlightedHtml = useMemo(() => activeContent ? highlightYaml(activeContent) : '', [activeContent]);
 
     return (
         <>
-            <div className="cwl-preview-panel">
-                <div className="cwl-preview-header">
-                    <div className="cwl-tab-bar">
-                        <button
-                            className={`cwl-tab${activeTab === 'workflow' ? ' active' : ''}`}
-                            onClick={() => setActiveTab('workflow')}
-                        >
-                            .cwl
-                        </button>
-                        <button
-                            className={`cwl-tab${activeTab === 'job' ? ' active' : ''}`}
-                            onClick={() => setActiveTab('job')}
-                        >
-                            .yml
-                        </button>
+            <div className={`cwl-preview-panel${isCollapsed ? ' cwl-collapsed' : ''}`}>
+                {isCollapsed ? (
+                    <div className="cwl-collapsed-strip" onClick={toggleCollapse} title="Expand CWL Preview">
+                        <span className="cwl-collapsed-label">CWL Preview</span>
                     </div>
-                    <div className="cwl-preview-actions">
-                        <button
-                            className="cwl-action-btn"
-                            onClick={handleCopy}
-                            disabled={!activeContent}
-                            title="Copy to clipboard"
-                        >
-                            {copied ? 'Copied!' : 'Copy'}
-                        </button>
-                        <button
-                            className="cwl-action-btn"
-                            onClick={() => setShowFullscreen(true)}
-                            disabled={!activeContent}
-                            title="Expand to fullscreen"
-                        >
-                            Expand
-                        </button>
-                    </div>
-                </div>
+                ) : (
+                    <>
+                        <div className="cwl-preview-header">
+                            <div className="cwl-tab-bar">
+                                <button
+                                    className={`cwl-tab${activeTab === 'workflow' ? ' active' : ''}`}
+                                    onClick={() => setActiveTab('workflow')}
+                                >
+                                    .cwl
+                                </button>
+                                <button
+                                    className={`cwl-tab${activeTab === 'job' ? ' active' : ''}`}
+                                    onClick={() => setActiveTab('job')}
+                                >
+                                    .yml
+                                </button>
+                            </div>
+                            <div className="cwl-preview-actions">
+                                <button
+                                    className="cwl-action-btn"
+                                    onClick={handleCopy}
+                                    disabled={!activeContent}
+                                    title="Copy to clipboard"
+                                >
+                                    {copied ? 'Copied!' : 'Copy'}
+                                </button>
+                                <button
+                                    className="cwl-action-btn"
+                                    onClick={() => setShowFullscreen(true)}
+                                    disabled={!activeContent}
+                                    title="Expand to fullscreen"
+                                >
+                                    Expand
+                                </button>
+                                <button
+                                    className="cwl-action-btn"
+                                    onClick={toggleCollapse}
+                                    title="Collapse panel"
+                                >
+                                    &raquo;
+                                </button>
+                            </div>
+                        </div>
 
-                <div className="cwl-preview-body">
-                    {error && (
-                        <div className="cwl-error-banner">
-                            <span className="cwl-error-icon">!</span>
-                            <span>{error}</span>
+                        <div className="cwl-preview-body">
+                            {error && (
+                                <div className="cwl-error-banner">
+                                    <span className="cwl-error-icon">!</span>
+                                    <span>{error}</span>
+                                </div>
+                            )}
+                            {showPlaceholder && !error && (
+                                <div className="cwl-empty-message">
+                                    Connect at least two nodes to preview the generated CWL workflow.
+                                </div>
+                            )}
+                            {activeContent && (
+                                <pre
+                                    className="cwl-code"
+                                    dangerouslySetInnerHTML={{ __html: highlightedHtml }}
+                                />
+                            )}
                         </div>
-                    )}
-                    {showPlaceholder && !error && (
-                        <div className="cwl-empty-message">
-                            Connect at least two nodes to preview the generated CWL workflow.
-                        </div>
-                    )}
-                    {activeContent && (
-                        <pre
-                            className="cwl-code"
-                            dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-                        />
-                    )}
-                </div>
+                    </>
+                )}
             </div>
 
             <Modal

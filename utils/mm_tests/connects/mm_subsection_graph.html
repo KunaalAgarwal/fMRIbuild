@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Multimodal Subsection Graph</title>
+  <style>
+    body {
+      margin: 16px;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+      color: #111827;
+      background: #f8fafc;
+    }
+    .panel {
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      background: #ffffff;
+      padding: 12px;
+      margin-bottom: 12px;
+    }
+    .meta {
+      color: #4b5563;
+      font-size: 13px;
+      margin-top: 6px;
+    }
+    pre {
+      margin: 0;
+      white-space: pre-wrap;
+      font-size: 12px;
+      color: #374151;
+    }
+  </style>
+  <script type="module">
+    import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.esm.min.mjs";
+
+    const graphText = `flowchart LR
+  ANTS_INTERMODAL_REG["ANTs / Intermodal Registration"]
+  ANTS_INTERMODAL_REG --> ANTS_INTERMODAL_REG`;
+
+    mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "default" });
+
+    window.addEventListener("DOMContentLoaded", async () => {
+      const graphEl = document.getElementById("graph");
+      const sourceEl = document.getElementById("source");
+      sourceEl.textContent = graphText;
+
+      const renderId = "mm_subsection_graph_render";
+      const { svg } = await mermaid.render(renderId, graphText);
+      graphEl.innerHTML = svg;
+    });
+  </script>
+</head>
+<body>
+  <h1>Multimodal Subsection Graph</h1>
+  <div class="meta">Source graph file: <code>utils/mm_tests/connects/mm_subsection_graph.mmd</code></div>
+
+  <div class="panel" id="graph"></div>
+
+  <div class="panel">
+    <h2>Embedded Mermaid Source</h2>
+    <pre id="source"></pre>
+  </div>
+</body>
+</html>

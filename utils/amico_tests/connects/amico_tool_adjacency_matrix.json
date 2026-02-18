@@ -1,0 +1,41 @@
+{
+  "generatedAt": "2026-02-18T02:06:11+00:00",
+  "sources": {
+    "graph": "/Users/adamdawood/Documents/Projects/niBuild/utils/amico_tests/connects/amico_subsection_graph.mmd",
+    "mapping": "/Users/adamdawood/Documents/Projects/niBuild/utils/amico_tests/connects/amico_tool_to_subsection_map.json"
+  },
+  "toolOrder": [
+    "amico_noddi"
+  ],
+  "toolToIndex": {
+    "amico_noddi": 0
+  },
+  "subsectionByTool": {
+    "amico_noddi": "amico / microstructure modeling"
+  },
+  "subsectionByToolOriginal": {
+    "amico_noddi": "AMICO / Microstructure Modeling"
+  },
+  "subsectionEdges": [
+    {
+      "source": "amico / microstructure modeling",
+      "target": "amico / microstructure modeling"
+    }
+  ],
+  "matrix": [
+    [
+      1
+    ]
+  ],
+  "edgeCount": 1,
+  "toolCount": 1,
+  "normalization": {
+    "canonicalLabelFormat": "library / subsection",
+    "rules": [
+      "lowercase",
+      "trim and collapse whitespace",
+      "normalize '&' to 'and'",
+      "treat '-' and '/' equivalently in subsection text"
+    ]
+  }
+}

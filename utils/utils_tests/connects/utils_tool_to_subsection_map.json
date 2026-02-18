@@ -1,0 +1,172 @@
+{
+  "modality": "Utilities",
+  "generatedAt": "2026-02-18T03:01:05Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/utils_tests/README.md",
+    "utils/utils_tests/test_*.sh"
+  ],
+  "toolCount": 32,
+  "byTool": {
+    "3dNwarpApply": {
+      "library": "AFNI",
+      "subsection": "Warp Utilities",
+      "subsectionKey": "AFNI / Warp Utilities"
+    },
+    "3dNwarpCat": {
+      "library": "AFNI",
+      "subsection": "Warp Utilities",
+      "subsectionKey": "AFNI / Warp Utilities"
+    },
+    "3dTcat": {
+      "library": "AFNI",
+      "subsection": "Dataset Operations",
+      "subsectionKey": "AFNI / Dataset Operations"
+    },
+    "3dTstat": {
+      "library": "AFNI",
+      "subsection": "Image Math",
+      "subsectionKey": "AFNI / Image Math"
+    },
+    "3dUndump": {
+      "library": "AFNI",
+      "subsection": "ROI Utilities",
+      "subsectionKey": "AFNI / ROI Utilities"
+    },
+    "3dZeropad": {
+      "library": "AFNI",
+      "subsection": "Dataset Operations",
+      "subsectionKey": "AFNI / Dataset Operations"
+    },
+    "3dcalc": {
+      "library": "AFNI",
+      "subsection": "Image Math",
+      "subsectionKey": "AFNI / Image Math"
+    },
+    "3dcopy": {
+      "library": "AFNI",
+      "subsection": "Dataset Operations",
+      "subsectionKey": "AFNI / Dataset Operations"
+    },
+    "3dfractionize": {
+      "library": "AFNI",
+      "subsection": "ROI Utilities",
+      "subsectionKey": "AFNI / ROI Utilities"
+    },
+    "3dinfo": {
+      "library": "AFNI",
+      "subsection": "Dataset Operations",
+      "subsectionKey": "AFNI / Dataset Operations"
+    },
+    "3dresample": {
+      "library": "AFNI",
+      "subsection": "ROI Utilities",
+      "subsectionKey": "AFNI / ROI Utilities"
+    },
+    "DenoiseImage": {
+      "library": "ANTs",
+      "subsection": "Preprocessing Utilities",
+      "subsectionKey": "ANTs / Preprocessing Utilities"
+    },
+    "ImageMath": {
+      "library": "ANTs",
+      "subsection": "Image Operations",
+      "subsectionKey": "ANTs / Image Operations"
+    },
+    "LabelGeometryMeasures": {
+      "library": "ANTs",
+      "subsection": "Label Analysis",
+      "subsectionKey": "ANTs / Label Analysis"
+    },
+    "N4BiasFieldCorrection": {
+      "library": "ANTs",
+      "subsection": "Preprocessing Utilities",
+      "subsectionKey": "ANTs / Preprocessing Utilities"
+    },
+    "ThresholdImage": {
+      "library": "ANTs",
+      "subsection": "Image Operations",
+      "subsectionKey": "ANTs / Image Operations"
+    },
+    "antsApplyTransforms": {
+      "library": "ANTs",
+      "subsection": "Transform Utilities",
+      "subsectionKey": "ANTs / Transform Utilities"
+    },
+    "antsJointLabelFusion.sh": {
+      "library": "ANTs",
+      "subsection": "Label Analysis",
+      "subsectionKey": "ANTs / Label Analysis"
+    },
+    "applywarp": {
+      "library": "FSL",
+      "subsection": "Warp Utilities",
+      "subsectionKey": "FSL / Warp Utilities"
+    },
+    "cluster": {
+      "library": "FSL",
+      "subsection": "Clustering",
+      "subsectionKey": "FSL / Clustering"
+    },
+    "convertwarp": {
+      "library": "FSL",
+      "subsection": "Warp Utilities",
+      "subsectionKey": "FSL / Warp Utilities"
+    },
+    "fslmaths": {
+      "library": "FSL",
+      "subsection": "Image Math",
+      "subsectionKey": "FSL / Image Math"
+    },
+    "fslmeants": {
+      "library": "FSL",
+      "subsection": "Image Math",
+      "subsectionKey": "FSL / Image Math"
+    },
+    "fslmerge": {
+      "library": "FSL",
+      "subsection": "Volume Operations",
+      "subsectionKey": "FSL / Volume Operations"
+    },
+    "fslreorient2std": {
+      "library": "FSL",
+      "subsection": "Volume Operations",
+      "subsectionKey": "FSL / Volume Operations"
+    },
+    "fslroi": {
+      "library": "FSL",
+      "subsection": "Image Math",
+      "subsectionKey": "FSL / Image Math"
+    },
+    "fslsplit": {
+      "library": "FSL",
+      "subsection": "Volume Operations",
+      "subsectionKey": "FSL / Volume Operations"
+    },
+    "fslstats": {
+      "library": "FSL",
+      "subsection": "Image Math",
+      "subsectionKey": "FSL / Image Math"
+    },
+    "invwarp": {
+      "library": "FSL",
+      "subsection": "Warp Utilities",
+      "subsectionKey": "FSL / Warp Utilities"
+    },
+    "mri_convert": {
+      "library": "FreeSurfer",
+      "subsection": "Format Conversion",
+      "subsectionKey": "FreeSurfer / Format Conversion"
+    },
+    "robustfov": {
+      "library": "FSL",
+      "subsection": "Volume Operations",
+      "subsectionKey": "FSL / Volume Operations"
+    },
+    "whereami": {
+      "library": "AFNI",
+      "subsection": "ROI Utilities",
+      "subsectionKey": "AFNI / ROI Utilities"
+    }
+  }
+}

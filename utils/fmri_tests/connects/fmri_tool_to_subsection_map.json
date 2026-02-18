@@ -1,0 +1,362 @@
+{
+  "modality": "Functional MRI",
+  "generatedAt": "2026-02-09T16:49:08.484Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)"
+  ],
+  "toolCount": 51,
+  "byTool": {
+    "3dANOVA": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dANOVA2": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dANOVA3": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dAutomask": {
+      "library": "AFNI",
+      "subsection": "Masking",
+      "subsectionKey": "AFNI / Masking"
+    },
+    "3dBandpass": {
+      "library": "AFNI",
+      "subsection": "Denoising",
+      "subsectionKey": "AFNI / Denoising"
+    },
+    "3dBlurToFWHM": {
+      "library": "AFNI",
+      "subsection": "Smoothing",
+      "subsectionKey": "AFNI / Smoothing"
+    },
+    "3dClustSim": {
+      "library": "AFNI",
+      "subsection": "Multiple Comparisons",
+      "subsectionKey": "AFNI / Multiple Comparisons"
+    },
+    "3dDeconvolve": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dDespike": {
+      "library": "AFNI",
+      "subsection": "Denoising",
+      "subsectionKey": "AFNI / Denoising"
+    },
+    "3dFWHMx": {
+      "library": "AFNI",
+      "subsection": "Multiple Comparisons",
+      "subsectionKey": "AFNI / Multiple Comparisons"
+    },
+    "3dLME": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dLMEr": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dmaskave": {
+      "library": "AFNI",
+      "subsection": "ROI Analysis",
+      "subsectionKey": "AFNI / ROI Analysis"
+    },
+    "3dMEMA": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dmerge": {
+      "library": "AFNI",
+      "subsection": "Smoothing",
+      "subsectionKey": "AFNI / Smoothing"
+    },
+    "3dMVM": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dNetCorr": {
+      "library": "AFNI",
+      "subsection": "Connectivity",
+      "subsectionKey": "AFNI / Connectivity"
+    },
+    "3dREMLfit": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dROIstats": {
+      "library": "AFNI",
+      "subsection": "ROI Analysis",
+      "subsectionKey": "AFNI / ROI Analysis"
+    },
+    "3dRSFC": {
+      "library": "AFNI",
+      "subsection": "Connectivity",
+      "subsectionKey": "AFNI / Connectivity"
+    },
+    "3dTcorr1D": {
+      "library": "AFNI",
+      "subsection": "Connectivity",
+      "subsectionKey": "AFNI / Connectivity"
+    },
+    "3dTcorrMap": {
+      "library": "AFNI",
+      "subsection": "Connectivity",
+      "subsectionKey": "AFNI / Connectivity"
+    },
+    "3dTshift": {
+      "library": "AFNI",
+      "subsection": "Slice Timing",
+      "subsectionKey": "AFNI / Slice Timing"
+    },
+    "3dttest++": {
+      "library": "AFNI",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "AFNI / Statistical Analysis"
+    },
+    "3dvolreg": {
+      "library": "AFNI",
+      "subsection": "Motion Correction",
+      "subsectionKey": "AFNI / Motion Correction"
+    },
+    "align_epi_anat": {
+      "library": "AFNI",
+      "subsection": "Registration",
+      "subsectionKey": "AFNI / Registration"
+    },
+    "antsMotionCorr": {
+      "library": "ANTs",
+      "subsection": "Motion Correction",
+      "subsectionKey": "ANTs / Motion Correction"
+    },
+    "applytopup": {
+      "library": "FSL",
+      "subsection": "Distortion Correction",
+      "subsectionKey": "FSL / Distortion Correction"
+    },
+    "bbregister": {
+      "library": "FreeSurfer",
+      "subsection": "Functional Analysis",
+      "subsectionKey": "FreeSurfer / Functional Analysis"
+    },
+    "dual_regression": {
+      "library": "FSL",
+      "subsection": "ICA/Denoising",
+      "subsectionKey": "FSL / ICA/Denoising"
+    },
+    "film_gls": {
+      "library": "FSL",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "FSL / Statistical Analysis"
+    },
+    "flameo": {
+      "library": "FSL",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "FSL / Statistical Analysis"
+    },
+    "fmriprep": {
+      "library": "fMRIPrep",
+      "subsection": "Pipeline",
+      "subsectionKey": "fMRIPrep / Pipeline"
+    },
+    "fsl_prepare_fieldmap": {
+      "library": "FSL",
+      "subsection": "Distortion Correction",
+      "subsectionKey": "FSL / Distortion Correction"
+    },
+    "fugue": {
+      "library": "FSL",
+      "subsection": "Distortion Correction",
+      "subsectionKey": "FSL / Distortion Correction"
+    },
+    "mcflirt": {
+      "library": "FSL",
+      "subsection": "Motion Correction",
+      "subsectionKey": "FSL / Motion Correction"
+    },
+    "melodic": {
+      "library": "FSL",
+      "subsection": "ICA/Denoising",
+      "subsectionKey": "FSL / ICA/Denoising"
+    },
+    "mri_glmfit": {
+      "library": "FreeSurfer",
+      "subsection": "Functional Analysis",
+      "subsectionKey": "FreeSurfer / Functional Analysis"
+    },
+    "mri_surf2vol": {
+      "library": "FreeSurfer",
+      "subsection": "Functional Analysis",
+      "subsectionKey": "FreeSurfer / Functional Analysis"
+    },
+    "mri_vol2surf": {
+      "library": "FreeSurfer",
+      "subsection": "Functional Analysis",
+      "subsectionKey": "FreeSurfer / Functional Analysis"
+    },
+    "mriqc": {
+      "library": "MRIQC",
+      "subsection": "Pipeline",
+      "subsectionKey": "MRIQC / Pipeline"
+    },
+    "mris_preproc": {
+      "library": "FreeSurfer",
+      "subsection": "Functional Analysis",
+      "subsectionKey": "FreeSurfer / Functional Analysis"
+    },
+    "prelude": {
+      "library": "FSL",
+      "subsection": "Distortion Correction",
+      "subsectionKey": "FSL / Distortion Correction"
+    },
+    "randomise": {
+      "library": "FSL",
+      "subsection": "Statistical Analysis",
+      "subsectionKey": "FSL / Statistical Analysis"
+    },
+    "slicetimer": {
+      "library": "FSL",
+      "subsection": "Slice Timing",
+      "subsectionKey": "FSL / Slice Timing"
+    },
+    "susan": {
+      "library": "FSL",
+      "subsection": "Smoothing",
+      "subsectionKey": "FSL / Smoothing"
+    },
+    "topup": {
+      "library": "FSL",
+      "subsection": "Distortion Correction",
+      "subsectionKey": "FSL / Distortion Correction"
+    },
+    "wb_command_cifti_create_dense_timeseries": {
+      "library": "Connectome Workbench",
+      "subsection": "CIFTI Operations",
+      "subsectionKey": "Connectome Workbench / CIFTI Operations"
+    },
+    "wb_command_cifti_separate": {
+      "library": "Connectome Workbench",
+      "subsection": "CIFTI Operations",
+      "subsectionKey": "Connectome Workbench / CIFTI Operations"
+    },
+    "wb_command_cifti_smoothing": {
+      "library": "Connectome Workbench",
+      "subsection": "Surface Smoothing",
+      "subsectionKey": "Connectome Workbench / Surface Smoothing"
+    },
+    "wb_command_metric_smoothing": {
+      "library": "Connectome Workbench",
+      "subsection": "Surface Smoothing",
+      "subsectionKey": "Connectome Workbench / Surface Smoothing"
+    }
+  },
+  "bySubsection": {
+    "AFNI / Connectivity": [
+      "3dNetCorr",
+      "3dRSFC",
+      "3dTcorr1D",
+      "3dTcorrMap"
+    ],
+    "AFNI / Denoising": [
+      "3dBandpass",
+      "3dDespike"
+    ],
+    "AFNI / Masking": [
+      "3dAutomask"
+    ],
+    "AFNI / Motion Correction": [
+      "3dvolreg"
+    ],
+    "AFNI / Multiple Comparisons": [
+      "3dClustSim",
+      "3dFWHMx"
+    ],
+    "AFNI / Registration": [
+      "align_epi_anat"
+    ],
+    "AFNI / ROI Analysis": [
+      "3dmaskave",
+      "3dROIstats"
+    ],
+    "AFNI / Slice Timing": [
+      "3dTshift"
+    ],
+    "AFNI / Smoothing": [
+      "3dBlurToFWHM",
+      "3dmerge"
+    ],
+    "AFNI / Statistical Analysis": [
+      "3dANOVA",
+      "3dANOVA2",
+      "3dANOVA3",
+      "3dDeconvolve",
+      "3dLME",
+      "3dLMEr",
+      "3dMEMA",
+      "3dMVM",
+      "3dREMLfit",
+      "3dttest++"
+    ],
+    "ANTs / Motion Correction": [
+      "antsMotionCorr"
+    ],
+    "Connectome Workbench / CIFTI Operations": [
+      "wb_command_cifti_create_dense_timeseries",
+      "wb_command_cifti_separate"
+    ],
+    "Connectome Workbench / Surface Smoothing": [
+      "wb_command_cifti_smoothing",
+      "wb_command_metric_smoothing"
+    ],
+    "fMRIPrep / Pipeline": [
+      "fmriprep"
+    ],
+    "FreeSurfer / Functional Analysis": [
+      "bbregister",
+      "mri_glmfit",
+      "mri_surf2vol",
+      "mri_vol2surf",
+      "mris_preproc"
+    ],
+    "FSL / Distortion Correction": [
+      "applytopup",
+      "fsl_prepare_fieldmap",
+      "fugue",
+      "prelude",
+      "topup"
+    ],
+    "FSL / ICA/Denoising": [
+      "dual_regression",
+      "melodic"
+    ],
+    "FSL / Motion Correction": [
+      "mcflirt"
+    ],
+    "FSL / Slice Timing": [
+      "slicetimer"
+    ],
+    "FSL / Smoothing": [
+      "susan"
+    ],
+    "FSL / Statistical Analysis": [
+      "film_gls",
+      "flameo",
+      "randomise"
+    ],
+    "MRIQC / Pipeline": [
+      "mriqc"
+    ]
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "modality": "Accelerated Microstructure Imaging via Convex Optimization",
+  "generatedAt": "2026-02-18T02:06:07Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/amico_tests/README.md",
+    "utils/amico_tests/test_amico_noddi.sh"
+  ],
+  "toolCount": 1,
+  "byTool": {
+    "amico_noddi": {
+      "library": "AMICO",
+      "subsection": "Microstructure Modeling",
+      "subsectionKey": "AMICO / Microstructure Modeling"
+    }
+  }
+}

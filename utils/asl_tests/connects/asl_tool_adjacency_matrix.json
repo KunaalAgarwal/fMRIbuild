@@ -1,0 +1,61 @@
+{
+  "generatedAt": "2026-02-18T01:45:14+00:00",
+  "sources": {
+    "graph": "/Users/adamdawood/Documents/Projects/niBuild/utils/asl_tests/connects/asl_subsection_graph.mmd",
+    "mapping": "/Users/adamdawood/Documents/Projects/niBuild/utils/asl_tests/connects/asl_tool_to_subsection_map.json"
+  },
+  "toolOrder": [
+    "asl_calib",
+    "basil",
+    "oxford_asl"
+  ],
+  "toolToIndex": {
+    "asl_calib": 0,
+    "basil": 1,
+    "oxford_asl": 2
+  },
+  "subsectionByTool": {
+    "asl_calib": "fsl / asl processing",
+    "basil": "fsl / asl processing",
+    "oxford_asl": "fsl / asl processing"
+  },
+  "subsectionByToolOriginal": {
+    "asl_calib": "FSL / ASL Processing",
+    "basil": "FSL / ASL Processing",
+    "oxford_asl": "FSL / ASL Processing"
+  },
+  "subsectionEdges": [
+    {
+      "source": "fsl / asl processing",
+      "target": "fsl / asl processing"
+    }
+  ],
+  "matrix": [
+    [
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1
+    ],
+    [
+      1,
+      1,
+      1
+    ]
+  ],
+  "edgeCount": 9,
+  "toolCount": 3,
+  "normalization": {
+    "canonicalLabelFormat": "library / subsection",
+    "rules": [
+      "lowercase",
+      "trim and collapse whitespace",
+      "normalize '&' to 'and'",
+      "treat '-' and '/' equivalently in subsection text"
+    ]
+  }
+}

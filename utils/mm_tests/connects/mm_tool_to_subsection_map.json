@@ -1,0 +1,17 @@
+{
+  "modality": "Multimodal",
+  "generatedAt": "2026-02-18T02:33:50Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/mm_tests/README.md",
+    "utils/mm_tests/test_*.sh"
+  ],
+  "toolCount": 1,
+  "byTool": {
+    "antsIntermodalityIntrasubject.sh": {
+      "library": "ANTs",
+      "subsection": "Intermodal Registration",
+      "subsectionKey": "ANTs / Intermodal Registration"
+    }
+  }
+}

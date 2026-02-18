@@ -1,0 +1,58 @@
+flowchart LR
+  MRIQC["MRIQC / Pipeline"]
+  FMRIPREP["fMRIPrep / Pipeline"]
+
+  FSL_DC["FSL / Distortion Correction"]
+  FSL_MC["FSL / Motion Correction"]
+  FSL_ST["FSL / Slice Timing"]
+  FSL_ICA["FSL / ICA-Denoising"]
+  FSL_SM["FSL / Smoothing"]
+  FSL_STAT["FSL / Statistical Analysis"]
+
+  AFNI_DEN["AFNI / Denoising"]
+  AFNI_ST["AFNI / Slice Timing"]
+  AFNI_REG["AFNI / Registration"]
+  AFNI_MC["AFNI / Motion Correction"]
+  AFNI_SM["AFNI / Smoothing"]
+  AFNI_MASK["AFNI / Masking"]
+  AFNI_STAT["AFNI / Statistical Analysis"]
+  AFNI_MCMP["AFNI / Multiple Comparisons"]
+  AFNI_CONN["AFNI / Connectivity"]
+  AFNI_ROI["AFNI / ROI Analysis"]
+
+  ANTS_MC["ANTs / Motion Correction"]
+  FS_FUNC["FreeSurfer / Functional Analysis"]
+  WB_CIFTI["Connectome Workbench / CIFTI Operations"]
+  WB_SURF["Connectome Workbench / Surface Smoothing"]
+
+  MRIQC --> FMRIPREP
+  MRIQC --> FSL_MC
+  MRIQC --> AFNI_MC
+  MRIQC --> ANTS_MC
+
+  FSL_DC --> FSL_MC
+  FSL_MC --> FSL_ST
+  FSL_ST --> FSL_ICA
+  FSL_ICA --> FSL_SM
+  FSL_SM --> FSL_STAT
+
+  AFNI_DEN --> AFNI_ST
+  AFNI_ST --> AFNI_REG
+  AFNI_REG --> AFNI_MC
+  AFNI_MC --> AFNI_SM
+  AFNI_SM --> AFNI_MASK
+  AFNI_MASK --> AFNI_STAT
+  AFNI_STAT --> AFNI_MCMP
+  AFNI_STAT --> AFNI_CONN
+  AFNI_CONN --> AFNI_ROI
+
+  ANTS_MC --> FSL_ICA
+  ANTS_MC --> AFNI_DEN
+
+  FMRIPREP --> FSL_STAT
+  FMRIPREP --> AFNI_CONN
+  FMRIPREP --> FS_FUNC
+  FMRIPREP --> WB_CIFTI
+
+  FS_FUNC --> WB_CIFTI
+  WB_CIFTI --> WB_SURF

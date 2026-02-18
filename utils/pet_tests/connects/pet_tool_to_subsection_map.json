@@ -1,0 +1,17 @@
+{
+  "modality": "Positron Emission Tomography",
+  "generatedAt": "2026-02-18T02:56:35Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/pet_tests/README.md",
+    "utils/pet_tests/test_mri_gtmpvc.sh"
+  ],
+  "toolCount": 1,
+  "byTool": {
+    "mri_gtmpvc": {
+      "library": "FreeSurfer",
+      "subsection": "PET Processing",
+      "subsectionKey": "FreeSurfer / PET Processing"
+    }
+  }
+}

@@ -1,0 +1,28 @@
+flowchart LR
+  %% dMRI subsection nodes discovered from src/data/toolData.js
+  FSL_PREP["FSL / Preprocessing"]
+  FSL_TENSOR["FSL / Tensor Fitting"]
+  FSL_TRACT["FSL / Tractography"]
+  FSL_TBSS["FSL / TBSS"]
+
+  MRT_PREP["MRtrix3 / Preprocessing"]
+  MRT_TENSOR_FOD["MRtrix3 / Tensor/FOD"]
+  MRT_TRACT["MRtrix3 / Tractography"]
+
+  FS_DIFF["FreeSurfer / Diffusion"]
+  AMICO_MICRO["AMICO / Microstructure Modeling"]
+
+  %% Directed subsection edges for realistic dMRI pipelines
+  FSL_PREP --> FSL_TENSOR
+  FSL_PREP --> FSL_TRACT
+  FSL_TENSOR --> FSL_TBSS
+  FSL_PREP --> FS_DIFF
+  FSL_PREP --> AMICO_MICRO
+
+  MRT_PREP --> MRT_TENSOR_FOD
+  MRT_TENSOR_FOD --> MRT_TRACT
+  MRT_PREP --> AMICO_MICRO
+
+  %% Mixed-library interoperability edges (commonly feasible handoffs)
+  MRT_PREP --> FSL_TENSOR
+  FSL_PREP --> MRT_TENSOR_FOD

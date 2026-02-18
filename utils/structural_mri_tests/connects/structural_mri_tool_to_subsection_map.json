@@ -1,0 +1,207 @@
+{
+  "modality": "Structural MRI",
+  "generatedAt": "2026-02-18T02:36:49Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/structural_mri_tests/README.md",
+    "utils/structural_mri_tests/test_*.sh"
+  ],
+  "toolCount": 39,
+  "byTool": {
+    "3dAllineate": {
+      "library": "AFNI",
+      "subsection": "Registration",
+      "subsectionKey": "AFNI / Registration"
+    },
+    "3dQwarp": {
+      "library": "AFNI",
+      "subsection": "Registration",
+      "subsectionKey": "AFNI / Registration"
+    },
+    "3dSkullStrip": {
+      "library": "AFNI",
+      "subsection": "Brain Extraction",
+      "subsectionKey": "AFNI / Brain Extraction"
+    },
+    "3dUnifize": {
+      "library": "AFNI",
+      "subsection": "Bias Correction",
+      "subsectionKey": "AFNI / Bias Correction"
+    },
+    "@SSwarper": {
+      "library": "AFNI",
+      "subsection": "Brain Extraction",
+      "subsectionKey": "AFNI / Brain Extraction"
+    },
+    "@auto_tlrc": {
+      "library": "AFNI",
+      "subsection": "Registration",
+      "subsectionKey": "AFNI / Registration"
+    },
+    "Atropos": {
+      "library": "ANTs",
+      "subsection": "Segmentation",
+      "subsectionKey": "ANTs / Segmentation"
+    },
+    "KellyKapowski": {
+      "library": "ANTs",
+      "subsection": "Cortical Thickness",
+      "subsectionKey": "ANTs / Cortical Thickness"
+    },
+    "antsAtroposN4.sh": {
+      "library": "ANTs",
+      "subsection": "Segmentation",
+      "subsectionKey": "ANTs / Segmentation"
+    },
+    "antsBrainExtraction.sh": {
+      "library": "ANTs",
+      "subsection": "Brain Extraction",
+      "subsectionKey": "ANTs / Brain Extraction"
+    },
+    "antsCorticalThickness.sh": {
+      "library": "ANTs",
+      "subsection": "Cortical Thickness",
+      "subsectionKey": "ANTs / Cortical Thickness"
+    },
+    "antsRegistration": {
+      "library": "ANTs",
+      "subsection": "Registration",
+      "subsectionKey": "ANTs / Registration"
+    },
+    "antsRegistrationSyN.sh": {
+      "library": "ANTs",
+      "subsection": "Registration",
+      "subsectionKey": "ANTs / Registration"
+    },
+    "antsRegistrationSyNQuick.sh": {
+      "library": "ANTs",
+      "subsection": "Registration",
+      "subsectionKey": "ANTs / Registration"
+    },
+    "aparcstats2table": {
+      "library": "FreeSurfer",
+      "subsection": "Morphometry",
+      "subsectionKey": "FreeSurfer / Morphometry"
+    },
+    "asegstats2table": {
+      "library": "FreeSurfer",
+      "subsection": "Morphometry",
+      "subsectionKey": "FreeSurfer / Morphometry"
+    },
+    "bet": {
+      "library": "FSL",
+      "subsection": "Brain Extraction",
+      "subsectionKey": "FSL / Brain Extraction"
+    },
+    "bianca": {
+      "library": "FSL",
+      "subsection": "Lesion Segmentation",
+      "subsectionKey": "FSL / Lesion Segmentation"
+    },
+    "fast": {
+      "library": "FSL",
+      "subsection": "Tissue Segmentation",
+      "subsectionKey": "FSL / Tissue Segmentation"
+    },
+    "flirt": {
+      "library": "FSL",
+      "subsection": "Registration",
+      "subsectionKey": "FSL / Registration"
+    },
+    "fnirt": {
+      "library": "FSL",
+      "subsection": "Registration",
+      "subsectionKey": "FSL / Registration"
+    },
+    "fsl_anat": {
+      "library": "FSL",
+      "subsection": "Pipelines",
+      "subsectionKey": "FSL / Pipelines"
+    },
+    "mri_annotation2label": {
+      "library": "FreeSurfer",
+      "subsection": "Parcellation",
+      "subsectionKey": "FreeSurfer / Parcellation"
+    },
+    "mri_aparc2aseg": {
+      "library": "FreeSurfer",
+      "subsection": "Parcellation",
+      "subsectionKey": "FreeSurfer / Parcellation"
+    },
+    "mri_convert": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "mri_label2vol": {
+      "library": "FreeSurfer",
+      "subsection": "Parcellation",
+      "subsectionKey": "FreeSurfer / Parcellation"
+    },
+    "mri_normalize": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "mri_segment": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "mri_segstats": {
+      "library": "FreeSurfer",
+      "subsection": "Morphometry",
+      "subsectionKey": "FreeSurfer / Morphometry"
+    },
+    "mri_watershed": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "mris_anatomical_stats": {
+      "library": "FreeSurfer",
+      "subsection": "Morphometry",
+      "subsectionKey": "FreeSurfer / Morphometry"
+    },
+    "mris_ca_label": {
+      "library": "FreeSurfer",
+      "subsection": "Parcellation",
+      "subsectionKey": "FreeSurfer / Parcellation"
+    },
+    "mris_inflate": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "mris_sphere": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "recon-all": {
+      "library": "FreeSurfer",
+      "subsection": "Surface Reconstruction",
+      "subsectionKey": "FreeSurfer / Surface Reconstruction"
+    },
+    "run_first_all": {
+      "library": "FSL",
+      "subsection": "Tissue Segmentation",
+      "subsectionKey": "FSL / Tissue Segmentation"
+    },
+    "siena": {
+      "library": "FSL",
+      "subsection": "Pipelines",
+      "subsectionKey": "FSL / Pipelines"
+    },
+    "sienax": {
+      "library": "FSL",
+      "subsection": "Pipelines",
+      "subsectionKey": "FSL / Pipelines"
+    },
+    "wb_command_surface_sphere_project_unproject": {
+      "library": "Connectome Workbench",
+      "subsection": "Surface Registration",
+      "subsectionKey": "Connectome Workbench / Surface Registration"
+    }
+  }
+}

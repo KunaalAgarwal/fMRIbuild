@@ -1,0 +1,113 @@
+{
+  "modality": "Diffusion Magnetic Resonance Imaging",
+  "generatedAt": "2026-02-18T02:21:44Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/dmri_tests/README.md",
+    "utils/dmri_tests/test_*.sh",
+    "utils/amico_tests/test_amico_noddi.sh"
+  ],
+  "toolCount": 20,
+  "byTool": {
+    "amico_noddi": {
+      "library": "AMICO",
+      "subsection": "Microstructure Modeling",
+      "subsectionKey": "AMICO / Microstructure Modeling"
+    },
+    "bedpostx": {
+      "library": "FSL",
+      "subsection": "Tractography",
+      "subsectionKey": "FSL / Tractography"
+    },
+    "dmri_postreg": {
+      "library": "FreeSurfer",
+      "subsection": "Diffusion",
+      "subsectionKey": "FreeSurfer / Diffusion"
+    },
+    "dtifit": {
+      "library": "FSL",
+      "subsection": "Tensor Fitting",
+      "subsectionKey": "FSL / Tensor Fitting"
+    },
+    "dwi2fod": {
+      "library": "MRtrix3",
+      "subsection": "Tensor/FOD",
+      "subsectionKey": "MRtrix3 / Tensor/FOD"
+    },
+    "dwi2tensor": {
+      "library": "MRtrix3",
+      "subsection": "Tensor/FOD",
+      "subsectionKey": "MRtrix3 / Tensor/FOD"
+    },
+    "dwidenoise": {
+      "library": "MRtrix3",
+      "subsection": "Preprocessing",
+      "subsectionKey": "MRtrix3 / Preprocessing"
+    },
+    "eddy": {
+      "library": "FSL",
+      "subsection": "Preprocessing",
+      "subsectionKey": "FSL / Preprocessing"
+    },
+    "mrdegibbs": {
+      "library": "MRtrix3",
+      "subsection": "Preprocessing",
+      "subsectionKey": "MRtrix3 / Preprocessing"
+    },
+    "probtrackx2": {
+      "library": "FSL",
+      "subsection": "Tractography",
+      "subsectionKey": "FSL / Tractography"
+    },
+    "tbss_1_preproc": {
+      "library": "FSL",
+      "subsection": "TBSS",
+      "subsectionKey": "FSL / TBSS"
+    },
+    "tbss_2_reg": {
+      "library": "FSL",
+      "subsection": "TBSS",
+      "subsectionKey": "FSL / TBSS"
+    },
+    "tbss_3_postreg": {
+      "library": "FSL",
+      "subsection": "TBSS",
+      "subsectionKey": "FSL / TBSS"
+    },
+    "tbss_4_prestats": {
+      "library": "FSL",
+      "subsection": "TBSS",
+      "subsectionKey": "FSL / TBSS"
+    },
+    "tbss_non_FA": {
+      "library": "FSL",
+      "subsection": "TBSS",
+      "subsectionKey": "FSL / TBSS"
+    },
+    "tck2connectome": {
+      "library": "MRtrix3",
+      "subsection": "Tractography",
+      "subsectionKey": "MRtrix3 / Tractography"
+    },
+    "tckgen": {
+      "library": "MRtrix3",
+      "subsection": "Tractography",
+      "subsectionKey": "MRtrix3 / Tractography"
+    },
+    "tcksift": {
+      "library": "MRtrix3",
+      "subsection": "Tractography",
+      "subsectionKey": "MRtrix3 / Tractography"
+    },
+    "tensor2metric": {
+      "library": "MRtrix3",
+      "subsection": "Tensor/FOD",
+      "subsectionKey": "MRtrix3 / Tensor/FOD"
+    },
+    "topup": {
+      "library": "FSL",
+      "subsection": "Preprocessing",
+      "subsectionKey": "FSL / Preprocessing"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "modality": "Arterial Spin Labeling",
+  "generatedAt": "2026-02-18T01:45:07Z",
+  "sourceOfTruth": [
+    "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
+    "utils/asl_tests/README.md",
+    "utils/asl_tests/test_oxford_asl.sh",
+    "utils/asl_tests/test_basil.sh",
+    "utils/asl_tests/test_asl_calib.sh"
+  ],
+  "toolCount": 3,
+  "byTool": {
+    "asl_calib": {
+      "library": "FSL",
+      "subsection": "ASL Processing",
+      "subsectionKey": "FSL / ASL Processing"
+    },
+    "basil": {
+      "library": "FSL",
+      "subsection": "ASL Processing",
+      "subsectionKey": "FSL / ASL Processing"
+    },
+    "oxford_asl": {
+      "library": "FSL",
+      "subsection": "ASL Processing",
+      "subsectionKey": "FSL / ASL Processing"
+    }
+  }
+}

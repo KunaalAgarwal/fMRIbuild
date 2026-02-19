@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { checkExtensionCompatibility } from '../utils/extensionValidation.js';
@@ -121,6 +121,7 @@ const EdgeMappingModal = ({
     sourceNode,
     targetNode,
     existingMappings = [],
+    adjacencyWarning = null,
 }) => {
     const { showWarning } = useToast();
     const [mappings, setMappings] = useState([]);
@@ -315,13 +316,12 @@ const EdgeMappingModal = ({
         onClose();
     };
 
-    const isOutputMapped = (outputName) => {
-        return mappings.some(m => m.sourceOutput === outputName);
-    };
+    // Pre-computed O(1) lookup Maps for mappings
+    const mappingsByOutput = useMemo(() => new Map(mappings.map(m => [m.sourceOutput, m])), [mappings]);
+    const mappingsByInput = useMemo(() => new Map(mappings.map(m => [m.targetInput, m])), [mappings]);
 
-    const isInputMapped = (inputName) => {
-        return mappings.some(m => m.targetInput === inputName);
-    };
+    const isOutputMapped = (outputName) => mappingsByOutput.has(outputName);
+    const isInputMapped = (inputName) => mappingsByInput.has(inputName);
 
     // Check type compatibility for a specific output-input pair
     const getMappingCompatibility = (outputName, inputName) => {
@@ -357,7 +357,13 @@ const EdgeMappingModal = ({
                 </Modal.Title>
             </Modal.Header>
             <Modal.Body>
-                {/* Type mismatch warning banner */}
+                {/* Warning banners */}
+                {adjacencyWarning && (
+                    <div className="type-warning-banner">
+                        <span className="warning-icon">⚠️</span>
+                        <span>{adjacencyWarning}</span>
+                    </div>
+                )}
                 {hasIncompatibleMappings && (
                     <div className="type-warning-banner">
                         <span className="warning-icon">⚠️</span>

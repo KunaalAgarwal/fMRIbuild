@@ -22,14 +22,14 @@ const LIBRARY_MAP = {
     amico: 'AMICO'
 };
 
+// Pre-computed inverse lookup: docker image base → DOCKER_TAGS key (O(1))
+const IMAGE_TO_LIBRARY = new Map(
+    Object.entries(DOCKER_IMAGES).map(([key, img]) => [img, LIBRARY_MAP[key]])
+);
+
 const getLibraryFromDockerImage = (dockerImage) => {
     const baseImage = dockerImage.split(':')[0];
-    for (const [key, image] of Object.entries(DOCKER_IMAGES)) {
-        if (image === baseImage) {
-            return LIBRARY_MAP[key] || null;
-        }
-    }
-    return null;
+    return IMAGE_TO_LIBRARY.get(baseImage) || null;
 };
 
 const NodeComponent = ({ data, id }) => {

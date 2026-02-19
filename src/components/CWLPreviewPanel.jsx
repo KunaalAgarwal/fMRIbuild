@@ -35,6 +35,7 @@ function CWLPreviewPanel({ getWorkflowData }) {
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [copied, setCopied] = useState(false);
     const debounceRef = useRef(null);
+    const copiedTimerRef = useRef(null);
 
     const [isCollapsed, setIsCollapsed] = useState(() => {
         try {
@@ -48,7 +49,7 @@ function CWLPreviewPanel({ getWorkflowData }) {
     const toggleCollapse = useCallback(() => {
         setIsCollapsed(prev => {
             const next = !prev;
-            localStorage.setItem('cwlPanelCollapsed', JSON.stringify(next));
+            try { localStorage.setItem('cwlPanelCollapsed', JSON.stringify(next)); } catch { /* private browsing */ }
             return next;
         });
     }, []);
@@ -89,10 +90,14 @@ function CWLPreviewPanel({ getWorkflowData }) {
 
     const activeContent = activeTab === 'workflow' ? cwlOutput : jobOutput;
 
+    // Clean up copied-reset timer on unmount
+    useEffect(() => () => { if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current); }, []);
+
     const handleCopy = useCallback(() => {
         navigator.clipboard.writeText(activeContent).then(() => {
             setCopied(true);
-            setTimeout(() => setCopied(false), 1500);
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+            copiedTimerRef.current = setTimeout(() => setCopied(false), 1500);
         }).catch(() => showWarning('Copy to clipboard failed'));
     }, [activeContent]);
 

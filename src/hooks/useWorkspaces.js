@@ -1,20 +1,26 @@
 import { useState } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
+const DEFAULT_WORKSPACES = [{ nodes: [], edges: [], name: '' }];
+
 export function useWorkspaces() {
   // Initialize state from localStorage or use defaults if nothing is stored.
   // Each workspace is now an object with 'nodes' and 'edges'
   const [workspaces, setWorkspaces] = useState(() => {
-    const savedWorkspaces = JSON.parse(localStorage.getItem('workspaces'));
-    if (savedWorkspaces) {
-      // Migrate existing data to include name field
-      return savedWorkspaces.map(ws => ({
-        nodes: ws.nodes || [],
-        edges: ws.edges || [],
-        name: ws.name || ''
-      }));
+    try {
+      const savedWorkspaces = JSON.parse(localStorage.getItem('workspaces'));
+      if (savedWorkspaces) {
+        // Migrate existing data to include name field
+        return savedWorkspaces.map(ws => ({
+          nodes: ws.nodes || [],
+          edges: ws.edges || [],
+          name: ws.name || ''
+        }));
+      }
+    } catch {
+      // Corrupted localStorage — fall through to default
     }
-    return [{ nodes: [], edges: [], name: '' }];
+    return DEFAULT_WORKSPACES;
   });
 
   const [currentWorkspace, setCurrentWorkspace] = useState(() => {
@@ -27,10 +33,8 @@ export function useWorkspaces() {
   useDebouncedStorage('currentWorkspace', currentWorkspace, 300);
 
   const addNewWorkspace = () => {
-    setWorkspaces((prevWorkspaces) => {
-      setCurrentWorkspace(prevWorkspaces.length);
-      return [...prevWorkspaces, { nodes: [], edges: [], name: '' }];
-    });
+    setWorkspaces((prev) => [...prev, { nodes: [], edges: [], name: '' }]);
+    setCurrentWorkspace((prev) => prev + 1);
   };
 
   const clearCurrentWorkspace = () => {
@@ -58,19 +62,11 @@ export function useWorkspaces() {
   };
 
   const removeCurrentWorkspace = () => {
-    setWorkspaces((prevWorkspaces) => {
-      if (prevWorkspaces.length === 1) {
-        // Prevent removing the last remaining workspace.
-        return prevWorkspaces;
-      }
-      const updatedWorkspaces = prevWorkspaces.filter(
-          (_, index) => index !== currentWorkspace
-      );
-      if (currentWorkspace >= updatedWorkspaces.length) {
-        setCurrentWorkspace(updatedWorkspaces.length - 1);
-      }
-      return updatedWorkspaces;
-    });
+    if (workspaces.length === 1) return;
+    setWorkspaces((prevWorkspaces) =>
+      prevWorkspaces.filter((_, index) => index !== currentWorkspace)
+    );
+    setCurrentWorkspace((prev) => (prev >= workspaces.length - 1 ? workspaces.length - 2 : prev));
   };
 
   const updateWorkspaceName = (newName) => {

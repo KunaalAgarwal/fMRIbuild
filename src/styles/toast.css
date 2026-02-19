@@ -21,7 +21,7 @@
     backdrop-filter: blur(10px);
     overflow: hidden;
     width: fit-content !important;
-    max-width: 400px;
+    max-width: min(400px, 90vw);
 }
 
 /* Variant left-border accent */

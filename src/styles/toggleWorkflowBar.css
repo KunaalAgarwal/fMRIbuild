@@ -30,7 +30,7 @@
 
 .page-numbers span:hover {
   transform: scale(1.1);
-  color: #b0b0b0;
+  color: var(--text-light);
 }
 
 .page-numbers .active {

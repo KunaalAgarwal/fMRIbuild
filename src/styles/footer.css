@@ -2,14 +2,13 @@
     width: 100%;
     background-color: var(--bg-card);
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: clamp(0.75rem, 1.2vw, 0.875rem);
     position: relative;
-    margin-top: 50px;
+    margin-top: clamp(20px, 5vw, 50px);
 
     display: flex;
-    justify-content: flex-start; /* Align items to the left */
-    /* Offset from the left edge */
-    padding: 10px 0 10px 20px;
+    justify-content: flex-start;
+    padding: clamp(6px, 1vw, 10px) 0 clamp(6px, 1vw, 10px) clamp(10px, 2vw, 20px);
 }
 
 .footer-content {
@@ -18,7 +17,7 @@
     align-items: flex-start; /* Align items to the left */
 }
 .footer-logo {
-    width: clamp(100px, 250px, 350px);
+    width: clamp(100px, 20vw, 350px);
     height: auto;
     margin-bottom: 7px;
 

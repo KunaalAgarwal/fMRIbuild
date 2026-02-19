@@ -73,13 +73,6 @@ export function isPreloaded() {
     return resolvedCache.size > 0;
 }
 
-/**
- * Returns the number of cached tool definitions.
- */
-export function getCacheSize() {
-    return resolvedCache.size;
-}
-
 // ── Fetch & Parse ────────────────────────────────────────────────────────
 
 async function fetchAndParse(cwlPath) {

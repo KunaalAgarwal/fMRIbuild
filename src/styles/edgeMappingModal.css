@@ -1,7 +1,7 @@
 .edge-mapping-modal .modal-content {
     border-radius: 8px;
     background-color: var(--bg-secondary);
-    color: #f5f5f5;
+    color: var(--text-light);
     border: 1px solid var(--border-subtle);
     box-shadow: var(--shadow-lg);
     font-family: 'Inter', sans-serif;
@@ -108,8 +108,8 @@
 
 .generic-badge {
     font-size: 0.6rem;
-    background-color: #555;
-    color: #ccc;
+    background-color: var(--bg-interactive);
+    color: var(--text-medium);
     padding: 2px 6px;
     border-radius: 3px;
     font-weight: 500;
@@ -129,7 +129,7 @@
 }
 
 .io-item:hover {
-    background-color: #333;
+    background-color: var(--bg-tertiary);
     border-color: rgba(255, 255, 255, 0.15);
 }
 
@@ -190,7 +190,7 @@
 .io-extensions {
     font-family: 'Roboto Mono', monospace;
     font-size: 0.6rem;
-    color: #777;
+    color: var(--text-muted);
     background-color: rgba(255, 255, 255, 0.05);
     padding: 3px 8px;
     border-radius: 3px;
@@ -321,7 +321,7 @@ g:hover .connection-dot {
 .edge-mapping-modal .btn-secondary {
     background-color: transparent;
     border-color: rgba(255, 255, 255, 0.15);
-    color: #aaa;
+    color: var(--text-muted);
     font-size: 0.85rem;
     padding: 8px 20px;
     border-radius: 5px;
@@ -331,7 +331,7 @@ g:hover .connection-dot {
 .edge-mapping-modal .btn-secondary:hover {
     background-color: rgba(255, 255, 255, 0.05);
     border-color: rgba(255, 255, 255, 0.25);
-    color: #ddd;
+    color: var(--text-light);
 }
 
 /* Warning banner */

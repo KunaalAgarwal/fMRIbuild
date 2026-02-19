@@ -51,29 +51,6 @@
   user-select: none;
 }
 
-/* Responsive adjustments for smaller screens */
-@media (max-width: 1200px) {
-  .workflow-name-container {
-    padding: 4px 8px;
-  }
-
-  .workflow-name-input {
-    width: 70px;
-    padding: 3px 6px;
-    font-size: 0.6rem;
-  }
-
-  .workflow-name-suffix {
-    font-size: 0.6rem;
-  }
-}
-
-@media (max-width: 900px) {
-  .workflow-name-input {
-    width: 60px;
-  }
-}
-
 @media (max-width: 600px) {
   .workflow-name-container {
     position: static;

@@ -51,9 +51,10 @@ export function buildCWLWorkflowObject(graph) {
     edges.forEach(e => incoming[e.target]++);
     const queue = nodes.filter(n => incoming[n.id] === 0).map(n => n.id);
     const order = [];
+    let head = 0;
 
-    while (queue.length) {
-        const id = queue.shift();
+    while (head < queue.length) {
+        const id = queue[head++];
         order.push(id);
         outEdgesOf(id).forEach(e => {
             if (--incoming[e.target] === 0) queue.push(e.target);

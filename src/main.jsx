@@ -51,7 +51,7 @@ function App() {
     }, []);
 
     return (
-        <div>
+        <>
             <div className="app-layout">
                 <HeaderBar />
                 <div className="toolbar-row">
@@ -89,7 +89,7 @@ function App() {
                 </div>
                 <Footer />
             </div>
-        </div>
+        </>
     );
 }
 

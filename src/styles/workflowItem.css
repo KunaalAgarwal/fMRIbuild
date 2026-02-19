@@ -1,7 +1,7 @@
 .custom-modal .modal-content {
   border-radius: 6px;
   background-color: var(--bg-tertiary);
-  color: #f5f5f5;
+  color: var(--text-light);
   border: 1px solid var(--border-medium);
   box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
   padding: 8px;
@@ -11,15 +11,10 @@
 .modal-label {
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
-  color: #f5f5f5;
+  color: var(--text-light);
   font-size: 0.9rem;
   display: block;
   margin-bottom: 6px;
-}
-
-.actions-button {
-  font-size: clamp(0.2rem, 1.2vw, 1.0rem);
-  padding: clamp(5px, 1vw, 12px) clamp(5px, 2vw, 20px);
 }
 
 /* ============================================
@@ -87,7 +82,7 @@
 
 .param-name {
   font-weight: 600;
-  color: #ccc;
+  color: var(--text-medium);
   flex-shrink: 0;
 }
 
@@ -96,7 +91,7 @@
   padding: 1px 6px;
   border-radius: 3px;
   background-color: rgba(255, 255, 255, 0.08);
-  color: #999;
+  color: var(--text-muted);
   flex-shrink: 0;
 }
 
@@ -109,7 +104,7 @@
 
 .param-description {
   font-size: 0.7rem;
-  color: #777777;
+  color: var(--text-muted);
   margin-top: 4px;
   line-height: 1.3;
 }
@@ -201,12 +196,12 @@
 .custom-modal .param-text:focus {
   box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
   border-color: var(--color-primary);
-  color: #e8e8e8;
+  color: var(--text-light);
 }
 
 .custom-modal .param-number::placeholder,
 .custom-modal .param-text::placeholder {
-  color: #555;
+  color: var(--text-secondary);
 }
 
 /* Inline controls — select dropdowns */
@@ -485,7 +480,7 @@
 }
 
 .node-version {
-  color: #999;
+  color: var(--text-muted);
 }
 
 /* ============================================
@@ -537,21 +532,9 @@
 }
 
 /* ============================================
-   WORKFLOW TOOLTIP (for info icon)
+   TOOLTIP SUB-STYLES (used by node info tooltip)
+   Base .workflow-tooltip is in workflowMenuItem.css
    ============================================ */
-.workflow-tooltip {
-  position: fixed;
-  background-color: var(--bg-primary);
-  padding: 10px 12px;
-  border-radius: 6px;
-  min-width: 200px;
-  max-width: 320px;
-  z-index: 10000;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border-subtle);
-  pointer-events: none;
-}
-
 .tooltip-section {
   margin-bottom: 6px;
 }

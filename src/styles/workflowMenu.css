@@ -60,10 +60,10 @@
 }
 
 .modality-header .tool-count {
-  font-size: clamp(0.55rem, 0.7vw, 0.75rem);
+  font-size: clamp(0.65rem, 0.7vw, 0.75rem);
   color: var(--text-muted);
   background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
+  padding: clamp(1px, 0.3vw, 2px) clamp(4px, 0.6vw, 6px);
   border-radius: 10px;
   white-space: nowrap;
   margin-left: 8px;
@@ -116,10 +116,10 @@
 }
 
 .library-header .tool-count {
-  font-size: clamp(0.55rem, 0.7vw, 0.75rem);
+  font-size: clamp(0.65rem, 0.7vw, 0.75rem);
   color: var(--text-muted);
   background-color: rgba(255, 255, 255, 0.1);
-  padding: 2px 6px;
+  padding: clamp(1px, 0.3vw, 2px) clamp(4px, 0.6vw, 6px);
   border-radius: 10px;
   white-space: nowrap;
 }
@@ -186,7 +186,7 @@
 }
 
 .workflow-search-input::placeholder {
-  color: #555;
+  color: var(--text-secondary);
   font-size: clamp(0.6rem, 0.8vw, 0.75rem);
 }
 

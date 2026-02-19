@@ -18,9 +18,13 @@ import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
+import { getInvalidConnectionReason } from '../utils/adjacencyValidation.js';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
+
+// Shared edge arrow marker config
+const EDGE_ARROW = { type: MarkerType.ArrowClosed, width: 10, height: 10 };
 
 function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkflowData, currentWorkspaceIndex }) {
   const reactFlowWrapper = useRef(null);
@@ -31,7 +35,6 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
   // Memoized node lookup for O(1) access
   const nodeMap = useNodeLookup(nodes);
-
   // Refs to track current nodes/edges for closures (fixes stale closure issue)
   const nodesRef = useRef(nodes);
   useEffect(() => {
@@ -103,11 +106,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           // Ensure edge has an ID (fallback for old saved data)
           id: edge.id || `${edge.source}-${edge.target}-${index}`,
           animated: true,
-          markerEnd: {
-            type: MarkerType.ArrowClosed,
-            width: 10,
-            height: 10,
-          },
+          markerEnd: EDGE_ARROW,
           style: { strokeWidth: 2 },
         }));
         setNodes(initialNodes);
@@ -158,9 +157,16 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         const targetNode = nodeMap.get(connection.target);
 
         if (sourceNode && targetNode) {
+          // Validate connection against consensus adjacency matrix (skip dummy nodes)
+          let adjacencyWarning = null;
+          if (!sourceNode.data.isDummy && !targetNode.data.isDummy) {
+            adjacencyWarning = getInvalidConnectionReason(sourceNode.data.label, targetNode.data.label);
+          }
+
           setEdgeModalData({
             sourceNode: { id: sourceNode.id, label: sourceNode.data.label, isDummy: sourceNode.data.isDummy || false },
             targetNode: { id: targetNode.id, label: targetNode.data.label, isDummy: targetNode.data.isDummy || false },
+            adjacencyWarning,
           });
           setShowEdgeModal(true);
         }
@@ -207,15 +213,11 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         } else if (pendingConnection) {
           // Create new edge with mappings
           const newEdge = {
-            id: `${pendingConnection.source}-${pendingConnection.target}-${Date.now()}`,
+            id: `${pendingConnection.source}-${pendingConnection.target}-${crypto.randomUUID()}`,
             source: pendingConnection.source,
             target: pendingConnection.target,
             animated: true,
-            markerEnd: {
-              type: MarkerType.ArrowClosed,
-              width: 10,
-              height: 10,
-            },
+            markerEnd: EDGE_ARROW,
             style: { strokeWidth: 2 },
             data: { mappings }
           };
@@ -260,10 +262,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   }, [onEdgesChange]);
 
   // Handle drag over.
-  const handleDragOver = (event) => {
+  const handleDragOver = useCallback((event) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = 'move';
-  };
+  }, []);
 
   // On drop, create a new node.
   const handleDrop = (event) => {
@@ -278,7 +280,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     });
 
     const newNode = {
-      id: `${Date.now()}`, // unique id
+      id: crypto.randomUUID(),
       type: 'default',
       data: {
         label: name,
@@ -387,9 +389,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 onInit={(instance) => setReactFlowInstance(instance)}
             >
               <MiniMap
-                nodeColor="#4a90e2"
-                maskColor="rgba(0, 0, 0, 0.65)"
-                style={{ backgroundColor: '#1a1a1a' }}
+                nodeColor="var(--color-primary)"
+                maskColor="var(--minimap-mask)"
+                style={{ backgroundColor: 'var(--minimap-bg)' }}
               />
               <Background variant="dots" gap={12} size={1} />
               <Controls />
@@ -406,6 +408,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             sourceNode={edgeModalData?.sourceNode}
             targetNode={edgeModalData?.targetNode}
             existingMappings={edgeModalData?.existingMappings || []}
+            adjacencyWarning={edgeModalData?.adjacencyWarning || null}
         />
       </div>
   );

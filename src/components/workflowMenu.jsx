@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef } from 'react';
+import React, { useState, useCallback, useMemo, useRef } from 'react';
 import WorkflowMenuItem from './workflowMenuItem';
 import ModalityTooltip from './modalityTooltip';
 import { toolsByModality, modalityOrder, modalityDescriptions, libraryOrder, dummyNodes } from '../utils/toolAnnotations';
@@ -14,17 +14,17 @@ function WorkflowMenu() {
   const [searchQuery, setSearchQuery] = useState('');
   const searchInputRef = useRef(null);
 
-  const toggleSection = (key) => {
+  const toggleSection = useCallback((key) => {
     setExpandedSections(prev => ({
       ...prev,
       [key]: !prev[key]
     }));
-  };
+  }, []);
 
-  const handleDragStart = (event, name, isDummy = false) => {
+  const handleDragStart = useCallback((event, name, isDummy = false) => {
     event.dataTransfer.setData('node/name', name);
     event.dataTransfer.setData('node/isDummy', isDummy.toString());
-  };
+  }, []);
 
   // Count total tools across all libraries/categories in a modality
   const getModalityToolCount = (modality) => {
@@ -171,7 +171,7 @@ function WorkflowMenu() {
               >
                 <span className="chevron">{expandedSections['DummyNodes'] ? '▼' : '▶'}</span>
                 <span className="library-name">I/O</span>
-                <span className="tool-count">2</span>
+                <span className="tool-count">{dummyNodes['I/O'].length}</span>
               </div>
 
               {expandedSections['DummyNodes'] && (

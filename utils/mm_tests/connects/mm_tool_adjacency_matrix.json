@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-18T02:33:52+00:00",
+  "generatedAt": "2026-02-19T07:33:55+00:00",
   "sources": {
-    "graph": "/Users/adamdawood/Documents/Projects/niBuild/utils/mm_tests/connects/mm_subsection_graph.mmd",
-    "mapping": "/Users/adamdawood/Documents/Projects/niBuild/utils/mm_tests/connects/mm_tool_to_subsection_map.json"
+    "graph": "C:\\Users\\kuna8\\personal_projects\\niBuild\\utils\\mm_tests\\connects\\mm_subsection_graph.mmd",
+    "mapping": "C:\\Users\\kuna8\\personal_projects\\niBuild\\utils\\mm_tests\\connects\\mm_tool_to_subsection_map.json"
   },
   "toolOrder": [
     "antsIntermodalityIntrasubject.sh"

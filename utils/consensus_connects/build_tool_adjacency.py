@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a directed tool-to-tool adjacency matrix for MM tools.
+"""Build a directed tool-to-tool adjacency matrix for any modality.
 
 Inputs:
 - Mermaid subsection graph (.mmd) with node labels and directed edges
@@ -8,6 +8,15 @@ Inputs:
 Outputs:
 - JSON adjacency artifact
 - CSV adjacency matrix
+
+Usage:
+    # Auto-discover files from a modality's connects directory:
+    python build_tool_adjacency.py --connects-dir ../fmri_tests/connects
+
+    # Or specify files explicitly:
+    python build_tool_adjacency.py \
+        --graph ../fmri_tests/connects/fmri_subsection_graph.mmd \
+        --mapping ../fmri_tests/connects/fmri_tool_to_subsection_map.json
 """
 
 from __future__ import annotations
@@ -19,7 +28,7 @@ import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, Iterable, List, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 
 NODE_RE = re.compile(r'^\s*([A-Za-z0-9_]+)\s*\["([^"]+)"\]\s*$')
@@ -200,46 +209,119 @@ def _validate_mapping_subsections_covered(
         )
 
 
-def parse_args(argv: Iterable[str]) -> argparse.Namespace:
-    script_dir = Path(__file__).resolve().parent
-    parser = argparse.ArgumentParser(
-        description=(
-            "Build directed MM tool adjacency matrix from subsection graph and tool mapping JSON."
+def _discover_modality_files(connects_dir: Path) -> Tuple[Path, Path, str]:
+    """Discover the graph and mapping files in a connects directory.
+
+    Expects files matching:
+        {modality}_subsection_graph.mmd
+        {modality}_tool_to_subsection_map.json
+    """
+    graphs = sorted(connects_dir.glob("*_subsection_graph.mmd"))
+    mappings = sorted(connects_dir.glob("*_tool_to_subsection_map.json"))
+
+    if len(graphs) != 1:
+        raise FileNotFoundError(
+            f"Expected exactly 1 *_subsection_graph.mmd in {connects_dir}, found {len(graphs)}: "
+            + ", ".join(p.name for p in graphs)
         )
+    if len(mappings) != 1:
+        raise FileNotFoundError(
+            f"Expected exactly 1 *_tool_to_subsection_map.json in {connects_dir}, found {len(mappings)}: "
+            + ", ".join(p.name for p in mappings)
+        )
+
+    graph_path = graphs[0]
+    mapping_path = mappings[0]
+
+    # Derive modality key from the graph filename
+    stem = graph_path.stem
+    suffix = "_subsection_graph"
+    if stem.endswith(suffix):
+        modality_key = stem[: -len(suffix)]
+    else:
+        modality_key = stem
+
+    return graph_path, mapping_path, modality_key
+
+
+def parse_args(argv: Iterable[str]) -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="Build a directed tool adjacency matrix from a subsection graph and tool mapping JSON."
+    )
+    parser.add_argument(
+        "--connects-dir",
+        type=Path,
+        default=None,
+        help=(
+            "Path to a modality's connects directory. Auto-discovers the graph and mapping files. "
+            "Mutually exclusive with --graph/--mapping."
+        ),
     )
     parser.add_argument(
         "--graph",
         type=Path,
-        default=script_dir / "mm_subsection_graph.mmd",
+        default=None,
         help="Path to Mermaid subsection graph (.mmd).",
     )
     parser.add_argument(
         "--mapping",
         type=Path,
-        default=script_dir / "mm_tool_to_subsection_map.json",
+        default=None,
         help="Path to tool mapping JSON (must include byTool).",
     )
     parser.add_argument(
         "--out-json",
         type=Path,
-        default=script_dir / "mm_tool_adjacency_matrix.json",
-        help="Output path for JSON matrix artifact.",
+        default=None,
+        help="Output path for JSON matrix artifact (default: auto-derived from modality).",
     )
     parser.add_argument(
         "--out-csv",
         type=Path,
-        default=script_dir / "mm_tool_adjacency_matrix.csv",
-        help="Output path for CSV matrix artifact.",
+        default=None,
+        help="Output path for CSV matrix artifact (default: auto-derived from modality).",
     )
     return parser.parse_args(list(argv))
 
 
+def _resolve_paths(
+    args: argparse.Namespace,
+) -> Tuple[Path, Path, Path, Path]:
+    """Resolve graph, mapping, and output paths from CLI arguments."""
+    graph_path: Optional[Path] = args.graph
+    mapping_path: Optional[Path] = args.mapping
+    out_json: Optional[Path] = args.out_json
+    out_csv: Optional[Path] = args.out_csv
+
+    if args.connects_dir is not None:
+        connects_dir = args.connects_dir.resolve()
+        if not connects_dir.is_dir():
+            raise FileNotFoundError(f"--connects-dir is not a directory: {connects_dir}")
+
+        discovered_graph, discovered_mapping, modality_key = _discover_modality_files(connects_dir)
+
+        graph_path = graph_path or discovered_graph
+        mapping_path = mapping_path or discovered_mapping
+        out_json = out_json or (connects_dir / f"{modality_key}_tool_adjacency_matrix.json")
+        out_csv = out_csv or (connects_dir / f"{modality_key}_tool_adjacency_matrix.csv")
+
+    if graph_path is None or mapping_path is None:
+        raise ValueError(
+            "Must provide either --connects-dir or both --graph and --mapping."
+        )
+
+    # Default output paths next to the graph file
+    if out_json is None:
+        out_json = graph_path.parent / (graph_path.stem.replace("_subsection_graph", "") + "_tool_adjacency_matrix.json")
+    if out_csv is None:
+        out_csv = graph_path.parent / (graph_path.stem.replace("_subsection_graph", "") + "_tool_adjacency_matrix.csv")
+
+    return graph_path.resolve(), mapping_path.resolve(), out_json.resolve(), out_csv.resolve()
+
+
 def main(argv: Iterable[str]) -> int:
     args = parse_args(argv)
-    graph_path = args.graph.resolve()
-    mapping_path = args.mapping.resolve()
-    out_json_path = args.out_json.resolve()
-    out_csv_path = args.out_csv.resolve()
+    graph_path, mapping_path, out_json_path, out_csv_path = _resolve_paths(args)
 
     node_id_to_label, subsection_edges_original, subsection_edges_canonical = parse_mermaid_graph(graph_path)
     tool_to_subsection_original, tool_to_subsection_canonical = load_tool_mapping(mapping_path)

@@ -1,6 +1,6 @@
 {
   "modality": "Functional MRI",
-  "generatedAt": "2026-02-09T16:49:08.484Z",
+  "generatedAt": "2026-02-19T00:00:00Z",
   "sourceOfTruth": [
     "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)"
   ],
@@ -28,8 +28,8 @@
     },
     "3dBandpass": {
       "library": "AFNI",
-      "subsection": "Denoising",
-      "subsectionKey": "AFNI / Denoising"
+      "subsection": "Temporal Filtering",
+      "subsectionKey": "AFNI / Temporal Filtering"
     },
     "3dBlurToFWHM": {
       "library": "AFNI",
@@ -48,8 +48,8 @@
     },
     "3dDespike": {
       "library": "AFNI",
-      "subsection": "Denoising",
-      "subsectionKey": "AFNI / Denoising"
+      "subsection": "Despiking",
+      "subsectionKey": "AFNI / Despiking"
     },
     "3dFWHMx": {
       "library": "AFNI",
@@ -269,9 +269,11 @@
       "3dTcorr1D",
       "3dTcorrMap"
     ],
-    "AFNI / Denoising": [
-      "3dBandpass",
+    "AFNI / Despiking": [
       "3dDespike"
+    ],
+    "AFNI / Temporal Filtering": [
+      "3dBandpass"
     ],
     "AFNI / Masking": [
       "3dAutomask"

@@ -2,6 +2,7 @@ flowchart LR
   %% dMRI subsection nodes discovered from src/data/toolData.js
   FSL_PREP["FSL / Preprocessing"]
   FSL_TENSOR["FSL / Tensor Fitting"]
+  FSL_FIBERMODEL["FSL / Fiber Modeling"]
   FSL_TRACT["FSL / Tractography"]
   FSL_TBSS["FSL / TBSS"]
 
@@ -14,7 +15,8 @@ flowchart LR
 
   %% Directed subsection edges for realistic dMRI pipelines
   FSL_PREP --> FSL_TENSOR
-  FSL_PREP --> FSL_TRACT
+  FSL_PREP --> FSL_FIBERMODEL
+  FSL_FIBERMODEL --> FSL_TRACT
   FSL_TENSOR --> FSL_TBSS
   FSL_PREP --> FS_DIFF
   FSL_PREP --> AMICO_MICRO

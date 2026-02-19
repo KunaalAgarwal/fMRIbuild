@@ -1,6 +1,6 @@
 {
   "modality": "Diffusion Magnetic Resonance Imaging",
-  "generatedAt": "2026-02-18T02:21:44Z",
+  "generatedAt": "2026-02-19T00:00:00Z",
   "sourceOfTruth": [
     "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
     "utils/dmri_tests/README.md",
@@ -16,8 +16,8 @@
     },
     "bedpostx": {
       "library": "FSL",
-      "subsection": "Tractography",
-      "subsectionKey": "FSL / Tractography"
+      "subsection": "Fiber Modeling",
+      "subsectionKey": "FSL / Fiber Modeling"
     },
     "dmri_postreg": {
       "library": "FreeSurfer",

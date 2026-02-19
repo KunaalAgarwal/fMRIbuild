@@ -1,12 +1,12 @@
 {
   "modality": "Structural MRI",
-  "generatedAt": "2026-02-18T02:36:49Z",
+  "generatedAt": "2026-02-19T00:00:00Z",
   "sourceOfTruth": [
     "src/data/toolData.js (toolsByModality / MODALITY_ASSIGNMENTS)",
     "utils/structural_mri_tests/README.md",
     "utils/structural_mri_tests/test_*.sh"
   ],
-  "toolCount": 39,
+  "toolCount": 38,
   "byTool": {
     "3dAllineate": {
       "library": "AFNI",
@@ -127,11 +127,6 @@
       "library": "FreeSurfer",
       "subsection": "Parcellation",
       "subsectionKey": "FreeSurfer / Parcellation"
-    },
-    "mri_convert": {
-      "library": "FreeSurfer",
-      "subsection": "Surface Reconstruction",
-      "subsectionKey": "FreeSurfer / Surface Reconstruction"
     },
     "mri_label2vol": {
       "library": "FreeSurfer",

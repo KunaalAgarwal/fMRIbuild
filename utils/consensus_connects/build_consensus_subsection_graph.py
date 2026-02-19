@@ -168,7 +168,7 @@ def chunked(items: Sequence[str], size: int) -> List[List[str]]:
 
 
 def build_mermaid(modality_graphs: List[Dict[str, object]]) -> str:
-    timestamp = dt.datetime.now(dt.UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    timestamp = dt.datetime.now(dt.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
     header = (
         "%%{init: {'theme':'base', 'flowchart': {'curve': 'linear', 'nodeSpacing': 20, "
         "'rankSpacing': 36, 'diagramPadding': 12}, 'themeVariables': {'fontFamily': "

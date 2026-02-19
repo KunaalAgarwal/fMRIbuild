@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-02-18T02:22:11+00:00",
+  "generatedAt": "2026-02-19T07:32:44+00:00",
   "sources": {
-    "graph": "/Users/adamdawood/Documents/Projects/niBuild/utils/dmri_tests/connects/dmri_subsection_graph.mmd",
-    "mapping": "/Users/adamdawood/Documents/Projects/niBuild/utils/dmri_tests/connects/dmri_tool_to_subsection_map.json"
+    "graph": "C:\\Users\\kuna8\\personal_projects\\niBuild\\utils\\dmri_tests\\connects\\dmri_subsection_graph.mmd",
+    "mapping": "C:\\Users\\kuna8\\personal_projects\\niBuild\\utils\\dmri_tests\\connects\\dmri_tool_to_subsection_map.json"
   },
   "toolOrder": [
     "amico_noddi",
@@ -50,7 +50,7 @@
   },
   "subsectionByTool": {
     "amico_noddi": "amico / microstructure modeling",
-    "bedpostx": "fsl / tractography",
+    "bedpostx": "fsl / fiber modeling",
     "dmri_postreg": "freesurfer / diffusion",
     "dtifit": "fsl / tensor fitting",
     "dwi2fod": "mrtrix3 / tensor fod",
@@ -72,7 +72,7 @@
   },
   "subsectionByToolOriginal": {
     "amico_noddi": "AMICO / Microstructure Modeling",
-    "bedpostx": "FSL / Tractography",
+    "bedpostx": "FSL / Fiber Modeling",
     "dmri_postreg": "FreeSurfer / Diffusion",
     "dtifit": "FSL / Tensor Fitting",
     "dwi2fod": "MRtrix3 / Tensor/FOD",
@@ -94,6 +94,10 @@
   },
   "subsectionEdges": [
     {
+      "source": "fsl / fiber modeling",
+      "target": "fsl / tractography"
+    },
+    {
       "source": "fsl / preprocessing",
       "target": "amico / microstructure modeling"
     },
@@ -103,11 +107,11 @@
     },
     {
       "source": "fsl / preprocessing",
-      "target": "fsl / tensor fitting"
+      "target": "fsl / fiber modeling"
     },
     {
       "source": "fsl / preprocessing",
-      "target": "fsl / tractography"
+      "target": "fsl / tensor fitting"
     },
     {
       "source": "fsl / preprocessing",
@@ -167,7 +171,7 @@
       0,
       0,
       0,
-      0,
+      1,
       0,
       0,
       0,
@@ -299,28 +303,6 @@
       0,
       0,
       0,
-      1,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      1,
-      0
-    ],
-    [
-      1,
-      0,
-      0,
-      1,
-      1,
-      1,
-      0,
-      0,
-      0,
       0,
       0,
       0,
@@ -334,6 +316,12 @@
       0
     ],
     [
+      1,
+      0,
+      0,
+      1,
+      1,
+      1,
       0,
       0,
       0,
@@ -346,35 +334,7 @@
       0,
       0,
       0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0
-    ],
-    [
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
-      0,
+      1,
       0
     ],
     [
@@ -547,6 +507,50 @@
       0,
       0,
       0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
       1,
       1,
       1,
@@ -563,7 +567,7 @@
       0,
       0,
       0,
-      1,
+      0,
       0,
       0,
       0,
@@ -576,7 +580,7 @@
       0
     ]
   ],
-  "edgeCount": 40,
+  "edgeCount": 39,
   "toolCount": 20,
   "normalization": {
     "canonicalLabelFormat": "library / subsection",

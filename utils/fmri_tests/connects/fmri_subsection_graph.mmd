@@ -9,7 +9,8 @@ flowchart LR
   FSL_SM["FSL / Smoothing"]
   FSL_STAT["FSL / Statistical Analysis"]
 
-  AFNI_DEN["AFNI / Denoising"]
+  AFNI_DESP["AFNI / Despiking"]
+  AFNI_TEMPFILT["AFNI / Temporal Filtering"]
   AFNI_ST["AFNI / Slice Timing"]
   AFNI_REG["AFNI / Registration"]
   AFNI_MC["AFNI / Motion Correction"]
@@ -25,34 +26,50 @@ flowchart LR
   WB_CIFTI["Connectome Workbench / CIFTI Operations"]
   WB_SURF["Connectome Workbench / Surface Smoothing"]
 
-  MRIQC --> FMRIPREP
-  MRIQC --> FSL_MC
-  MRIQC --> AFNI_MC
-  MRIQC --> ANTS_MC
+  %% MRIQC is a QC-only tool (reports/metrics, no image output) — kept as isolated node
 
+  %% FSL pipeline
   FSL_DC --> FSL_MC
   FSL_MC --> FSL_ST
-  FSL_ST --> FSL_ICA
-  FSL_ICA --> FSL_SM
+  FSL_ST --> FSL_SM
+  FSL_SM --> FSL_ICA
   FSL_SM --> FSL_STAT
+  FSL_ICA --> FSL_STAT
 
-  AFNI_DEN --> AFNI_ST
+  %% AFNI pipeline (afni_proc.py block order: despike, tshift, align, volreg, blur, mask, scale, regress)
+  AFNI_DESP --> AFNI_ST
   AFNI_ST --> AFNI_REG
   AFNI_REG --> AFNI_MC
   AFNI_MC --> AFNI_SM
   AFNI_SM --> AFNI_MASK
   AFNI_MASK --> AFNI_STAT
+  AFNI_MASK --> AFNI_TEMPFILT
   AFNI_STAT --> AFNI_MCMP
   AFNI_STAT --> AFNI_CONN
+  AFNI_TEMPFILT --> AFNI_CONN
   AFNI_CONN --> AFNI_ROI
+  AFNI_MASK --> AFNI_CONN
 
+  %% Cross-library motion correction handoffs
   ANTS_MC --> FSL_ICA
-  ANTS_MC --> AFNI_DEN
+  ANTS_MC --> AFNI_DESP
 
+  %% Distortion correction cross-library
+  FSL_DC --> AFNI_MC
+  FSL_DC --> ANTS_MC
+
+  %% fMRIPrep downstream edges
   FMRIPREP --> FSL_STAT
+  FMRIPREP --> FSL_SM
+  FMRIPREP --> FSL_ICA
+  FMRIPREP --> AFNI_SM
+  FMRIPREP --> AFNI_MASK
+  FMRIPREP --> AFNI_TEMPFILT
+  FMRIPREP --> AFNI_STAT
   FMRIPREP --> AFNI_CONN
   FMRIPREP --> FS_FUNC
   FMRIPREP --> WB_CIFTI
 
+  %% FreeSurfer / Connectome Workbench
   FS_FUNC --> WB_CIFTI
   WB_CIFTI --> WB_SURF

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
-const DEFAULT_WORKSPACES = [{ nodes: [], edges: [], name: '' }];
+const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '' }];
 
 export function useWorkspaces() {
   // Initialize state from localStorage or use defaults if nothing is stored.
@@ -10,8 +10,9 @@ export function useWorkspaces() {
     try {
       const savedWorkspaces = JSON.parse(localStorage.getItem('workspaces'));
       if (savedWorkspaces) {
-        // Migrate existing data to include name field
+        // Migrate existing data to include name and id fields
         return savedWorkspaces.map(ws => ({
+          id: ws.id || crypto.randomUUID(),
           nodes: ws.nodes || [],
           edges: ws.edges || [],
           name: ws.name || ''
@@ -33,16 +34,16 @@ export function useWorkspaces() {
   useDebouncedStorage('currentWorkspace', currentWorkspace, 300);
 
   const addNewWorkspace = () => {
-    setWorkspaces((prev) => [...prev, { nodes: [], edges: [], name: '' }]);
+    setWorkspaces((prev) => [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '' }]);
     setCurrentWorkspace((prev) => prev + 1);
   };
 
   const clearCurrentWorkspace = () => {
     setWorkspaces((prevWorkspaces) => {
       const updatedWorkspaces = [...prevWorkspaces];
-      // Preserve the name when clearing
-      const currentName = updatedWorkspaces[currentWorkspace]?.name || '';
-      updatedWorkspaces[currentWorkspace] = { nodes: [], edges: [], name: currentName };
+      // Preserve the id and name when clearing
+      const ws = updatedWorkspaces[currentWorkspace];
+      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: ws?.name || '' };
       return updatedWorkspaces;
     });
   };
@@ -51,11 +52,12 @@ export function useWorkspaces() {
     // newItems is expected to be an object with shape: { nodes, edges }
     setWorkspaces((prevWorkspaces) => {
       const updatedWorkspaces = [...prevWorkspaces];
-      // Preserve the name when updating nodes/edges
-      const currentName = updatedWorkspaces[currentWorkspace]?.name || '';
+      // Preserve the id and name when updating nodes/edges
+      const ws = updatedWorkspaces[currentWorkspace];
       updatedWorkspaces[currentWorkspace] = {
         ...newItems,
-        name: currentName
+        id: ws?.id || crypto.randomUUID(),
+        name: ws?.name || ''
       };
       return updatedWorkspaces;
     });

@@ -15,7 +15,7 @@ import { computeScatteredNodes } from '../utils/scatterPropagation.js';
  * Convert the React-Flow graph into a CWL Workflow JS object.
  * Returns the raw object before YAML serialization.
  */
-export function buildCWLWorkflowObject(graph) {
+export function buildCWLWorkflowObject(graph, allWorkspaces = null) {
     // Filter out dummy nodes before processing
     const dummyNodeIds = new Set(
         graph.nodes.filter(n => n.data?.isDummy).map(n => n.id)
@@ -104,15 +104,19 @@ export function buildCWLWorkflowObject(graph) {
     };
 
     /* ---------- build CWL skeleton ---------- */
-    const hasScatter = scatteredSteps.size > 0;
     const wf = {
         cwlVersion: 'v1.2',
         class: 'Workflow',
-        ...(hasScatter && { requirements: { ScatterFeatureRequirement: {} } }),
         inputs: {},
         outputs: {},
         steps: {}
     };
+
+    // Requirement flags — assembled after the node walk loop
+    let needsMultipleInputFeature = false;
+    let needsInlineJavascript = false;
+    let needsStepInputExpression = false;
+    const conditionalStepIds = new Set();
 
     // Separate map for job template values (not embedded in CWL)
     const jobDefaults = {};
@@ -175,16 +179,19 @@ export function buildCWLWorkflowObject(graph) {
     };
 
     /* ---------- pre-compute wired inputs per node from edge mappings ---------- */
-    // wiredInputsMap: Map<nodeId, Map<inputName, { sourceNodeId, sourceOutput }>>
+    // wiredInputsMap: Map<nodeId, Map<inputName, Array<{ sourceNodeId, sourceOutput }>>>
     const wiredInputsMap = new Map();
     for (const edge of edges) {
         const mappings = edge.data?.mappings || [];
         for (const m of mappings) {
             if (!wiredInputsMap.has(edge.target)) wiredInputsMap.set(edge.target, new Map());
-            wiredInputsMap.get(edge.target).set(m.targetInput, {
-                sourceNodeId: edge.source,
-                sourceOutput: m.sourceOutput
-            });
+            const nodeInputs = wiredInputsMap.get(edge.target);
+            const sourceInfo = { sourceNodeId: edge.source, sourceOutput: m.sourceOutput };
+            if (nodeInputs.has(m.targetInput)) {
+                nodeInputs.get(m.targetInput).push(sourceInfo);
+            } else {
+                nodeInputs.set(m.targetInput, [sourceInfo]);
+            }
         }
     }
 
@@ -192,6 +199,7 @@ export function buildCWLWorkflowObject(graph) {
     order.forEach((nodeId) => {
         const node = nodeById(nodeId);
         const { label } = node.data;
+
         const tool = getToolConfigSync(label);
 
         // Generic fallback for undefined tools
@@ -211,23 +219,60 @@ export function buildCWLWorkflowObject(graph) {
         const incomingEdges = inEdgesOf(nodeId);
         const isSingleNode = nodes.length === 1;
 
-        // Step skeleton with correct relative path
-        // Declare ALL outputs so they can be referenced
+        // Step skeleton
         const step = {
             run: `../${effectiveTool.cwlPath}`,
             in: {},
             out: Object.keys(effectiveTool.outputs)
         };
 
+        // Read expressions from node data
+        const expressions = node.data.expressions || {};
+
         /* ---------- handle required inputs ---------- */
         Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
             const { type } = inputDef;
-            const wiredInfo = wiredInputsMap.get(nodeId)?.get(inputName);
+            const expr = expressions[inputName];
+            const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
 
-            if (wiredInfo) {
-                // This input is explicitly wired from an upstream output via edge mapping
-                const srcStepId = getStepId(wiredInfo.sourceNodeId);
-                step.in[inputName] = `${srcStepId}/${wiredInfo.sourceOutput}`;
+            if (expr) {
+                // Expression mode: valueFrom transforms the input
+                needsStepInputExpression = true;
+                needsInlineJavascript = true;
+                if (wiredSources.length === 0) {
+                    // Unwired + expression: expose as workflow input, valueFrom transforms it
+                    const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+                    wf.inputs[wfInputName] = { type: toCWLType(type) };
+                    step.in[inputName] = { source: wfInputName, valueFrom: expr };
+                } else if (wiredSources.length === 1) {
+                    // Single wired + expression: source is upstream output, valueFrom transforms it
+                    const srcStepId = getStepId(wiredSources[0].sourceNodeId);
+                    step.in[inputName] = {
+                        source: `${srcStepId}/${wiredSources[0].sourceOutput}`,
+                        valueFrom: expr,
+                    };
+                } else {
+                    // Multi-source + expression: preserve linkMerge alongside valueFrom
+                    const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+                    step.in[inputName] = {
+                        source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                        linkMerge,
+                        valueFrom: expr,
+                    };
+                    needsMultipleInputFeature = true;
+                }
+            } else if (wiredSources.length === 1) {
+                // Single source: simple string reference (backward-compatible)
+                const srcStepId = getStepId(wiredSources[0].sourceNodeId);
+                step.in[inputName] = `${srcStepId}/${wiredSources[0].sourceOutput}`;
+            } else if (wiredSources.length > 1) {
+                // Multiple sources: use source array + linkMerge
+                const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+                step.in[inputName] = {
+                    source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                    linkMerge,
+                };
+                needsMultipleInputFeature = true;
             } else {
                 // Not wired - expose as workflow input
                 const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
@@ -252,6 +297,34 @@ export function buildCWLWorkflowObject(graph) {
         if (effectiveTool.optionalInputs) {
             Object.entries(effectiveTool.optionalInputs).forEach(([inputName, inputDef]) => {
                 const { type } = inputDef;
+                const optExpr = expressions[inputName];
+
+                // Expression on optional input: emit valueFrom, respecting wired sources
+                if (optExpr) {
+                    needsStepInputExpression = true;
+                    needsInlineJavascript = true;
+                    const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
+                    if (wiredSources.length === 1) {
+                        const srcStepId = getStepId(wiredSources[0].sourceNodeId);
+                        step.in[inputName] = {
+                            source: `${srcStepId}/${wiredSources[0].sourceOutput}`,
+                            valueFrom: optExpr,
+                        };
+                    } else if (wiredSources.length > 1) {
+                        const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+                        step.in[inputName] = {
+                            source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                            linkMerge,
+                            valueFrom: optExpr,
+                        };
+                        needsMultipleInputFeature = true;
+                    } else {
+                        const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+                        wf.inputs[wfInputName] = { type: toCWLType(type, true) };
+                        step.in[inputName] = { source: wfInputName, valueFrom: optExpr };
+                    }
+                    return;
+                }
 
                 // Skip record types - these are complex types handled by CWL directly
                 if (type === 'record') {
@@ -307,7 +380,7 @@ export function buildCWLWorkflowObject(graph) {
                 // Source node: scatter on File/Directory required inputs that are workflow-level inputs
                 Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
                     const isFileOrDir = inputDef.type === 'File' || inputDef.type === 'Directory';
-                    const isWired = wiredInputsMap.get(nodeId)?.has(inputName);
+                    const isWired = (wiredInputsMap.get(nodeId)?.get(inputName)?.length || 0) > 0;
                     if (isFileOrDir && !isWired) {
                         scatterInputs.push(inputName);
                     }
@@ -340,8 +413,24 @@ export function buildCWLWorkflowObject(graph) {
         finalStep.in = step.in;
         finalStep.out = step.out;
         if (step.hints) finalStep.hints = step.hints;
+
+        // Conditional execution (when clause)
+        if (node.data.whenExpression && node.data.whenExpression.trim()) {
+            finalStep.when = node.data.whenExpression.trim();
+            conditionalStepIds.add(nodeId);
+            needsInlineJavascript = true;
+        }
+
         wf.steps[stepId] = finalStep;
     });
+
+    /* ---------- assemble requirements ---------- */
+    const requirements = {};
+    if (needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
+    if (scatteredSteps.size > 0) requirements.ScatterFeatureRequirement = {};
+    if (needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
+    if (needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
+    if (Object.keys(requirements).length > 0) wf.requirements = requirements;
 
     /* ---------- declare ALL outputs from terminal nodes ---------- */
     const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
@@ -366,10 +455,17 @@ export function buildCWLWorkflowObject(graph) {
                 ? toArrayType(outputDef.type)
                 : toCWLType(outputDef.type);
 
-            wf.outputs[wfOutputName] = {
+            const outputEntry = {
                 type: outputType,
                 outputSource: `${stepId}/${outputName}`
             };
+
+            // Conditional terminal nodes need pickValue to handle null outputs
+            if (conditionalStepIds.has(node.id)) {
+                outputEntry.pickValue = 'first_non_null';
+            }
+
+            wf.outputs[wfOutputName] = outputEntry;
         });
     });
 

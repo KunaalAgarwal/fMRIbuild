@@ -68,8 +68,8 @@ const getToolIO = (toolLabel, isDummy = false) => {
     // Dummy I/O nodes accept any data type
     if (isDummy) {
         return {
-            outputs: [{ name: 'output', type: 'any', label: 'Output', extensions: [] }],
-            inputs: [{ name: 'input', type: 'any', label: 'Input', acceptedExtensions: null }],
+            outputs: [{ name: 'data', type: 'any', label: 'data', extensions: [] }],
+            inputs:  [{ name: 'data', type: 'any', label: 'data', acceptedExtensions: null }],
             isGeneric: true,
             isDummy: true
         };
@@ -140,7 +140,18 @@ const EdgeMappingModal = ({
     useEffect(() => {
         if (show) {
             if (existingMappings.length > 0) {
-                setMappings(existingMappings);
+                // Migrate old dummy node mapping names ('output'/'input' → 'data')
+                const migratedMappings = existingMappings.map(m => ({
+                    sourceOutput: (sourceIO.isDummy && m.sourceOutput === 'output') ? 'data' : m.sourceOutput,
+                    targetInput: (targetIO.isDummy && m.targetInput === 'input') ? 'data' : m.targetInput,
+                }));
+                // Filter out stale mappings referencing removed inputs/outputs
+                const validOutputNames = new Set(sourceIO.outputs.map(o => o.name));
+                const validInputNames = new Set(targetIO.inputs.map(i => i.name));
+                const validMappings = migratedMappings.filter(
+                    m => validOutputNames.has(m.sourceOutput) && validInputNames.has(m.targetInput)
+                );
+                setMappings(validMappings);
             } else {
                 // Default mapping: first output to first input
                 const defaultMapping = [];
@@ -375,7 +386,7 @@ const EdgeMappingModal = ({
                     {/* Outputs Column */}
                     <div className="io-column outputs-column">
                         <div className="column-header">
-                            Outputs ({sourceNode.label})
+                            {sourceIO.isDummy ? 'Provides' : 'Outputs'} ({sourceNode.label})
                             {sourceIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
                         <div className="io-items-scroll" ref={outputsScrollRef}>
@@ -490,7 +501,7 @@ const EdgeMappingModal = ({
                     {/* Inputs Column */}
                     <div className="io-column inputs-column">
                         <div className="column-header">
-                            Inputs ({targetNode.label})
+                            {targetIO.isDummy ? 'Receives' : 'Inputs'} ({targetNode.label})
                             {targetIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
                         <div className="io-items-scroll" ref={inputsScrollRef}>

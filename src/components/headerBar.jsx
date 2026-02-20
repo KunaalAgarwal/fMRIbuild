@@ -41,11 +41,25 @@ function HeaderBar(){
                             <li>Collapse or expand the panel using the toggle button.</li>
                         </ul>
 
+                        <strong style={{ fontSize: '1.05em' }}>Advanced Workflow Features</strong>
+                        <ul style={{ paddingLeft: '20px', marginBottom: '12px', marginTop: '4px' }}>
+                            <li><strong>Multiple Inputs</strong> — Connect multiple edges to the same input on a node to merge upstream outputs. Choose a merge strategy (flattened or nested) in the parameter modal.</li>
+                            <li><strong>Conditional Steps</strong> — Double-click a node and set a "when" expression (e.g., <code>$(inputs.run_step == true)</code>) to conditionally skip a step at runtime. Skipped steps produce null outputs.</li>
+                            <li><strong>Expressions</strong> — Click the <em>fx</em> button next to any parameter to transform its value with a CWL expression. Type just the expression body (e.g., <code>self / 2.355</code>) — the <code>$(…)</code> wrapper is added automatically. For scalar parameters (numbers, strings), <code>self</code> is the raw value. For File parameters, <code>self</code> is a File object with properties like <code>self.nameroot</code>, <code>self.basename</code>, and <code>self.dirname</code>. Pick from the template dropdown for common patterns.</li>
+                        </ul>
+
                         <strong style={{ fontSize: '1.05em' }}>Managing Your Work</strong>
-                        <ul style={{ paddingLeft: '20px', marginBottom: '0', marginTop: '4px' }}>
+                        <ul style={{ paddingLeft: '20px', marginBottom: '12px', marginTop: '4px' }}>
                             <li>Select a node or edge and press Delete to remove it.</li>
                             <li>Organize workflows using multiple named workspaces, saved automatically in browser storage.</li>
-                            <li>Click "Generate Workflow" to export a CWL zip bundle with the workflow definition and tool dependencies.</li>
+                            <li>Click "Generate Workflow" to download a <code>.crate.zip</code> bundle containing:</li>
+                        </ul>
+                        <ul style={{ paddingLeft: '36px', marginBottom: '0', marginTop: '0', listStyleType: 'disc' }}>
+                            <li>A CWL workflow file and pre-filled job template with your parameter values.</li>
+                            <li>Tool CWL definitions with pinned Docker image versions.</li>
+                            <li>A Dockerfile and run script for one-command execution via Docker.</li>
+                            <li>A README with setup instructions for Docker and cwltool.</li>
+                            <li>RO-Crate metadata for reproducibility and discovery on WorkflowHub.</li>
                         </ul>
                     </div>
                 </Modal.Body>

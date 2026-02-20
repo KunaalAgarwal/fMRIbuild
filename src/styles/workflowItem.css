@@ -61,6 +61,7 @@
   letter-spacing: 0.5px;
   padding-bottom: 8px;
   margin-bottom: 6px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .param-card {
@@ -69,6 +70,12 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 5px;
   margin-bottom: 6px;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+
+.param-card:hover {
+  border-color: rgba(255, 255, 255, 0.14);
+  background-color: rgba(42, 42, 42, 0.9);
 }
 
 .param-card-header {
@@ -162,23 +169,25 @@
   background-color: var(--bg-primary);
   color: var(--text-medium);
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
+  border-left: 2px solid var(--border-subtle);
+  border-radius: 5px;
   font-size: 0.8rem;
-  padding: 4px 8px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  padding: 5px 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
   -moz-appearance: textfield;
 }
 
 .custom-modal .param-number {
-  width: 90px;
-  min-width: 90px;
-  max-width: 90px;
+  width: 100px;
+  min-width: 100px;
+  max-width: 100px;
   text-align: right;
 }
 
 .custom-modal .param-text {
-  width: 120px;
-  max-width: 120px;
+  width: 140px;
+  max-width: 140px;
 }
 
 .param-number::-webkit-outer-spin-button,
@@ -189,19 +198,31 @@
 
 .custom-modal .param-number:hover,
 .custom-modal .param-text:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(26, 26, 26, 0.85);
 }
 
 .custom-modal .param-number:focus,
 .custom-modal .param-text:focus {
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
   border-color: var(--color-primary);
+  border-left-color: var(--color-primary);
+  color: var(--text-light);
+  background-color: rgba(26, 26, 26, 0.95);
+}
+
+/* Filled state — accent left border when a value is entered */
+.custom-modal .param-number.filled,
+.custom-modal .param-text.filled {
+  border-left-color: var(--color-primary);
   color: var(--text-light);
 }
 
 .custom-modal .param-number::placeholder,
 .custom-modal .param-text::placeholder {
   color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.7;
 }
 
 /* Inline controls — select dropdowns */
@@ -210,20 +231,39 @@
   background-color: var(--bg-primary);
   color: var(--text-medium);
   border: 1px solid var(--border-subtle);
-  border-radius: 4px;
+  border-left: 2px solid var(--border-subtle);
+  border-radius: 5px;
   font-size: 0.8rem;
-  width: 140px;
-  padding: 4px 24px 4px 8px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  width: 150px;
+  padding: 5px 28px 5px 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  cursor: pointer;
 }
 
 .custom-modal .param-select:hover {
-  border-color: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.22);
+  background-color: rgba(26, 26, 26, 0.85);
 }
 
 .custom-modal .param-select:focus {
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.2);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
   border-color: var(--color-primary);
+  border-left-color: var(--color-primary);
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234a90e2' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+}
+
+/* Filled state for selects */
+.custom-modal .param-select.filled {
+  border-left-color: var(--color-primary);
+  color: var(--text-light);
 }
 
 .custom-modal .modal-body {
@@ -252,6 +292,125 @@
 /* ============================================
    SCATTER TOGGLE (parameter modal)
    ============================================ */
+/* Conditional (when) expression */
+.when-expression-group {
+  margin-bottom: 16px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.when-builder-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.custom-modal .when-param-select {
+  font-family: 'Roboto Mono', monospace;
+  background-color: var(--bg-primary);
+  color: var(--text-medium);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--border-subtle);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  flex: 1;
+  max-width: 180px;
+  padding: 5px 28px 5px 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+}
+
+.custom-modal .when-param-select:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.custom-modal .when-param-select:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
+  border-color: var(--color-primary);
+  border-left-color: var(--color-primary);
+}
+
+.custom-modal .when-condition-input {
+  font-family: 'Roboto Mono', monospace;
+  background-color: var(--bg-primary);
+  color: var(--text-medium);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--border-subtle);
+  border-radius: 5px;
+  font-size: 0.8rem;
+  flex: 1;
+  max-width: 140px;
+  padding: 5px 10px;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.custom-modal .when-condition-input:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.custom-modal .when-condition-input:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
+  border-color: var(--color-primary);
+  border-left-color: var(--color-primary);
+  color: var(--text-light);
+  background-color: rgba(26, 26, 26, 0.95);
+}
+
+.custom-modal .when-condition-input.filled {
+  border-left-color: var(--color-warning);
+  color: var(--text-light);
+}
+
+.custom-modal .when-condition-input::placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.when-preview {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding: 3px 8px;
+  background-color: rgba(255, 255, 255, 0.04);
+  border-radius: 3px;
+}
+
+.custom-modal .when-condition-input.invalid {
+  border-color: var(--color-danger, #e74c3c);
+  border-left-color: var(--color-danger, #e74c3c);
+}
+
+.custom-modal .when-condition-input.invalid:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(231, 76, 60, 0.25);
+}
+
+.when-warning-text {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--color-danger, #e74c3c);
+  margin-top: 4px;
+  padding: 3px 8px;
+  background-color: rgba(231, 76, 60, 0.06);
+  border-radius: 3px;
+}
+
+.when-help-text {
+  font-size: 0.7rem;
+  color: var(--text-secondary);
+  margin-top: 6px;
+}
+
 .scatter-toggle-group {
   margin-bottom: 16px;
   padding-bottom: 16px;
@@ -278,20 +437,89 @@
   border-color: rgba(74, 144, 226, 0.2);
 }
 
-.param-card.input-unwired {
-  background-color: rgba(255, 255, 255, 0.03);
-  border-style: dashed;
-}
-
 .input-source {
   color: var(--color-primary);
   font-size: 0.7rem;
 }
 
-.input-runtime {
-  color: var(--text-secondary);
-  font-style: italic;
+.input-source-single {
+  margin-top: 4px;
+  padding: 3px 8px;
+  background-color: rgba(74, 144, 226, 0.04);
+  border-radius: 3px;
+}
+
+.input-source-multi-details {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 4px;
+  padding: 5px 8px;
+  background-color: rgba(74, 144, 226, 0.04);
+  border: 1px solid rgba(74, 144, 226, 0.1);
+  border-radius: 4px;
+}
+
+.input-source-multi-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.input-source-multi-row .input-source-multi-sources {
+  flex: 1;
+  min-width: 0;
+}
+
+.input-source-multi-sources {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.input-source-detail {
+  font-size: 0.62rem;
+  opacity: 0.8;
+}
+
+/* .custom-modal prefix needed to override Bootstrap .form-select */
+.custom-modal .link-merge-select {
+  font-family: 'Roboto Mono', monospace;
   font-size: 0.7rem;
+  background-color: var(--bg-primary);
+  color: var(--text-medium);
+  border: 1px solid var(--border-subtle);
+  border-radius: 5px;
+  padding: 4px 28px 4px 8px;
+  width: auto;
+  max-width: 170px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  color-scheme: dark;
+}
+
+.custom-modal .link-merge-select:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.custom-modal .link-merge-select:focus {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.2);
+  border-color: var(--color-primary);
+}
+
+.merge-help-text {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  margin-top: 3px;
+  font-style: italic;
 }
 
 /* ============================================
@@ -332,18 +560,18 @@
   }
 
   .custom-modal .param-number {
-    width: 80px;
-    min-width: 80px;
-    max-width: 80px;
+    width: 90px;
+    min-width: 90px;
+    max-width: 90px;
   }
 
   .custom-modal .param-text {
-    width: 100px;
-    max-width: 100px;
+    width: 120px;
+    max-width: 120px;
   }
 
   .custom-modal .param-select {
-    width: 130px;
+    width: 140px;
   }
 
   .param-description {
@@ -408,8 +636,7 @@
     font-size: 0.55rem;
   }
 
-  .input-source,
-  .input-runtime {
+  .input-source {
     font-size: 0.62rem;
   }
 
@@ -467,16 +694,20 @@
 }
 
 /* ============================================
-   LEFT COLUMN - Version or spacer
+   LEFT COLUMN - Version or spacer (fixed width)
    ============================================ */
 .node-version,
 .node-version-spacer {
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
   font-size: 8px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 500;
-  white-space: nowrap;
-  min-width: 20px;
   text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .node-version {
@@ -484,17 +715,22 @@
 }
 
 /* ============================================
-   RIGHT COLUMN - Params/Info buttons
+   RIGHT COLUMN - Params/Info buttons (fixed width)
    ============================================ */
 .node-params-btn,
 .node-info-btn,
 .node-info-spacer {
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
   font-size: 8px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 500;
-  min-width: 20px;
   text-align: right;
   user-select: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .node-params-btn,
@@ -509,26 +745,256 @@
   color: var(--color-primary);
 }
 
-/* Bottom-left spacer */
-.node-bottom-spacer {
-  min-width: 20px;
+/* Bottom-left badge container — inline icons */
+.node-bottom-left {
+  width: 54px;
+  min-width: 54px;
+  max-width: 54px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  overflow: hidden;
 }
 
-/* Scatter badge on canvas node */
-.node-scatter-badge {
-  font-size: 7px;
+/* Shared badge base */
+.node-scatter-badge,
+.node-when-badge,
+.node-fx-badge {
+  font-size: 6px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
+  border-radius: 2px;
+  padding: 0px 3px;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.4;
+}
+
+.node-scatter-badge {
   color: var(--color-cyan);
   background-color: rgba(74, 198, 226, 0.12);
   border: 1px solid rgba(74, 198, 226, 0.3);
+}
+
+.node-fx-badge {
+  color: var(--color-primary, #4a90e2);
+  background-color: rgba(74, 144, 226, 0.12);
+  border: 1px solid rgba(74, 144, 226, 0.3);
+}
+
+/* Expression toggle button in param control */
+.expression-toggle {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  font-style: italic;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 6px;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.expression-toggle:hover {
+  color: var(--color-primary);
+  border-color: rgba(74, 144, 226, 0.5);
+  background-color: rgba(74, 144, 226, 0.06);
+}
+
+.expression-toggle.active {
+  color: var(--color-primary);
+  border-color: var(--color-primary);
+  background-color: rgba(74, 144, 226, 0.14);
+  box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.15);
+}
+
+.expression-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.expression-row .form-control,
+.expression-row .form-select,
+.expression-row .form-check {
+  flex: 1;
+}
+
+/* Inline row for expression input + template dropdown */
+.expression-input-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.expression-input-row .expression-input {
+  flex: 1;
+  min-width: 0;
+}
+
+.expression-input-row .expression-template-select {
+  flex-shrink: 0;
+  width: auto;
+}
+
+.custom-modal .expression-input {
+  font-family: 'Roboto Mono', monospace;
+  background-color: var(--bg-primary);
+  color: var(--text-medium);
+  border: 1px solid var(--border-subtle);
+  border-left: 2px solid var(--border-subtle);
+  border-radius: 5px;
+  font-size: 0.75rem;
+  padding: 5px 10px;
+  flex: 1;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+}
+
+.custom-modal .expression-input.filled {
+  border-left-color: var(--color-primary);
+  color: var(--text-light);
+}
+
+.custom-modal .expression-input:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
+  border-color: var(--color-primary);
+  border-left-color: var(--color-primary);
+  background-color: rgba(26, 26, 26, 0.95);
+}
+
+.custom-modal .expression-input::placeholder {
+  color: var(--text-secondary);
+  font-style: italic;
+  opacity: 0.7;
+}
+
+.custom-modal .expression-template-select {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  background-color: var(--bg-primary);
+  color: var(--text-medium);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 4px 28px 4px 8px;
+  width: auto;
+  max-width: 220px;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 8px center;
+  background-size: 12px;
+  color-scheme: dark;
+}
+
+.custom-modal .expression-template-select:hover {
+  border-color: rgba(255, 255, 255, 0.22);
+}
+
+.custom-modal .expression-template-select:focus {
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(74, 144, 226, 0.2);
+  border-color: var(--color-primary);
+}
+
+/* Expression preview (valueFrom context) */
+.expression-preview {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  padding: 3px 8px;
+  background-color: rgba(255, 255, 255, 0.04);
   border-radius: 3px;
-  padding: 1px 6px;
-  text-align: center;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  border-left: 2px solid rgba(74, 144, 226, 0.3);
+}
+
+/* Expression validation warning */
+.expression-warning-text {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--color-danger, #e74c3c);
+  margin-top: 4px;
+  padding: 3px 8px;
+  background-color: rgba(231, 76, 60, 0.06);
+  border-radius: 3px;
+}
+
+.custom-modal .expression-input.invalid {
+  border-color: var(--color-danger, #e74c3c);
+  border-left-color: var(--color-danger, #e74c3c);
+}
+
+.custom-modal .expression-input.invalid:focus {
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(231, 76, 60, 0.25);
+}
+
+/* Highlight param cards with active expressions */
+.param-card.has-expression {
+  border-color: rgba(74, 144, 226, 0.25);
+  background-color: rgba(74, 144, 226, 0.05);
+}
+
+/* Scatter + expression info note */
+.expression-scatter-note {
+  font-size: 0.65rem;
+  color: var(--color-cyan);
+  margin-top: 3px;
+  opacity: 0.8;
+}
+
+.expression-scatter-note code {
+  font-family: 'Roboto Mono', monospace;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* File expression details (body of param-card when fx toggled on File params) */
+.expression-file-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background-color: rgba(74, 144, 226, 0.04);
+  border: 1px solid rgba(74, 144, 226, 0.1);
+  border-radius: 4px;
+}
+
+/* Scalar expression details (body of param-card when fx toggled on scalar params) */
+.expression-scalar-details {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background-color: rgba(74, 144, 226, 0.04);
+  border: 1px solid rgba(74, 144, 226, 0.1);
+  border-radius: 4px;
+}
+
+/* Contextual help text for expression mode */
+.expression-help-text {
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  font-style: italic;
   margin-top: 2px;
-  align-self: center;
+}
+
+.node-when-badge {
+  color: var(--color-warning, #ffc107);
+  background-color: rgba(255, 193, 7, 0.12);
+  border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 /* ============================================

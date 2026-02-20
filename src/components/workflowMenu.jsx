@@ -4,7 +4,7 @@ import ModalityTooltip from './modalityTooltip';
 import { toolsByModality, modalityOrder, modalityDescriptions, libraryOrder, dummyNodes } from '../utils/toolAnnotations';
 import '../styles/workflowMenu.css';
 
-function WorkflowMenu() {
+function WorkflowMenu({ workspaces = [], currentWorkspaceIndex = 0 }) {
   const [expandedSections, setExpandedSections] = useState(() => {
     const initial = { DummyNodes: false };
     modalityOrder.forEach(m => { initial[m] = false; });

@@ -61,7 +61,7 @@ function App() {
                         onRemoveWorkspace={removeCurrentWorkspace}
                         workspaceCount={workspaces.length}
                         // On click, we pass our function to generateWorkflow
-                        onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentWorkflowName)}
+                        onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentWorkflowName, workspaces)}
                     />
                     <WorkflowNameInput
                         name={currentWorkflowName}
@@ -70,7 +70,10 @@ function App() {
                 </div>
                 <div className="workflow-content">
                     <div className="workflow-content-main">
-                        <WorkflowMenu />
+                        <WorkflowMenu
+                            workspaces={workspaces}
+                            currentWorkspaceIndex={currentWorkspace}
+                        />
                         <WorkflowCanvas
                             workflowItems={workspaces[currentWorkspace]}
                             updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}

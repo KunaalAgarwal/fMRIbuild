@@ -58,18 +58,25 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
   // Compute which inputs on each node are wired from upstream edge mappings.
   // Used by NodeComponent via WiredInputsContext to show wired/unwired state.
+  // Value: Map<nodeId, Map<inputName, Array<{ sourceNodeId, sourceNodeLabel, sourceOutput }>>>
   const wiredContext = useMemo(() => {
     const wiredMap = new Map();
     edges.forEach(edge => {
       if (!edge.data?.mappings) return;
       edge.data.mappings.forEach(mapping => {
         if (!wiredMap.has(edge.target)) wiredMap.set(edge.target, new Map());
+        const nodeInputs = wiredMap.get(edge.target);
         const sourceNode = nodeMap.get(edge.source);
-        wiredMap.get(edge.target).set(mapping.targetInput, {
+        const sourceInfo = {
           sourceNodeId: edge.source,
           sourceNodeLabel: sourceNode?.data?.label || 'Unknown',
           sourceOutput: mapping.sourceOutput
-        });
+        };
+        if (nodeInputs.has(mapping.targetInput)) {
+          nodeInputs.get(mapping.targetInput).push(sourceInfo);
+        } else {
+          nodeInputs.set(mapping.targetInput, [sourceInfo]);
+        }
       });
     });
     return wiredMap;
@@ -135,7 +142,12 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                     dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest',
                     scatterEnabled: updatedData.scatterEnabled !== undefined
                         ? updatedData.scatterEnabled
-                        : (node.data.scatterEnabled || false)
+                        : (node.data.scatterEnabled || false),
+                    linkMergeOverrides: updatedData.linkMergeOverrides || node.data.linkMergeOverrides || {},
+                    whenExpression: updatedData.whenExpression !== undefined
+                        ? updatedData.whenExpression
+                        : (node.data.whenExpression || ''),
+                    expressions: updatedData.expressions || node.data.expressions || {},
                   }
                 }
               : node
@@ -287,6 +299,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         parameters: '',
         dockerVersion: 'latest',
         scatterEnabled: false,
+        linkMergeOverrides: {},
+        whenExpression: '',
+        expressions: {},
         isDummy: isDummy,
         onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(newNode.id, newData),
       },

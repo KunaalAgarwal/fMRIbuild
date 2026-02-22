@@ -70,7 +70,20 @@
 }
 
 .howto-modal .btn-close {
-    filter: invert(1) grayscale(100%) brightness(200%);
+    filter: invert(1) grayscale(100%) brightness(120%);
+    opacity: 0.6;
+    transition: opacity 0.2s ease;
+    transform: none;
+    box-shadow: none;
+    background-color: transparent;
+    padding: 8px;
+}
+
+.howto-modal .btn-close:hover {
+    opacity: 1;
+    transform: none;
+    box-shadow: none;
+    background-color: transparent;
 }
 
 .howto-modal .modal-body {

@@ -494,86 +494,58 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       y: event.clientY,
     });
 
-    if (isBIDS) {
-      // BIDS Input node
+    // Helper: create a node with common defaults, apply type-specific overrides
+    const createNode = (dataOverrides, afterAdd) => {
       const newNodeId = crypto.randomUUID();
       const newNode = {
         id: newNodeId,
         type: 'default',
+        position: flowPosition,
         data: {
           label: name,
-          isDummy: true,
-          isBIDS: true,
-          bidsStructure: null,
-          bidsSelections: null,
+          isDummy: false,
           parameters: '',
           dockerVersion: 'latest',
           scatterEnabled: false,
           linkMergeOverrides: {},
           whenExpression: '',
           expressions: {},
-          onSaveParameters: null,
-          onUpdateBIDS: (updates) => handleBIDSNodeUpdate(newNodeId, updates),
+          ...dataOverrides(newNodeId),
         },
-        position: flowPosition,
       };
-
       setNodes((prevNodes) => [...prevNodes, newNode]);
       markForSync();
+      if (afterAdd) afterAdd(newNodeId);
+    };
 
-      // Trigger directory picker after node creation
-      triggerBIDSDirectoryPicker(newNodeId);
+    if (isBIDS) {
+      createNode((id) => ({
+        isDummy: true,
+        isBIDS: true,
+        bidsStructure: null,
+        bidsSelections: null,
+        onSaveParameters: null,
+        onUpdateBIDS: (updates) => handleBIDSNodeUpdate(id, updates),
+      }), (id) => triggerBIDSDirectoryPicker(id));
     } else if (customWorkflowId) {
-      // Custom workflow node
       const savedWorkflow = customWorkflows.find(w => w.id === customWorkflowId);
       if (!savedWorkflow) return;
-
-      const newNode = {
-        id: crypto.randomUUID(),
-        type: 'default',
-        data: {
-          label: savedWorkflow.name,
-          isDummy: false,
-          isCustomWorkflow: true,
-          customWorkflowId: savedWorkflow.id,
-          internalNodes: structuredClone(savedWorkflow.nodes),
-          internalEdges: structuredClone(savedWorkflow.edges),
-          boundaryNodes: { ...savedWorkflow.boundaryNodes },
-          hasValidationWarnings: savedWorkflow.hasValidationWarnings,
-          parameters: {},
-          dockerVersion: 'latest',
-          scatterEnabled: false,
-          linkMergeOverrides: {},
-          whenExpression: '',
-          expressions: {},
-          onSaveParameters: (newData) => handleCustomNodeUpdate(newNode.id, newData),
-        },
-        position: flowPosition,
-      };
-
-      setNodes((prevNodes) => [...prevNodes, newNode]);
-      markForSync();
+      createNode((id) => ({
+        label: savedWorkflow.name,
+        isCustomWorkflow: true,
+        customWorkflowId: savedWorkflow.id,
+        internalNodes: structuredClone(savedWorkflow.nodes),
+        internalEdges: structuredClone(savedWorkflow.edges),
+        boundaryNodes: { ...savedWorkflow.boundaryNodes },
+        hasValidationWarnings: savedWorkflow.hasValidationWarnings,
+        parameters: {},
+        onSaveParameters: (newData) => handleCustomNodeUpdate(id, newData),
+      }));
     } else {
-      // Regular tool node
-      const newNode = {
-        id: crypto.randomUUID(),
-        type: 'default',
-        data: {
-          label: name,
-          parameters: '',
-          dockerVersion: 'latest',
-          scatterEnabled: false,
-          linkMergeOverrides: {},
-          whenExpression: '',
-          expressions: {},
-          isDummy: isDummy,
-          onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(newNode.id, newData),
-        },
-        position: flowPosition,
-      };
-
-      setNodes((prevNodes) => [...prevNodes, newNode]);
-      markForSync();
+      createNode((id) => ({
+        isDummy: isDummy,
+        onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(id, newData),
+      }));
     }
   };
 

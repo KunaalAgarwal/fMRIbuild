@@ -84,9 +84,8 @@ function autoLabel(group) {
 /**
  * Generate a unique group ID.
  */
-let groupIdCounter = 0;
 function nextGroupId() {
-  return `grp_${++groupIdCounter}`;
+  return crypto.randomUUID();
 }
 
 /**
@@ -415,7 +414,7 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
               onChange={e => setSubjectSearch(e.target.value)}
             />
 
-            <div className="bids-subject-list">
+            <div className="bids-subject-list scrollbar-thin">
               {filteredSubjects.map(subId => {
                 const demo = participants[subId];
                 const demoStr = demo

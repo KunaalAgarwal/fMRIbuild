@@ -19,6 +19,7 @@ const ENTITY_REGEX = new RegExp(
 );
 
 const NIFTI_REGEX = /\.(nii\.gz|nii)$/;
+const DEFAULT_SESSION = '_nosession';
 const DATATYPE_NAMES = new Set([
   'anat', 'func', 'dwi', 'fmap', 'perf',
   'meg', 'eeg', 'ieeg', 'beh', 'pet', 'micr', 'nirs', 'emg', 'motion',
@@ -169,7 +170,7 @@ export function validateBIDSStructure(structure, hasDatasetDescription) {
   const sessionSets = new Set();
   for (const subId of subjectIds) {
     for (const sesKey of Object.keys(structure.subjects[subId].sessions)) {
-      if (sesKey !== '_nosession') sessionSets.add(sesKey);
+      if (sesKey !== DEFAULT_SESSION) sessionSets.add(sesKey);
     }
   }
   const dtList = [...datatypeCounts.keys()].sort();
@@ -195,6 +196,7 @@ export async function parseBIDSDirectory(fileList) {
   // Categorize files in a single pass
   const niftiFiles = [];           // { relativePath, filename, datatype, dirSegments }
   const sidecarFiles = new Map();  // relativePath (without .json) → File object
+  const eventsIndex = new Set();   // relative paths of _events.tsv files for O(1) lookup
   let datasetDescriptionFile = null;
   let participantsTSVFile = null;
 
@@ -248,9 +250,9 @@ export async function parseBIDSDirectory(fileList) {
       continue;
     }
 
-    // Events TSV files
+    // Events TSV files — index for O(1) pairing with BOLD NIfTIs
     if (filename.endsWith('_events.tsv')) {
-      // Store path for later pairing; we'll attach to matched BOLD files
+      eventsIndex.add(relativePath);
       continue;
     }
 
@@ -294,7 +296,7 @@ export async function parseBIDSDirectory(fileList) {
     if (!parsed) continue;
 
     const subId = nf.subDir;
-    const sesKey = nf.sesDir || '_nosession';
+    const sesKey = nf.sesDir || DEFAULT_SESSION;
 
     if (!subjects[subId]) subjects[subId] = { sessions: {} };
     if (!subjects[subId].sessions[sesKey]) subjects[subId].sessions[sesKey] = {};
@@ -312,20 +314,13 @@ export async function parseBIDSDirectory(fileList) {
       } catch { /* ignore */ }
     }
 
-    // Look for paired events TSV (func data)
+    // Look for paired events TSV (func data) — O(1) via pre-built index
     let eventsPath = null;
     if (nf.datatype === 'func' && parsed.suffix === 'bold') {
       const eventsRelative = nf.relativePath
         .replace(/_bold\.(nii\.gz|nii)$/, '_events.tsv');
-      // Check if events file exists in the FileList
-      for (let i = 0; i < fileList.length; i++) {
-        const fp = rootPrefix
-          ? fileList[i].webkitRelativePath.slice(rootPrefix.length)
-          : fileList[i].webkitRelativePath;
-        if (fp === eventsRelative) {
-          eventsPath = eventsRelative;
-          break;
-        }
+      if (eventsIndex.has(eventsRelative)) {
+        eventsPath = eventsRelative;
       }
     }
 

@@ -1,27 +1,11 @@
 import { useState, useMemo, useEffect, useRef } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
-import { DOCKER_IMAGES, DOCKER_TAGS } from '../utils/toolAnnotations.js';
+import { DOCKER_TAGS } from '../utils/toolAnnotations.js';
 import { EXPRESSION_TEMPLATES } from '../utils/expressionTemplates.js';
+import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import TagDropdown from './TagDropdown.jsx';
 import '../styles/workflowItem.css';
-
-const VALID_OPERATORS = ['==', '!=', '>=', '<=', '>', '<'];
-
-const LIBRARY_MAP = {
-    fsl: 'FSL', afni: 'AFNI', ants: 'ANTs', freesurfer: 'FreeSurfer',
-    mrtrix3: 'MRtrix3', fmriprep: 'fMRIPrep', mriqc: 'MRIQC',
-    connectome_workbench: 'Connectome Workbench', amico: 'AMICO'
-};
-
-const IMAGE_TO_LIBRARY = new Map(
-    Object.entries(DOCKER_IMAGES).map(([key, img]) => [img, LIBRARY_MAP[key]])
-);
-
-const getLibraryFromDockerImage = (dockerImage) => {
-    const baseImage = dockerImage.split(':')[0];
-    return IMAGE_TO_LIBRARY.get(baseImage) || null;
-};
 
 const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, internalEdges, wiredInputs }) => {
     const nonDummyNodes = useMemo(
@@ -82,9 +66,10 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const [expressionToggles, setExpressionToggles] = useState({});
     const [linkMergeValues, setLinkMergeValues] = useState({});
 
-    // Deep clone of internal nodes to track edits
+    // Deep clone of internal nodes to track edits (ref syncs from state automatically)
     const [editedNodes, setEditedNodes] = useState([]);
-    const editedNodesRef = useRef([]);
+    const editedNodesRef = useRef(editedNodes);
+    editedNodesRef.current = editedNodes;
 
     // Load a node's data into all form state variables
     const loadNodeState = (node) => {
@@ -135,7 +120,6 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         if (show) {
             const freshNodes = structuredClone(nonDummyNodes);
             setEditedNodes(freshNodes);
-            editedNodesRef.current = freshNodes;
             setCurrentIndex(0);
             loadNodeState(freshNodes[0]);
         }
@@ -185,7 +169,6 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             }
         }
 
-        editedNodesRef.current = updated;
         return updated;
     };
 
@@ -521,7 +504,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                     </Form.Group>
 
                     {/* Parameters */}
-                    <div className="params-scroll">
+                    <div className="params-scroll scrollbar-thin">
                         {[
                             { params: allParams.required, label: 'Required' },
                             { params: allParams.optional, label: 'Optional' },

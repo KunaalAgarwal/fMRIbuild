@@ -23,21 +23,6 @@
 .params-scroll {
   max-height: 50vh;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-
-.params-scroll::-webkit-scrollbar {
-  width: 4px;
-}
-
-.params-scroll::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.params-scroll::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
 }
 
 .param-section {
@@ -686,7 +671,7 @@
 .node-label {
   font-weight: 600;
   font-size: 0.75rem;
-  color: #333;
+  color: var(--text-on-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -867,7 +852,7 @@
 .node-warning-badge {
   font-size: 7px;
   font-weight: 700;
-  color: #f0ad4e;
+  color: var(--color-warning);
   background-color: rgba(240, 173, 78, 0.15);
   border: 1px solid rgba(240, 173, 78, 0.3);
   border-radius: 2px;

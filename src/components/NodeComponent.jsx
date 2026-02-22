@@ -3,38 +3,14 @@ import { createPortal } from 'react-dom';
 import { Handle, Position } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
-import { DOCKER_IMAGES, DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
+import { DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
 import { EXPRESSION_TEMPLATES } from '../utils/expressionTemplates.js';
+import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import TagDropdown from './TagDropdown.jsx';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import CustomWorkflowParamModal from './CustomWorkflowParamModal.jsx';
 import '../styles/workflowItem.css';
-
-// Map DOCKER_IMAGES keys to DOCKER_TAGS keys
-const VALID_OPERATORS = ['==', '!=', '>=', '<=', '>', '<'];
-
-const LIBRARY_MAP = {
-    fsl: 'FSL',
-    afni: 'AFNI',
-    ants: 'ANTs',
-    freesurfer: 'FreeSurfer',
-    mrtrix3: 'MRtrix3',
-    fmriprep: 'fMRIPrep',
-    mriqc: 'MRIQC',
-    connectome_workbench: 'Connectome Workbench',
-    amico: 'AMICO'
-};
-
-// Pre-computed inverse lookup: docker image base → DOCKER_TAGS key (O(1))
-const IMAGE_TO_LIBRARY = new Map(
-    Object.entries(DOCKER_IMAGES).map(([key, img]) => [img, LIBRARY_MAP[key]])
-);
-
-const getLibraryFromDockerImage = (dockerImage) => {
-    const baseImage = dockerImage.split(':')[0];
-    return IMAGE_TO_LIBRARY.get(baseImage) || null;
-};
 
 const NodeComponent = ({ data, id }) => {
     // Check if this is a dummy node early
@@ -887,7 +863,7 @@ const NodeComponent = ({ data, id }) => {
                         </Form.Group>
 
                         {/* Unified Parameter Pane */}
-                        <div className="params-scroll">
+                        <div className="params-scroll scrollbar-thin">
                             {/* Required & Optional Parameters (shared rendering) */}
                             {[
                                 { params: allParams.required, label: 'Required' },

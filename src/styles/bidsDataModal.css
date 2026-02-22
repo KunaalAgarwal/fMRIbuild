@@ -111,17 +111,6 @@
 .bids-subject-list {
   flex: 1;
   overflow-y: auto;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
-}
-
-.bids-subject-list::-webkit-scrollbar {
-  width: 4px;
-}
-
-.bids-subject-list::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
 }
 
 .bids-subject-row {

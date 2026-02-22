@@ -488,7 +488,7 @@ const EdgeMappingModal = ({
                             {sourceIO.isDummy ? 'Provides' : 'Outputs'} ({sourceNode.label})
                             {sourceIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
-                        <div className="io-items-scroll" ref={outputsScrollRef}>
+                        <div className="io-items-scroll scrollbar-thin" ref={outputsScrollRef}>
                             {sourceIO.outputs.map((output, idx) => {
                                 // Check if this output is mapped to an incompatible input
                                 const mapping = mappings.find(m => m.sourceOutput === output.name);
@@ -611,7 +611,7 @@ const EdgeMappingModal = ({
                             {targetIO.isDummy ? 'Receives' : 'Inputs'} ({targetNode.label})
                             {targetIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
-                        <div className="io-items-scroll" ref={inputsScrollRef}>
+                        <div className="io-items-scroll scrollbar-thin" ref={inputsScrollRef}>
                             {targetIO.inputs.map((input, idx, arr) => {
                                 // Check if this input is mapped from an incompatible output
                                 const mapping = mappings.find(m => m.targetInput === input.name);

@@ -1,3 +1,6 @@
+/* ============================================
+   HEADER BAR
+   ============================================ */
 .header-bar {
     display: flex;
     position: sticky;
@@ -15,7 +18,7 @@
 .header-bar h1 {
     font-size: clamp(0.5rem, 2vw, 1.5rem);
     font-weight: 600;
-    margin: 0; /* Remove extra margins */
+    margin: 0;
     padding: 0;
 }
 
@@ -23,7 +26,7 @@
     font-weight: 500;
     margin-left: 10px;
     cursor: pointer;
-    font-size: clamp(0.25rem, 1.5vw, 1.5rem); /* Responsive icon size */
+    font-size: clamp(0.25rem, 1.5vw, 1.5rem);
 }
 
 .header-span:hover {
@@ -36,6 +39,318 @@
     color: inherit;
 }
 
-.header-modal {
-    font-weight: 400;
+/* ============================================
+   HOW-TO MODAL — Layout & Shell
+   ============================================ */
+.howto-modal .modal-dialog {
+    max-width: 900px;
+}
+
+.howto-modal .modal-content {
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    color: var(--text-light);
+    border: 1px solid var(--border-medium);
+    box-shadow: var(--shadow-lg);
+    font-family: 'Inter', sans-serif;
+}
+
+.howto-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 24px;
+    background-color: var(--bg-header);
+    border-radius: 8px 8px 0 0;
+}
+
+.howto-modal .modal-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.howto-modal .btn-close {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.howto-modal .modal-body {
+    padding: 20px 24px;
+}
+
+/* ============================================
+   HOW-TO MODAL — Quick Navigation
+   ============================================ */
+.howto-nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 10px;
+    padding: 10px 12px;
+    margin-bottom: 16px;
+    background-color: var(--bg-tertiary);
+    border: 1px solid var(--border-subtle);
+    border-radius: 6px;
+}
+
+.howto-nav-item {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.68rem;
+    color: var(--color-primary);
+    cursor: pointer;
+    padding: 2px 6px;
+    border-radius: 3px;
+    transition: background-color 0.15s ease;
+}
+
+.howto-nav-item:hover {
+    background-color: rgba(74, 144, 226, 0.12);
+    text-decoration: underline;
+}
+
+.howto-nav-item.active {
+    background-color: rgba(74, 144, 226, 0.18);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+/* Cross-reference links within content (styled like nav items) */
+.howto-nav-ref {
+    color: var(--color-primary);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.howto-nav-ref:hover {
+    text-decoration: underline;
+}
+
+/* ============================================
+   HOW-TO MODAL — Accordion Dark Theme
+   ============================================ */
+.howto-modal .accordion {
+    --bs-accordion-bg: transparent;
+    --bs-accordion-border-color: var(--border-subtle);
+    --bs-accordion-btn-color: var(--text-light);
+    --bs-accordion-btn-bg: var(--bg-tertiary);
+    --bs-accordion-active-bg: rgba(74, 144, 226, 0.08);
+    --bs-accordion-active-color: var(--text-primary);
+    --bs-accordion-btn-focus-box-shadow: none;
+}
+
+.howto-modal .accordion-item {
+    background-color: transparent;
+    border-color: var(--border-subtle);
+}
+
+.howto-modal .accordion-button {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-light);
+    background-color: var(--bg-tertiary);
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    /* Override global button styles from background.css */
+    border-radius: 0;
+    transform: none;
+    box-shadow: none;
+}
+
+.howto-modal .accordion-button:hover {
+    transform: none;
+    box-shadow: none;
+}
+
+.howto-modal .accordion-button:not(.collapsed) {
+    color: var(--text-primary);
+    background-color: rgba(74, 144, 226, 0.08);
+    border-bottom-color: rgba(74, 144, 226, 0.2);
+}
+
+.howto-modal .accordion-button::after {
+    filter: invert(1) grayscale(100%) brightness(200%);
+}
+
+.howto-modal .accordion-button:focus {
+    box-shadow: none;
+    border-color: var(--border-subtle);
+}
+
+.howto-modal .accordion-body {
+    background-color: var(--bg-secondary);
+    color: var(--text-light);
+    padding: 16px 20px;
+    font-size: 0.82rem;
+    line-height: 1.7;
+}
+
+/* ============================================
+   HOW-TO MODAL — Content Typography
+   ============================================ */
+.howto-section-intro {
+    margin-bottom: 12px;
+    color: var(--text-medium);
+    line-height: 1.7;
+}
+
+.howto-subheading {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: 0.82rem;
+    color: var(--text-primary);
+    margin-top: 16px;
+    margin-bottom: 8px;
+    padding-bottom: 4px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.howto-steps {
+    padding-left: 20px;
+    margin-bottom: 12px;
+}
+
+.howto-steps li {
+    margin-bottom: 6px;
+    color: var(--text-medium);
+}
+
+.howto-list {
+    padding-left: 20px;
+    list-style-type: disc;
+    margin-bottom: 12px;
+}
+
+.howto-list li {
+    margin-bottom: 4px;
+    color: var(--text-medium);
+}
+
+.howto-nested-list {
+    padding-left: 24px;
+    list-style-type: disc;
+    margin-top: 4px;
+}
+
+/* ============================================
+   HOW-TO MODAL — Code & Links
+   ============================================ */
+.howto-code {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.78rem;
+    background-color: var(--bg-primary);
+    color: var(--color-primary);
+    padding: 1px 5px;
+    border-radius: 3px;
+    border: 1px solid var(--border-subtle);
+}
+
+.howto-code-block {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.72rem;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    padding: 10px 14px;
+    border-radius: 5px;
+    border: 1px solid var(--border-subtle);
+    margin: 8px 0;
+    overflow-x: auto;
+    white-space: pre;
+    line-height: 1.5;
+}
+
+.howto-link {
+    color: var(--color-primary);
+    text-decoration: none;
+}
+
+.howto-link:hover {
+    text-decoration: underline;
+    color: #5ea0f0;
+}
+
+/* ============================================
+   HOW-TO MODAL — Tables
+   ============================================ */
+.howto-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 10px 0 14px;
+    font-size: 0.78rem;
+}
+
+.howto-table th {
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    font-size: 0.74rem;
+    color: var(--text-primary);
+    background-color: var(--bg-tertiary);
+    padding: 8px 10px;
+    border-bottom: 1px solid var(--border-medium);
+    text-align: left;
+}
+
+.howto-table td {
+    padding: 6px 10px;
+    color: var(--text-medium);
+    border-bottom: 1px solid var(--border-subtle);
+    vertical-align: top;
+}
+
+.howto-table tr:last-child td {
+    border-bottom: none;
+}
+
+.howto-table td:first-child {
+    white-space: nowrap;
+}
+
+/* Coverage matrix: center checkmarks */
+.howto-coverage-table td:not(:first-child),
+.howto-coverage-table th:not(:first-child) {
+    text-align: center;
+    font-size: 0.82rem;
+}
+
+/* ============================================
+   HOW-TO MODAL — Tip Callouts
+   ============================================ */
+.howto-tip {
+    background-color: rgba(74, 144, 226, 0.08);
+    border-left: 3px solid var(--color-primary);
+    padding: 8px 14px;
+    border-radius: 0 5px 5px 0;
+    margin: 10px 0;
+    font-size: 0.78rem;
+    color: var(--text-medium);
+}
+
+.howto-tip strong {
+    color: var(--color-primary);
+}
+
+/* ============================================
+   HOW-TO MODAL — Responsive
+   ============================================ */
+@media (max-width: 768px) {
+    .howto-modal .modal-dialog {
+        max-width: 95vw;
+    }
+
+    .howto-modal .accordion-button {
+        font-size: 0.78rem;
+        padding: 10px 12px;
+    }
+
+    .howto-modal .accordion-body {
+        padding: 12px 14px;
+        font-size: 0.76rem;
+    }
+
+    .howto-nav {
+        gap: 4px 8px;
+        padding: 8px 10px;
+    }
+
+    .howto-nav-item {
+        font-size: 0.62rem;
+    }
 }

@@ -20,6 +20,10 @@ import { getInvalidConnectionReason } from './utils/adjacencyValidation.js';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
 
+/** Get the Set of IDs for dummy nodes (supports both flat and data-nested shapes). */
+const getDummyIds = (nodes) =>
+    new Set(nodes.filter(n => n.isDummy || n.data?.isDummy).map(n => n.id));
+
 /**
  * Compute boundary nodes (first/last non-dummy in topological order)
  * for a set of internal nodes and edges.
@@ -30,9 +34,7 @@ function computeBoundaryNodes(nodes, edges) {
 
     // Build ID-based lookup
     const nodeIds = new Set(nonDummyNodes.map(n => n.id));
-    const dummyIds = new Set(
-        nodes.filter(n => n.isDummy || n.data?.isDummy).map(n => n.id)
-    );
+    const dummyIds = getDummyIds(nodes);
     const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
 
     // Kahn's topo sort
@@ -114,9 +116,7 @@ function hasUnsavedChanges(workspace, savedWorkflow) {
  * Returns true if any validation warnings exist.
  */
 function validateWorkflowEdges(nodes, edges) {
-    const dummyIds = new Set(
-        nodes.filter(n => n.isDummy || n.data?.isDummy).map(n => n.id)
-    );
+    const dummyIds = getDummyIds(nodes);
     const nodeMap = new Map(nodes.map(n => [n.id, n]));
 
     for (const edge of edges) {

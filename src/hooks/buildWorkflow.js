@@ -121,6 +121,302 @@ function expandCustomWorkflowNodes(graph) {
     };
 }
 
+/* ========== Pure utility helpers ========== */
+
+/** Convert a type string to its CWL representation. */
+function toCWLType(typeStr, makeNullable = false) {
+    if (!typeStr) return makeNullable ? ['null', 'File'] : 'File';
+    if (typeStr === 'record') return null;
+    if (typeStr.endsWith('[]')) {
+        const itemType = typeStr.slice(0, -2);
+        const arrayType = { type: 'array', items: itemType };
+        return makeNullable ? ['null', arrayType] : arrayType;
+    }
+    if (typeStr.endsWith('?')) {
+        return ['null', typeStr.slice(0, -1)];
+    }
+    return makeNullable ? ['null', typeStr] : typeStr;
+}
+
+/** Wrap a type string in a CWL array type. */
+function toArrayType(typeStr) {
+    const base = (typeStr || 'File').replace(/\?$/, '');
+    return { type: 'array', items: base };
+}
+
+/** Check if a value is safely YAML-serializable. */
+function isSerializable(val) {
+    if (val === null || val === undefined) return false;
+    const t = typeof val;
+    if (t === 'string' || t === 'number' || t === 'boolean') return true;
+    if (t === 'function') return false;
+    if (Array.isArray(val)) return val.every(isSerializable);
+    if (t === 'object') return Object.values(val).every(isSerializable);
+    return false;
+}
+
+/** Safely extract user parameters object from node data. */
+function getUserParams(nodeData) {
+    const p = nodeData.parameters;
+    if (p && typeof p === 'object' && !Array.isArray(p)) return p;
+    return null;
+}
+
+/** Return a sensible default value for a CWL type. */
+function defaultForType(type, inputDef) {
+    switch (type) {
+        case 'boolean': return false;
+        case 'int':     return inputDef?.bounds ? inputDef.bounds[0] : 0;
+        case 'double':  return inputDef?.bounds ? inputDef.bounds[0] : 0.0;
+        case 'string':  return '';
+        default:        return null;
+    }
+}
+
+/** Generate a workflow-level input name, skipping the step prefix for single-node workflows. */
+function makeWfInputName(stepId, inputName, isSingleNode) {
+    return isSingleNode ? inputName : `${stepId}_${inputName}`;
+}
+
+/* ========== Extracted sub-functions for buildCWLWorkflowObject ========== */
+
+/**
+ * Populate step.in entries and corresponding workflow-level inputs/jobDefaults
+ * for one node's required and optional CWL inputs.
+ *
+ * Mutates: step.in, ctx.wf.inputs, ctx.jobDefaults, ctx.needs* flags.
+ */
+function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingleNode) {
+    const nodeId = node.id;
+    const expressions = node.data.expressions || {};
+
+    /* --- required inputs --- */
+    Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
+        const { type } = inputDef;
+        const expr = expressions[inputName];
+        const wiredSources = ctx.wiredInputsMap.get(nodeId)?.get(inputName) || [];
+
+        if (expr) {
+            // Expression mode: valueFrom transforms the input
+            ctx.needsStepInputExpression = true;
+            ctx.needsInlineJavascript = true;
+            if (wiredSources.length === 0) {
+                const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+                ctx.wf.inputs[wfInputName] = { type: toCWLType(type) };
+                step.in[inputName] = { source: wfInputName, valueFrom: expr };
+            } else if (wiredSources.length === 1) {
+                step.in[inputName] = {
+                    source: ctx.resolveWiredSource(wiredSources[0]),
+                    valueFrom: expr,
+                };
+            } else {
+                const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+                step.in[inputName] = {
+                    source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                    linkMerge,
+                    valueFrom: expr,
+                };
+                ctx.needsMultipleInputFeature = true;
+            }
+        } else if (wiredSources.length === 1) {
+            step.in[inputName] = ctx.resolveWiredSource(wiredSources[0]);
+        } else if (wiredSources.length > 1) {
+            const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+            step.in[inputName] = {
+                source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                linkMerge,
+            };
+            ctx.needsMultipleInputFeature = true;
+        } else {
+            // Not wired - expose as workflow input
+            const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+            const inputType = ctx.scatteredSteps.has(nodeId) && (type === 'File' || type === 'Directory')
+                ? toArrayType(type)
+                : toCWLType(type);
+            ctx.wf.inputs[wfInputName] = { type: inputType };
+            step.in[inputName] = wfInputName;
+
+            // Pre-fill jobDefaults for scalar required params if user set a value
+            if (type !== 'File' && type !== 'Directory') {
+                const params = getUserParams(node.data);
+                const userValue = params?.[inputName];
+                if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
+                    ctx.jobDefaults[wfInputName] = userValue;
+                }
+            }
+        }
+    });
+
+    /* --- optional inputs --- */
+    if (!effectiveTool.optionalInputs) return;
+
+    Object.entries(effectiveTool.optionalInputs).forEach(([inputName, inputDef]) => {
+        const { type } = inputDef;
+        const optExpr = expressions[inputName];
+
+        // Expression on optional input: emit valueFrom, respecting wired sources
+        if (optExpr) {
+            ctx.needsStepInputExpression = true;
+            ctx.needsInlineJavascript = true;
+            const wiredSources = ctx.wiredInputsMap.get(nodeId)?.get(inputName) || [];
+            if (wiredSources.length === 1) {
+                step.in[inputName] = {
+                    source: ctx.resolveWiredSource(wiredSources[0]),
+                    valueFrom: optExpr,
+                };
+            } else if (wiredSources.length > 1) {
+                const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+                step.in[inputName] = {
+                    source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                    linkMerge,
+                    valueFrom: optExpr,
+                };
+                ctx.needsMultipleInputFeature = true;
+            } else {
+                const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+                ctx.wf.inputs[wfInputName] = { type: toCWLType(type, true) };
+                step.in[inputName] = { source: wfInputName, valueFrom: optExpr };
+            }
+            return;
+        }
+
+        // Skip record types - these are complex types handled by CWL directly
+        if (type === 'record') {
+            const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+            const recordEntry = { type: ['null', 'Any'] };
+            const params = getUserParams(node.data);
+            const recordValue = params?.[inputName];
+            if (recordValue !== undefined && recordValue !== null && recordValue !== '' && isSerializable(recordValue)) {
+                recordEntry.default = recordValue;
+            }
+            ctx.wf.inputs[wfInputName] = recordEntry;
+            step.in[inputName] = wfInputName;
+            return;
+        }
+
+        // Check wired sources for non-expression optional inputs
+        const wiredSources = ctx.wiredInputsMap.get(nodeId)?.get(inputName) || [];
+
+        if (wiredSources.length === 1) {
+            step.in[inputName] = ctx.resolveWiredSource(wiredSources[0]);
+        } else if (wiredSources.length > 1) {
+            const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
+            step.in[inputName] = {
+                source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                linkMerge,
+            };
+            ctx.needsMultipleInputFeature = true;
+        } else {
+            // Not wired — expose as nullable workflow input with job default
+            const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
+            const inputEntry = { type: toCWLType(type, true) };
+            const params = getUserParams(node.data);
+            const userValue = params?.[inputName];
+            let value;
+            if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
+                value = userValue;
+            } else {
+                value = defaultForType(type, inputDef);
+            }
+            if (value !== null && value !== undefined) {
+                ctx.jobDefaults[wfInputName] = value;
+            }
+            ctx.wf.inputs[wfInputName] = inputEntry;
+            step.in[inputName] = wfInputName;
+        }
+    });
+}
+
+/**
+ * Compute scatter configuration for a single step.
+ *
+ * @returns {{ scatter, scatterMethod? }} or null if step is not scattered.
+ */
+function computeStepScatter(ctx, nodeId, effectiveTool, incomingEdges) {
+    if (!ctx.scatteredSteps.has(nodeId)) return null;
+
+    const scatterInputs = [];
+
+    if (ctx.sourceNodeIds.has(nodeId)) {
+        // Source node: scatter on File/Directory required inputs that are workflow-level inputs
+        Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
+            const isFileOrDir = inputDef.type === 'File' || inputDef.type === 'Directory';
+            const isWired = (ctx.wiredInputsMap.get(nodeId)?.get(inputName)?.length || 0) > 0;
+            if (isFileOrDir && !isWired) {
+                scatterInputs.push(inputName);
+            }
+        });
+    } else {
+        // Downstream node: scatter on inputs wired from scattered upstream
+        incomingEdges.forEach(edge => {
+            if (!ctx.scatteredSteps.has(edge.source)) return;
+            const mappings = edge.data?.mappings || [];
+            mappings.forEach(m => {
+                if (!scatterInputs.includes(m.targetInput)) {
+                    scatterInputs.push(m.targetInput);
+                }
+            });
+        });
+        // Also check BIDS edges targeting this node (BIDS nodes are scatter sources)
+        ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
+            const mappings = edge.data?.mappings || [];
+            mappings.forEach(m => {
+                if (!scatterInputs.includes(m.targetInput)) {
+                    scatterInputs.push(m.targetInput);
+                }
+            });
+        });
+    }
+
+    if (scatterInputs.length === 0) return null;
+
+    const result = {
+        scatter: scatterInputs.length === 1 ? scatterInputs[0] : scatterInputs,
+    };
+    if (scatterInputs.length > 1) {
+        result.scatterMethod = 'dotproduct';
+    }
+    return result;
+}
+
+/**
+ * Declare workflow-level outputs for all terminal nodes (nodes with no outgoing edges).
+ *
+ * Mutates: ctx.wf.outputs.
+ */
+function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
+    terminalNodes.forEach(node => {
+        const tool = getToolConfigSync(node.data.label);
+        const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
+        const stepId = ctx.getStepId(node.id);
+        const isSingleTerminal = terminalNodes.length === 1;
+        const isScattered = ctx.scatteredSteps.has(node.id);
+
+        Object.entries(outputs).forEach(([outputName, outputDef]) => {
+            const wfOutputName = isSingleTerminal
+                ? outputName
+                : `${stepId}_${outputName}`;
+
+            const outputType = isScattered
+                ? toArrayType(outputDef.type)
+                : toCWLType(outputDef.type);
+
+            const outputEntry = {
+                type: outputType,
+                outputSource: `${stepId}/${outputName}`
+            };
+
+            // Conditional terminal nodes: output may be null when step is skipped
+            if (conditionalStepIds.has(node.id)) {
+                outputEntry.type = ['null', outputType];
+                outputEntry.pickValue = 'first_non_null';
+            }
+
+            ctx.wf.outputs[wfOutputName] = outputEntry;
+        });
+    });
+}
+
 /**
  * Convert the React-Flow graph into a CWL Workflow JS object.
  * Returns the raw object before YAML serialization.
@@ -148,11 +444,9 @@ export function buildCWLWorkflowObject(graph) {
     );
 
     /* ---------- Pre-compute lookup maps for O(1) access ---------- */
-    // Node lookup by ID
     const nodeMap = new Map(nodes.map(n => [n.id, n]));
     const nodeById = id => nodeMap.get(id);
 
-    // Pre-compute incoming and outgoing edges per node
     const inEdgeMap = new Map();
     const outEdgeMap = new Map();
     for (const node of nodes) {
@@ -186,27 +480,22 @@ export function buildCWLWorkflowObject(graph) {
     }
 
     /* ---------- generate readable step IDs ---------- */
-    // Count occurrences of each tool to handle duplicates
     const toolCounts = {};
     const nodeIdToStepId = {};
 
     order.forEach((nodeId) => {
         const node = nodeById(nodeId);
         const tool = getToolConfigSync(node.data.label);
-        // Use tool.id if available, otherwise generate from label
         const toolId = tool?.id || node.data.label.toLowerCase().replace(/[^a-z0-9]/g, '_');
 
-        // Track how many times we've seen this tool
         if (!(toolId in toolCounts)) {
             toolCounts[toolId] = 0;
         }
         toolCounts[toolId]++;
 
-        // Store mapping from node ID to step ID
         nodeIdToStepId[nodeId] = { toolId, count: toolCounts[toolId] };
     });
 
-    // Generate final step IDs (only add number suffix if duplicates exist)
     const getStepId = (nodeId) => {
         const { toolId, count } = nodeIdToStepId[nodeId];
         const totalCount = toolCounts[toolId];
@@ -220,17 +509,9 @@ export function buildCWLWorkflowObject(graph) {
     };
 
     /* ---------- compute scatter propagation ---------- */
-    // Include BIDS nodes in scatter computation (they have scatterEnabled: true)
     const scatterNodes = [...nodes, ...bidsNodes];
     const scatterEdges = [...edges, ...bidsEdges];
     const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges);
-
-    /* ---------- helper: wrap a type string in CWL array ---------- */
-    const toArrayType = (typeStr) => {
-        // Strip nullable marker - array can be empty instead
-        const base = (typeStr || 'File').replace(/\?$/, '');
-        return { type: 'array', items: base };
-    };
 
     /* ---------- build CWL skeleton ---------- */
     const wf = {
@@ -253,71 +534,8 @@ export function buildCWLWorkflowObject(graph) {
         wf.inputs[selKey] = { type: { type: 'array', items: 'File' } };
     }
 
-    // Requirement flags — assembled after the node walk loop
-    let needsMultipleInputFeature = false;
-    let needsInlineJavascript = false;
-    let needsStepInputExpression = false;
     const conditionalStepIds = new Set();
-
-    // Separate map for job template values (not embedded in CWL)
     const jobDefaults = {};
-
-    /* ---------- helper: convert type string to CWL type ---------- */
-    const toCWLType = (typeStr, makeNullable = false) => {
-        if (!typeStr) return makeNullable ? ['null', 'File'] : 'File';
-
-        // Skip record types - handled separately
-        if (typeStr === 'record') return null;
-
-        // Handle array types like 'File[]'
-        if (typeStr.endsWith('[]')) {
-            const itemType = typeStr.slice(0, -2);
-            const arrayType = { type: 'array', items: itemType };
-            return makeNullable ? ['null', arrayType] : arrayType;
-        }
-
-        // Handle nullable types like 'File?'
-        if (typeStr.endsWith('?')) {
-            return ['null', typeStr.slice(0, -1)];
-        }
-
-        // Plain type
-        return makeNullable ? ['null', typeStr] : typeStr;
-    };
-
-    /* ---------- helper: check if a value is YAML-serializable ---------- */
-    const isSerializable = (val) => {
-        if (val === null || val === undefined) return false;
-        const t = typeof val;
-        if (t === 'string' || t === 'number' || t === 'boolean') return true;
-        if (t === 'function') return false;
-        if (Array.isArray(val)) return val.every(isSerializable);
-        if (t === 'object') return Object.values(val).every(isSerializable);
-        return false;
-    };
-
-    /* ---------- helper: safely extract user parameters ---------- */
-    const getUserParams = (nodeData) => {
-        const p = nodeData.parameters;
-        if (p && typeof p === 'object' && !Array.isArray(p)) return p;
-        return null;
-    };
-
-    /* ---------- helper: type-based default for optional inputs ---------- */
-    const defaultForType = (type, inputDef) => {
-        switch (type) {
-            case 'boolean': return false;
-            case 'int':     return inputDef?.bounds ? inputDef.bounds[0] : 0;
-            case 'double':  return inputDef?.bounds ? inputDef.bounds[0] : 0.0;
-            case 'string':  return '';
-            default:        return null;
-        }
-    };
-
-    /* ---------- helper: generate workflow input name ---------- */
-    const makeWfInputName = (stepId, inputName, isSingleNode) => {
-        return isSingleNode ? inputName : `${stepId}_${inputName}`;
-    };
 
     /* ---------- pre-compute wired inputs per node from edge mappings ---------- */
     // wiredInputsMap: Map<nodeId, Map<inputName, Array<{ sourceNodeId, sourceOutput, isBIDSInput? }>>>
@@ -355,6 +573,15 @@ export function buildCWLWorkflowObject(graph) {
         }
     }
 
+    /* ---------- shared context for extracted helpers ---------- */
+    const ctx = {
+        wf, jobDefaults, wiredInputsMap, scatteredSteps, sourceNodeIds,
+        bidsEdges, resolveWiredSource, getStepId,
+        needsMultipleInputFeature: false,
+        needsInlineJavascript: false,
+        needsStepInputExpression: false,
+    };
+
     /* ---------- walk nodes in topo order ---------- */
     order.forEach((nodeId) => {
         const node = nodeById(nodeId);
@@ -376,7 +603,6 @@ export function buildCWLWorkflowObject(graph) {
         const effectiveTool = tool || genericTool;
 
         const stepId = getStepId(nodeId);
-        const incomingEdges = inEdgesOf(nodeId);
         const isSingleNode = nodes.length === 1;
 
         // Step skeleton
@@ -386,151 +612,10 @@ export function buildCWLWorkflowObject(graph) {
             out: Object.keys(effectiveTool.outputs)
         };
 
-        // Read expressions from node data
-        const expressions = node.data.expressions || {};
+        // Populate step.in and workflow inputs
+        buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingleNode);
 
-        /* ---------- handle required inputs ---------- */
-        Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
-            const { type } = inputDef;
-            const expr = expressions[inputName];
-            const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
-
-            if (expr) {
-                // Expression mode: valueFrom transforms the input
-                needsStepInputExpression = true;
-                needsInlineJavascript = true;
-                if (wiredSources.length === 0) {
-                    // Unwired + expression: expose as workflow input, valueFrom transforms it
-                    const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                    wf.inputs[wfInputName] = { type: toCWLType(type) };
-                    step.in[inputName] = { source: wfInputName, valueFrom: expr };
-                } else if (wiredSources.length === 1) {
-                    // Single wired + expression: source is upstream output, valueFrom transforms it
-                    step.in[inputName] = {
-                        source: resolveWiredSource(wiredSources[0]),
-                        valueFrom: expr,
-                    };
-                } else {
-                    // Multi-source + expression: preserve linkMerge alongside valueFrom
-                    const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
-                    step.in[inputName] = {
-                        source: wiredSources.map(ws => resolveWiredSource(ws)),
-                        linkMerge,
-                        valueFrom: expr,
-                    };
-                    needsMultipleInputFeature = true;
-                }
-            } else if (wiredSources.length === 1) {
-                // Single source: simple string reference (backward-compatible)
-                step.in[inputName] = resolveWiredSource(wiredSources[0]);
-            } else if (wiredSources.length > 1) {
-                // Multiple sources: use source array + linkMerge
-                const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
-                step.in[inputName] = {
-                    source: wiredSources.map(ws => resolveWiredSource(ws)),
-                    linkMerge,
-                };
-                needsMultipleInputFeature = true;
-            } else {
-                // Not wired - expose as workflow input
-                const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                const inputType = scatteredSteps.has(nodeId) && (type === 'File' || type === 'Directory')
-                    ? toArrayType(type)
-                    : toCWLType(type);
-                wf.inputs[wfInputName] = { type: inputType };
-                step.in[inputName] = wfInputName;
-
-                // Pre-fill jobDefaults for scalar required params if user set a value
-                if (type !== 'File' && type !== 'Directory') {
-                    const params = getUserParams(node.data);
-                    const userValue = params?.[inputName];
-                    if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
-                        jobDefaults[wfInputName] = userValue;
-                    }
-                }
-            }
-        });
-
-        /* ---------- handle optional inputs ---------- */
-        if (effectiveTool.optionalInputs) {
-            Object.entries(effectiveTool.optionalInputs).forEach(([inputName, inputDef]) => {
-                const { type } = inputDef;
-                const optExpr = expressions[inputName];
-
-                // Expression on optional input: emit valueFrom, respecting wired sources
-                if (optExpr) {
-                    needsStepInputExpression = true;
-                    needsInlineJavascript = true;
-                    const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
-                    if (wiredSources.length === 1) {
-                        step.in[inputName] = {
-                            source: resolveWiredSource(wiredSources[0]),
-                            valueFrom: optExpr,
-                        };
-                    } else if (wiredSources.length > 1) {
-                        const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
-                        step.in[inputName] = {
-                            source: wiredSources.map(ws => resolveWiredSource(ws)),
-                            linkMerge,
-                            valueFrom: optExpr,
-                        };
-                        needsMultipleInputFeature = true;
-                    } else {
-                        const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                        wf.inputs[wfInputName] = { type: toCWLType(type, true) };
-                        step.in[inputName] = { source: wfInputName, valueFrom: optExpr };
-                    }
-                    return;
-                }
-
-                // Skip record types - these are complex types handled by CWL directly
-                if (type === 'record') {
-                    const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                    const recordEntry = { type: ['null', 'Any'] };
-                    const params = getUserParams(node.data);
-                    const recordValue = params?.[inputName];
-                    if (recordValue !== undefined && recordValue !== null && recordValue !== '' && isSerializable(recordValue)) {
-                        recordEntry.default = recordValue;
-                    }
-                    wf.inputs[wfInputName] = recordEntry;
-                    step.in[inputName] = wfInputName;
-                    return;
-                }
-
-                // Check wired sources for non-expression optional inputs
-                const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
-
-                if (wiredSources.length === 1) {
-                    step.in[inputName] = resolveWiredSource(wiredSources[0]);
-                } else if (wiredSources.length > 1) {
-                    const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
-                    step.in[inputName] = {
-                        source: wiredSources.map(ws => resolveWiredSource(ws)),
-                        linkMerge,
-                    };
-                    needsMultipleInputFeature = true;
-                } else {
-                    // Not wired — expose as nullable workflow input with job default
-                    const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                    const inputEntry = { type: toCWLType(type, true) };
-                    const params = getUserParams(node.data);
-                    const userValue = params?.[inputName];
-                    let value;
-                    if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
-                        value = userValue;
-                    } else {
-                        value = defaultForType(type, inputDef);
-                    }
-                    if (value !== null && value !== undefined) {
-                        jobDefaults[wfInputName] = value;
-                    }
-                    wf.inputs[wfInputName] = inputEntry;
-                    step.in[inputName] = wfInputName;
-                }
-            });
-        }
-
-        /* ---------- add Docker hints ---------- */
+        // Add Docker hints
         const dockerVersion = node.data.dockerVersion || 'latest';
         const dockerImage = effectiveTool.dockerImage;
 
@@ -542,53 +627,15 @@ export function buildCWLWorkflowObject(graph) {
             };
         }
 
-        /* ---------- add scatter to step if needed ---------- */
-        if (scatteredSteps.has(nodeId)) {
-            const scatterInputs = [];
-
-            if (sourceNodeIds.has(nodeId)) {
-                // Source node: scatter on File/Directory required inputs that are workflow-level inputs
-                Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
-                    const isFileOrDir = inputDef.type === 'File' || inputDef.type === 'Directory';
-                    const isWired = (wiredInputsMap.get(nodeId)?.get(inputName)?.length || 0) > 0;
-                    if (isFileOrDir && !isWired) {
-                        scatterInputs.push(inputName);
-                    }
-                });
-            } else {
-                // Downstream node: scatter on inputs wired from scattered upstream
-                incomingEdges.forEach(edge => {
-                    if (!scatteredSteps.has(edge.source)) return;
-                    const mappings = edge.data?.mappings || [];
-                    mappings.forEach(m => {
-                        if (!scatterInputs.includes(m.targetInput)) {
-                            scatterInputs.push(m.targetInput);
-                        }
-                    });
-                });
-                // Also check BIDS edges targeting this node (BIDS nodes are scatter sources)
-                bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
-                    const mappings = edge.data?.mappings || [];
-                    mappings.forEach(m => {
-                        if (!scatterInputs.includes(m.targetInput)) {
-                            scatterInputs.push(m.targetInput);
-                        }
-                    });
-                });
-            }
-
-            if (scatterInputs.length > 0) {
-                step.scatter = scatterInputs.length === 1 ? scatterInputs[0] : scatterInputs;
-                if (scatterInputs.length > 1) {
-                    step.scatterMethod = 'dotproduct';
-                }
-            }
-        }
+        // Compute scatter for this step
+        const scatterConfig = computeStepScatter(ctx, nodeId, effectiveTool, inEdgesOf(nodeId));
 
         // Build final step with CWL-conventional property order: run, scatter, in, out, hints
         const finalStep = { run: step.run };
-        if (step.scatter) finalStep.scatter = step.scatter;
-        if (step.scatterMethod) finalStep.scatterMethod = step.scatterMethod;
+        if (scatterConfig) {
+            finalStep.scatter = scatterConfig.scatter;
+            if (scatterConfig.scatterMethod) finalStep.scatterMethod = scatterConfig.scatterMethod;
+        }
         finalStep.in = step.in;
         finalStep.out = step.out;
         if (step.hints) finalStep.hints = step.hints;
@@ -597,7 +644,7 @@ export function buildCWLWorkflowObject(graph) {
         if (node.data.whenExpression && node.data.whenExpression.trim()) {
             finalStep.when = node.data.whenExpression.trim();
             conditionalStepIds.add(nodeId);
-            needsInlineJavascript = true;
+            ctx.needsInlineJavascript = true;
         }
 
         wf.steps[stepId] = finalStep;
@@ -605,49 +652,15 @@ export function buildCWLWorkflowObject(graph) {
 
     /* ---------- assemble requirements ---------- */
     const requirements = {};
-    if (needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
+    if (ctx.needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
     if (scatteredSteps.size > 0) requirements.ScatterFeatureRequirement = {};
-    if (needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
-    if (needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
+    if (ctx.needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
+    if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
     if (Object.keys(requirements).length > 0) wf.requirements = requirements;
 
     /* ---------- declare ALL outputs from terminal nodes ---------- */
     const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
-
-    terminalNodes.forEach(node => {
-        const tool = getToolConfigSync(node.data.label);
-        // Fallback outputs for undefined tools
-        const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
-        const stepId = getStepId(node.id);
-        const isSingleTerminal = terminalNodes.length === 1;
-
-        // Expose ALL outputs from terminal nodes
-        const isScattered = scatteredSteps.has(node.id);
-
-        Object.entries(outputs).forEach(([outputName, outputDef]) => {
-            const wfOutputName = isSingleTerminal
-                ? outputName
-                : `${stepId}_${outputName}`;
-
-            // If scattered, wrap output type in array
-            const outputType = isScattered
-                ? toArrayType(outputDef.type)
-                : toCWLType(outputDef.type);
-
-            const outputEntry = {
-                type: outputType,
-                outputSource: `${stepId}/${outputName}`
-            };
-
-            // Conditional terminal nodes: output may be null when step is skipped
-            if (conditionalStepIds.has(node.id)) {
-                outputEntry.type = ['null', outputType];
-                outputEntry.pickValue = 'first_non_null';
-            }
-
-            wf.outputs[wfOutputName] = outputEntry;
-        });
-    });
+    declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds);
 
     return { wf, jobDefaults };
 }

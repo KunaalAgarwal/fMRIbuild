@@ -51,6 +51,20 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     edgesRef.current = edges;
   }, [edges]);
 
+  // Deferred workspace sync: flag-based to avoid setState-during-render.
+  // Only syncs when explicitly marked (user actions), not on drag/selection changes.
+  const needsSyncRef = useRef(false);
+  const markForSync = useCallback(() => { needsSyncRef.current = true; }, []);
+
+  useEffect(() => {
+    if (needsSyncRef.current) {
+      needsSyncRef.current = false;
+      if (updateCurrentWorkspaceItems) {
+        updateCurrentWorkspaceItems({ nodes, edges });
+      }
+    }
+  }, [nodes, edges, updateCurrentWorkspaceItems]);
+
   // Compute which nodes inherit scatter from upstream (BFS propagation).
   // Used by NodeComponent via ScatterPropagationContext to show badges.
   // BIDS nodes participate in scatter (they output File[] arrays) but regular dummy nodes don't.
@@ -123,7 +137,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
     if (changed) {
       setNodes(updatedNodes);
-      updateWorkspaceState(updatedNodes, edgesRef.current);
+      markForSync();
     }
   }, [customWorkflows]);
 
@@ -201,23 +215,16 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         setEdges(initialEdges);
         // Persist synced custom workflow data back to workspace state
         if (anyCustomSynced) {
-          updateWorkspaceState(initialNodes, initialEdges);
+          markForSync();
         }
       }
     }
   }, [workflowItems, nodes.length, currentWorkspaceIndex]);
 
-  // Helper: Update persistent workspace state.
-  const updateWorkspaceState = (updatedNodes, updatedEdges) => {
-    if (updateCurrentWorkspaceItems) {
-      updateCurrentWorkspaceItems({ nodes: updatedNodes, edges: updatedEdges });
-    }
-  };
-
   // Update a node's parameters and dockerVersion.
   const handleNodeUpdate = (nodeId, updatedData) => {
-    setNodes((prevNodes) => {
-      const updatedNodes = prevNodes.map((node) =>
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
           node.id === nodeId
               ? {
                   ...node,
@@ -236,16 +243,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                   }
                 }
               : node
-      );
-      updateWorkspaceState(updatedNodes, edgesRef.current);
-      return updatedNodes;
-    });
+      )
+    );
+    markForSync();
   };
 
   // Update a custom workflow node's internal nodes (parameter edits).
   const handleCustomNodeUpdate = (nodeId, updatedData) => {
-    setNodes((prevNodes) => {
-      const updatedNodes = prevNodes.map((node) =>
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
         node.id === nodeId
           ? {
               ...node,
@@ -255,10 +261,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
               }
             }
           : node
-      );
-      updateWorkspaceState(updatedNodes, edgesRef.current);
-      return updatedNodes;
-    });
+      )
+    );
+    markForSync();
   };
 
   // --- BIDS node handlers ---
@@ -275,15 +280,14 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       return;
     }
     // Normal data update
-    setNodes((prevNodes) => {
-      const updatedNodes = prevNodes.map((node) =>
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
         node.id === nodeId
           ? { ...node, data: { ...node.data, ...updates } }
           : node
-      );
-      updateWorkspaceState(updatedNodes, edgesRef.current);
-      return updatedNodes;
-    });
+      )
+    );
+    markForSync();
   };
 
   const triggerBIDSDirectoryPicker = (nodeId) => {
@@ -408,15 +412,13 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       (mappings) => {
         if (editingEdge) {
           // Update existing edge
-          setEdges((eds) => {
-            const updatedEdges = eds.map((e) =>
+          setEdges((eds) =>
+            eds.map((e) =>
                 e.id === editingEdge.id
                     ? { ...e, data: { ...e.data, mappings } }
                     : e
-            );
-            updateWorkspaceState(nodesRef.current, updatedEdges);
-            return updatedEdges;
-          });
+            )
+          );
         } else if (pendingConnection) {
           // Create new edge with mappings
           const newEdge = {
@@ -428,12 +430,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             style: { strokeWidth: 2 },
             data: { mappings }
           };
-          setEdges((eds) => {
-            const newEdges = [...eds, newEdge];
-            updateWorkspaceState(nodesRef.current, newEdges);
-            return newEdges;
-          });
+          setEdges((eds) => [...eds, newEdge]);
         }
+
+        markForSync();
 
         // Reset modal state
         setShowEdgeModal(false);
@@ -455,18 +455,14 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   // Wrap onEdgesChange to sync edge deletions to localStorage
   // Uses nodesRef to avoid stale closure capturing nodes
   const handleEdgesChange = useCallback((changes) => {
-    // Apply the changes first
     onEdgesChange(changes);
 
-    // Check if any edges were deleted and sync to localStorage
+    // Sync edge deletions to localStorage
     const deletions = changes.filter(c => c.type === 'remove');
     if (deletions.length > 0) {
-      setEdges((currentEdges) => {
-        updateWorkspaceState(nodesRef.current, currentEdges);
-        return currentEdges;
-      });
+      markForSync();
     }
-  }, [onEdgesChange]);
+  }, [onEdgesChange, markForSync]);
 
   // Handle drag over.
   const handleDragOver = useCallback((event) => {
@@ -512,11 +508,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         position: flowPosition,
       };
 
-      setNodes((prevNodes) => {
-        const updatedNodes = [...prevNodes, newNode];
-        updateWorkspaceState(updatedNodes, edgesRef.current);
-        return updatedNodes;
-      });
+      setNodes((prevNodes) => [...prevNodes, newNode]);
+      markForSync();
 
       // Trigger directory picker after node creation
       triggerBIDSDirectoryPicker(newNodeId);
@@ -548,11 +541,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         position: flowPosition,
       };
 
-      setNodes((prevNodes) => {
-        const updatedNodes = [...prevNodes, newNode];
-        updateWorkspaceState(updatedNodes, edgesRef.current);
-        return updatedNodes;
-      });
+      setNodes((prevNodes) => [...prevNodes, newNode]);
+      markForSync();
     } else {
       // Regular tool node
       const newNode = {
@@ -572,11 +562,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         position: flowPosition,
       };
 
-      setNodes((prevNodes) => {
-        const updatedNodes = [...prevNodes, newNode];
-        updateWorkspaceState(updatedNodes, edgesRef.current);
-        return updatedNodes;
-      });
+      setNodes((prevNodes) => [...prevNodes, newNode]);
+      markForSync();
     }
   };
 
@@ -587,24 +574,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         // Pre-compute Set for O(1) lookups (fixes O(n²) -> O(n))
         const deletedIds = new Set(deletedNodes.map(n => n.id));
 
-        // Remove deleted nodes from the nodes state.
-        setNodes((prevNodes) => {
-          const updatedNodes = prevNodes.filter(
-              (node) => !deletedIds.has(node.id)
-          );
-          // Update edges using the updated nodes.
-          setEdges((prevEdges) => {
-            const updatedEdges = prevEdges.filter(
-                (edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target)
-            );
-            // Update persistent workspace with both new nodes and edges.
-            updateWorkspaceState(updatedNodes, updatedEdges);
-            return updatedEdges;
-          });
-          return updatedNodes;
-        });
+        setNodes((prevNodes) =>
+          prevNodes.filter((node) => !deletedIds.has(node.id))
+        );
+        setEdges((prevEdges) =>
+          prevEdges.filter((edge) => !deletedIds.has(edge.source) && !deletedIds.has(edge.target))
+        );
+        markForSync();
       },
-      [updateCurrentWorkspaceItems]
+      [markForSync]
   );
 
   // --- Global Key Listener for "Delete" Key ---

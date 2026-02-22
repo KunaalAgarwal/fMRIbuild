@@ -75,13 +75,39 @@ flowchart LR
   AFNI_ROI --> AFNI_CONN
   AFNI_ROI --> AFNI_STAT
 
+  %% AFNI alternative pipeline orderings (skip steps)
+  AFNI_DESP --> AFNI_MC
+  AFNI_MC --> AFNI_TEMPFILT
+  AFNI_MC --> AFNI_MASK
+  AFNI_REG --> AFNI_SM
+  AFNI_REG --> AFNI_MASK
+  AFNI_TEMPFILT --> AFNI_SM
+  AFNI_TEMPFILT --> AFNI_MASK
+
+  %% AFNI analysis chains
+  AFNI_TEMPFILT --> AFNI_ROI
+  AFNI_TEMPFILT --> AFNI_MCMP
+  AFNI_STAT --> AFNI_ROI
+  AFNI_CONN --> AFNI_MCMP
+
   %% Cross-library motion correction handoffs
   ANTS_MC --> FSL_ICA
   ANTS_MC --> AFNI_DESP
+  ANTS_MC --> FSL_SM
+  ANTS_MC --> FSL_STAT
+  ANTS_MC --> AFNI_SM
+  ANTS_MC --> AFNI_MASK
+  FSL_MC --> AFNI_SM
+  FSL_MC --> AFNI_MASK
+  FSL_MC --> AFNI_STAT
 
   %% Distortion correction cross-library
   FSL_DC --> AFNI_MC
   FSL_DC --> ANTS_MC
+  FSL_DC --> AFNI_DESP
+  FSL_DC --> AFNI_ST
+  FSL_DC --> AFNI_REG
+  FSL_DC --> AFNI_SM
 
   %% fMRIPrep downstream edges
   FMRIPREP --> FSL_STAT
@@ -97,6 +123,12 @@ flowchart LR
   FMRIPREP --> FS_FUNC
   FMRIPREP --> WB_CIFTI
   FMRIPREP --> WB_SURF
+
+  %% Cross-library analysis handoffs
+  FSL_ICA --> AFNI_STAT
+  FSL_ICA --> AFNI_SM
+  FSL_STAT --> AFNI_MCMP
+  AFNI_STAT --> FSL_STAT
 
   %% FreeSurfer / Connectome Workbench
   FS_FUNC --> WB_CIFTI

@@ -122,6 +122,7 @@
   padding: clamp(1px, 0.3vw, 2px) clamp(4px, 0.6vw, 6px);
   border-radius: 10px;
   white-space: nowrap;
+  margin-left: 8px;
 }
 
 /* Green accent for I/O section */
@@ -288,10 +289,20 @@
   border-color: var(--color-danger);
 }
 
-/* Symmetric padding so text stays centered */
+/* Smooth padding/font transition when edit/delete buttons appear */
 .custom-workflow-item-wrapper > :first-child {
-  padding-left: 28px;
-  padding-right: 28px;
+  transition: padding 0.15s ease, font-size 0.15s ease;
+}
+
+.custom-workflow-item-wrapper:hover > :first-child {
+  padding-left: 30px;
+  padding-right: 30px;
+  font-size: clamp(0.55rem, 0.85vw, 0.7rem);
+}
+
+/* Prevent scale-up on custom items to avoid overlap with action buttons */
+.custom-workflow-item-wrapper .workflow-menu-item:hover {
+  transform: none;
 }
 
 /* Delete confirmation portal */

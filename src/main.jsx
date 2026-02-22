@@ -93,6 +93,23 @@ function serializeEdges(edges) {
 }
 
 /**
+ * Compare workspace content against a saved custom workflow (ignoring node positions).
+ * Returns true if there are differences (unsaved changes).
+ */
+function hasUnsavedChanges(workspace, savedWorkflow) {
+    if (!workspace || !savedWorkflow) return false;
+
+    const wsNodes = serializeNodes(workspace.nodes || []).map(({ position, ...rest }) => rest);
+    const savedNodes = savedWorkflow.nodes.map(({ position, ...rest }) => rest);
+
+    const wsEdges = serializeEdges(workspace.edges || []);
+    const savedEdges = serializeEdges(savedWorkflow.edges || []);
+
+    return JSON.stringify(wsNodes) !== JSON.stringify(savedNodes) ||
+           JSON.stringify(wsEdges) !== JSON.stringify(savedEdges);
+}
+
+/**
  * Validate internal edges of a workflow before saving.
  * Returns true if any validation warnings exist.
  */
@@ -210,12 +227,35 @@ function App() {
         }
     }, [getWorkflowData, currentWorkflowName, saveWorkflow, getNextDefaultName, showError, showSuccess, showWarning, updateWorkflowName]);
 
+    const handleWorkspaceSwitch = useCallback((newIndex) => {
+        // Warn if leaving a workspace with unsaved custom workflow changes
+        const currentWs = workspaces[currentWorkspace];
+        const currentWfName = currentWs?.workflowName?.trim();
+        if (currentWfName) {
+            const savedWf = customWorkflows.find(w => w.name === currentWfName);
+            if (savedWf && hasUnsavedChanges(currentWs, savedWf)) {
+                showWarning(`Workflow "${currentWfName}" has unsaved changes`);
+            }
+        }
+
+        // Notify if arriving at a workspace editing a custom workflow
+        const targetWs = workspaces[newIndex];
+        const targetWfName = targetWs?.workflowName?.trim();
+        if (targetWfName) {
+            const targetSaved = customWorkflows.find(w => w.name === targetWfName);
+            if (targetSaved) {
+                showInfo(`Editing custom workflow "${targetWfName}"`);
+            }
+        }
+
+        setCurrentWorkspace(newIndex);
+    }, [workspaces, currentWorkspace, customWorkflows, setCurrentWorkspace, showWarning, showInfo]);
+
     const handleEditWorkflow = useCallback((workflow) => {
         // Check if this workflow is already open in an existing workspace
         const existingIndex = workspaces.findIndex(ws => ws.workflowName === workflow.name);
         if (existingIndex !== -1) {
-            setCurrentWorkspace(existingIndex);
-            showInfo(`Switched to existing workspace for "${workflow.name}"`);
+            handleWorkspaceSwitch(existingIndex);
             return;
         }
 
@@ -249,7 +289,7 @@ function App() {
             workflowName: workflow.name
         });
         showInfo(`Editing "${workflow.name}" in new workspace`);
-    }, [addNewWorkspaceWithData, showInfo, workspaces, setCurrentWorkspace]);
+    }, [addNewWorkspaceWithData, showInfo, workspaces, handleWorkspaceSwitch]);
 
     const isExistingWorkflow = currentWorkflowName.trim() && customWorkflows.some(w => w.name === currentWorkflowName.trim());
     const saveButtonLabel = isExistingWorkflow ? 'Update Workflow' : 'Save Workflow';
@@ -295,7 +335,7 @@ function App() {
                     <ToggleWorkflowBar
                         current={currentWorkspace}
                         workspaces={workspaces}
-                        onChange={setCurrentWorkspace}
+                        onChange={handleWorkspaceSwitch}
                     />
                 </div>
                 <Footer />

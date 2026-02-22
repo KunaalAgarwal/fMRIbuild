@@ -3182,6 +3182,14 @@ export const dummyNodes = {
             "function": "Represents the final output of the workflow",
             "typicalUse": "Connect from the last processing step to show where results go",
             "isDummy": true
+        },
+        {
+            "name": "BIDS Input",
+            "fullName": "BIDS Dataset Input",
+            "function": "Loads a BIDS-formatted neuroimaging dataset and exposes selected data streams as output ports",
+            "typicalUse": "Drag onto canvas, select your BIDS directory, choose subjects and modalities, then wire outputs to processing tools",
+            "isDummy": true,
+            "isBIDS": true
         }
     ]
 };

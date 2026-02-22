@@ -3,11 +3,140 @@ import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
 
 /**
+ * Expand custom workflow nodes into their internal nodes/edges.
+ * Rewrites external edges so their namespaced mappings (internalNodeId/ioName)
+ * point to the correct expanded internal node with plain ioName.
+ * Returns a flat graph with no custom workflow nodes.
+ */
+function expandCustomWorkflowNodes(graph) {
+    const { nodes, edges } = graph;
+    const customNodes = nodes.filter(n => n.data?.isCustomWorkflow);
+
+    if (customNodes.length === 0) return graph;
+
+    const customNodeIds = new Set(customNodes.map(n => n.id));
+    const expandedNodes = [];
+    const expandedEdges = [];
+
+    // 1. Expand each custom workflow node into its internal nodes + edges
+    for (const customNode of customNodes) {
+        const { internalNodes = [], internalEdges = [] } = customNode.data;
+
+        for (const iNode of internalNodes) {
+            expandedNodes.push({
+                id: `${customNode.id}__${iNode.id}`,
+                type: 'default',
+                data: {
+                    label: iNode.label,
+                    isDummy: iNode.isDummy || false,
+                    parameters: iNode.parameters || {},
+                    dockerVersion: iNode.dockerVersion || 'latest',
+                    scatterEnabled: iNode.scatterEnabled || false,
+                    linkMergeOverrides: iNode.linkMergeOverrides || {},
+                    whenExpression: iNode.whenExpression || '',
+                    expressions: iNode.expressions || {},
+                },
+                position: iNode.position || { x: 0, y: 0 },
+            });
+        }
+
+        for (const iEdge of internalEdges) {
+            expandedEdges.push({
+                id: `${customNode.id}__${iEdge.id}`,
+                source: `${customNode.id}__${iEdge.source}`,
+                target: `${customNode.id}__${iEdge.target}`,
+                data: iEdge.data ? structuredClone(iEdge.data) : {},
+            });
+        }
+    }
+
+    // 2. Keep non-custom nodes as-is
+    const regularNodes = nodes.filter(n => !customNodeIds.has(n.id));
+
+    // 3. Rewrite external edges that touch custom workflow nodes
+    const rewrittenEdges = [];
+
+    for (const edge of edges) {
+        const srcIsCustom = customNodeIds.has(edge.source);
+        const tgtIsCustom = customNodeIds.has(edge.target);
+
+        if (!srcIsCustom && !tgtIsCustom) {
+            rewrittenEdges.push(edge);
+            continue;
+        }
+
+        const mappings = edge.data?.mappings || [];
+
+        // Group mappings by (expandedSource, expandedTarget) pair
+        // since one external edge can map to multiple internal nodes
+        const edgeGroups = new Map();
+
+        for (const m of mappings) {
+            let newSource = edge.source;
+            let newSourceOutput = m.sourceOutput;
+            let newTarget = edge.target;
+            let newTargetInput = m.targetInput;
+
+            if (srcIsCustom) {
+                const slashIdx = m.sourceOutput.indexOf('/');
+                if (slashIdx > -1) {
+                    const internalNodeId = m.sourceOutput.substring(0, slashIdx);
+                    newSourceOutput = m.sourceOutput.substring(slashIdx + 1);
+                    newSource = `${edge.source}__${internalNodeId}`;
+                }
+            }
+
+            if (tgtIsCustom) {
+                const slashIdx = m.targetInput.indexOf('/');
+                if (slashIdx > -1) {
+                    const internalNodeId = m.targetInput.substring(0, slashIdx);
+                    newTargetInput = m.targetInput.substring(slashIdx + 1);
+                    newTarget = `${edge.target}__${internalNodeId}`;
+                }
+            }
+
+            const key = `${newSource}::${newTarget}`;
+            if (!edgeGroups.has(key)) {
+                edgeGroups.set(key, { source: newSource, target: newTarget, mappings: [] });
+            }
+            edgeGroups.get(key).mappings.push({
+                sourceOutput: newSourceOutput,
+                targetInput: newTargetInput,
+            });
+        }
+
+        for (const [key, group] of edgeGroups) {
+            rewrittenEdges.push({
+                id: `${edge.id}__${key}`,
+                source: group.source,
+                target: group.target,
+                data: { mappings: group.mappings },
+            });
+        }
+    }
+
+    return {
+        nodes: [...regularNodes, ...expandedNodes],
+        edges: [...rewrittenEdges, ...expandedEdges],
+    };
+}
+
+/**
  * Convert the React-Flow graph into a CWL Workflow JS object.
  * Returns the raw object before YAML serialization.
  */
 export function buildCWLWorkflowObject(graph) {
-    // Filter out dummy nodes before processing
+    // Pre-process: expand any custom workflow nodes into flat internal nodes
+    graph = expandCustomWorkflowNodes(graph);
+
+    // Extract BIDS nodes before filtering (they generate workflow-level inputs)
+    const bidsNodes = graph.nodes.filter(n => n.data?.isBIDS && n.data?.bidsSelections);
+    const bidsNodeIds = new Set(bidsNodes.map(n => n.id));
+
+    // Collect edges FROM BIDS nodes (used for wired-inputs computation)
+    const bidsEdges = graph.edges.filter(e => bidsNodeIds.has(e.source));
+
+    // Filter out ALL dummy nodes (including BIDS) before processing
     const dummyNodeIds = new Set(
         graph.nodes.filter(n => n.data?.isDummy).map(n => n.id)
     );
@@ -84,8 +213,17 @@ export function buildCWLWorkflowObject(graph) {
         return totalCount > 1 ? `${toolId}_${count}` : toolId;
     };
 
+    /* ---------- resolve CWL source reference for a wired input ---------- */
+    const resolveWiredSource = (ws) => {
+        if (ws.isBIDSInput) return ws.sourceOutput; // workflow-level input name
+        return `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`;
+    };
+
     /* ---------- compute scatter propagation ---------- */
-    const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(nodes, edges);
+    // Include BIDS nodes in scatter computation (they have scatterEnabled: true)
+    const scatterNodes = [...nodes, ...bidsNodes];
+    const scatterEdges = [...edges, ...bidsEdges];
+    const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges);
 
     /* ---------- helper: wrap a type string in CWL array ---------- */
     const toArrayType = (typeStr) => {
@@ -102,6 +240,14 @@ export function buildCWLWorkflowObject(graph) {
         outputs: {},
         steps: {}
     };
+
+    // Generate workflow-level File[] inputs from BIDS node selections
+    for (const bidsNode of bidsNodes) {
+        const selections = bidsNode.data.bidsSelections.selections;
+        for (const [selKey] of Object.entries(selections)) {
+            wf.inputs[selKey] = { type: { type: 'array', items: 'File' } };
+        }
+    }
 
     // Requirement flags — assembled after the node walk loop
     let needsMultipleInputFeature = false;
@@ -170,7 +316,7 @@ export function buildCWLWorkflowObject(graph) {
     };
 
     /* ---------- pre-compute wired inputs per node from edge mappings ---------- */
-    // wiredInputsMap: Map<nodeId, Map<inputName, Array<{ sourceNodeId, sourceOutput }>>>
+    // wiredInputsMap: Map<nodeId, Map<inputName, Array<{ sourceNodeId, sourceOutput, isBIDSInput? }>>>
     const wiredInputsMap = new Map();
     for (const edge of edges) {
         const mappings = edge.data?.mappings || [];
@@ -178,6 +324,25 @@ export function buildCWLWorkflowObject(graph) {
             if (!wiredInputsMap.has(edge.target)) wiredInputsMap.set(edge.target, new Map());
             const nodeInputs = wiredInputsMap.get(edge.target);
             const sourceInfo = { sourceNodeId: edge.source, sourceOutput: m.sourceOutput };
+            if (nodeInputs.has(m.targetInput)) {
+                nodeInputs.get(m.targetInput).push(sourceInfo);
+            } else {
+                nodeInputs.set(m.targetInput, [sourceInfo]);
+            }
+        }
+    }
+
+    // Add BIDS edges to the wired inputs map (BIDS sources are workflow-level inputs)
+    for (const edge of bidsEdges) {
+        const mappings = edge.data?.mappings || [];
+        for (const m of mappings) {
+            if (!wiredInputsMap.has(edge.target)) wiredInputsMap.set(edge.target, new Map());
+            const nodeInputs = wiredInputsMap.get(edge.target);
+            const sourceInfo = {
+                sourceNodeId: null,
+                sourceOutput: m.sourceOutput, // This is the BIDS selection key (workflow input name)
+                isBIDSInput: true,
+            };
             if (nodeInputs.has(m.targetInput)) {
                 nodeInputs.get(m.targetInput).push(sourceInfo);
             } else {
@@ -237,16 +402,15 @@ export function buildCWLWorkflowObject(graph) {
                     step.in[inputName] = { source: wfInputName, valueFrom: expr };
                 } else if (wiredSources.length === 1) {
                     // Single wired + expression: source is upstream output, valueFrom transforms it
-                    const srcStepId = getStepId(wiredSources[0].sourceNodeId);
                     step.in[inputName] = {
-                        source: `${srcStepId}/${wiredSources[0].sourceOutput}`,
+                        source: resolveWiredSource(wiredSources[0]),
                         valueFrom: expr,
                     };
                 } else {
                     // Multi-source + expression: preserve linkMerge alongside valueFrom
                     const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
                     step.in[inputName] = {
-                        source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                        source: wiredSources.map(ws => resolveWiredSource(ws)),
                         linkMerge,
                         valueFrom: expr,
                     };
@@ -254,13 +418,12 @@ export function buildCWLWorkflowObject(graph) {
                 }
             } else if (wiredSources.length === 1) {
                 // Single source: simple string reference (backward-compatible)
-                const srcStepId = getStepId(wiredSources[0].sourceNodeId);
-                step.in[inputName] = `${srcStepId}/${wiredSources[0].sourceOutput}`;
+                step.in[inputName] = resolveWiredSource(wiredSources[0]);
             } else if (wiredSources.length > 1) {
                 // Multiple sources: use source array + linkMerge
                 const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
                 step.in[inputName] = {
-                    source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                    source: wiredSources.map(ws => resolveWiredSource(ws)),
                     linkMerge,
                 };
                 needsMultipleInputFeature = true;
@@ -296,15 +459,14 @@ export function buildCWLWorkflowObject(graph) {
                     needsInlineJavascript = true;
                     const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
                     if (wiredSources.length === 1) {
-                        const srcStepId = getStepId(wiredSources[0].sourceNodeId);
                         step.in[inputName] = {
-                            source: `${srcStepId}/${wiredSources[0].sourceOutput}`,
+                            source: resolveWiredSource(wiredSources[0]),
                             valueFrom: optExpr,
                         };
                     } else if (wiredSources.length > 1) {
                         const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
                         step.in[inputName] = {
-                            source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                            source: wiredSources.map(ws => resolveWiredSource(ws)),
                             linkMerge,
                             valueFrom: optExpr,
                         };
@@ -335,12 +497,11 @@ export function buildCWLWorkflowObject(graph) {
                 const wiredSources = wiredInputsMap.get(nodeId)?.get(inputName) || [];
 
                 if (wiredSources.length === 1) {
-                    const srcStepId = getStepId(wiredSources[0].sourceNodeId);
-                    step.in[inputName] = `${srcStepId}/${wiredSources[0].sourceOutput}`;
+                    step.in[inputName] = resolveWiredSource(wiredSources[0]);
                 } else if (wiredSources.length > 1) {
                     const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
                     step.in[inputName] = {
-                        source: wiredSources.map(ws => `${getStepId(ws.sourceNodeId)}/${ws.sourceOutput}`),
+                        source: wiredSources.map(ws => resolveWiredSource(ws)),
                         linkMerge,
                     };
                     needsMultipleInputFeature = true;
@@ -394,6 +555,15 @@ export function buildCWLWorkflowObject(graph) {
                 // Downstream node: scatter on inputs wired from scattered upstream
                 incomingEdges.forEach(edge => {
                     if (!scatteredSteps.has(edge.source)) return;
+                    const mappings = edge.data?.mappings || [];
+                    mappings.forEach(m => {
+                        if (!scatterInputs.includes(m.targetInput)) {
+                            scatterInputs.push(m.targetInput);
+                        }
+                    });
+                });
+                // Also check BIDS edges targeting this node (BIDS nodes are scatter sources)
+                bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
                     const mappings = edge.data?.mappings || [];
                     mappings.forEach(m => {
                         if (!scatterInputs.includes(m.targetInput)) {

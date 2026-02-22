@@ -22,11 +22,19 @@ export function computeScatteredNodes(nodes, edges) {
         outgoing.get(edge.source)?.push(edge.target);
     }
 
-    // BFS from scatter-enabled source nodes, propagating to all downstream
+    // BFS from scatter-enabled nodes, propagating to all downstream.
+    // Seeds: source nodes with scatterEnabled, OR custom workflow nodes with internal scatter.
+    // Note: mid-pipeline nodes without scatter are NOT seeded here, but they will still be
+    // added to scatteredNodeIds by the BFS traversal if an upstream node is scattered.
     const scatteredNodeIds = new Set();
     const queue = [];
     for (const node of nodes) {
-        if (node.data?.scatterEnabled && sourceNodeIds.has(node.id)) {
+        const isSource = sourceNodeIds.has(node.id);
+        const hasTopLevelScatter = node.data?.scatterEnabled;
+        const hasInternalScatter = node.data?.isCustomWorkflow &&
+            node.data?.internalNodes?.some(n => n.scatterEnabled);
+
+        if ((hasTopLevelScatter && isSource) || hasInternalScatter) {
             scatteredNodeIds.add(node.id);
             queue.push(node.id);
         }

@@ -63,8 +63,32 @@ const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, 
 /**
  * Get tool inputs/outputs, with fallback for undefined tools.
  * Includes file extension metadata for validation.
+ *
+ * For custom workflow nodes, collects IO from all internal non-dummy nodes
+ * with namespaced identifiers (internalNodeId/ioName) and group metadata.
  */
-const getToolIO = (toolLabel, isDummy = false) => {
+const getToolIO = (nodeData) => {
+    const { label: toolLabel, isDummy, isCustomWorkflow, internalNodes } = nodeData;
+
+    // BIDS Input nodes: dynamic outputs from BIDS selections
+    if (isDummy && nodeData.isBIDS) {
+        const selections = nodeData.bidsSelections?.selections || {};
+        const outputs = Object.keys(selections).length > 0
+            ? Object.entries(selections).map(([key]) => ({
+                name: key,
+                type: 'File[]',
+                label: key,
+                extensions: [],
+            }))
+            : [{ name: 'data', type: 'File[]', label: 'data (no selections yet)', extensions: [] }];
+        return {
+            outputs,
+            inputs: [],
+            isGeneric: false,
+            isBIDS: true,
+        };
+    }
+
     // Dummy I/O nodes accept any data type
     if (isDummy) {
         return {
@@ -74,6 +98,77 @@ const getToolIO = (toolLabel, isDummy = false) => {
             isDummy: true
         };
     }
+
+    // Custom workflow nodes: aggregate IO from all internal non-dummy nodes
+    if (isCustomWorkflow && internalNodes) {
+        const { internalEdges } = nodeData;
+        const nonDummyNodes = internalNodes.filter(n => !n.isDummy);
+        const outputs = [];
+        const inputs = [];
+
+        // Build set of intermediate outputs consumed by downstream internal nodes
+        const consumedOutputs = new Set();
+        if (internalEdges) {
+            for (const edge of internalEdges) {
+                const srcNode = internalNodes.find(n => n.id === edge.source);
+                const tgtNode = internalNodes.find(n => n.id === edge.target);
+                if (srcNode && tgtNode && !srcNode.isDummy && !tgtNode.isDummy) {
+                    for (const m of (edge.data?.mappings || [])) {
+                        consumedOutputs.add(`${edge.source}/${m.sourceOutput}`);
+                    }
+                }
+            }
+        }
+
+        nonDummyNodes.forEach((node, index) => {
+            const tool = getToolConfigSync(node.label);
+            if (!tool) return;
+
+            Object.entries(tool.outputs).forEach(([name, def]) => {
+                const namespacedName = `${node.id}/${name}`;
+                if (consumedOutputs.has(namespacedName)) return; // Skip intermediate outputs
+                outputs.push({
+                    name: namespacedName,
+                    type: def.type,
+                    label: def.label || name,
+                    extensions: def.extensions || [],
+                    group: node.label,
+                    groupIndex: index,
+                });
+            });
+
+            // Required inputs
+            Object.entries(tool.requiredInputs).forEach(([name, def]) => {
+                inputs.push({
+                    name: `${node.id}/${name}`,
+                    type: def.type,
+                    label: def.label || name,
+                    acceptedExtensions: def.acceptedExtensions || null,
+                    required: true,
+                    group: node.label,
+                    groupIndex: index,
+                });
+            });
+
+            // Optional inputs (exclude record types)
+            Object.entries(tool.optionalInputs || {})
+                .filter(([_, def]) => def.type !== 'record')
+                .forEach(([name, def]) => {
+                    inputs.push({
+                        name: `${node.id}/${name}`,
+                        type: def.type,
+                        label: def.label || name,
+                        acceptedExtensions: null,
+                        required: false,
+                        group: node.label,
+                        groupIndex: index,
+                    });
+                });
+        });
+
+        return { outputs, inputs, isGeneric: false, isCustomWorkflow: true };
+    }
+
     const tool = getToolConfigSync(toolLabel);
     if (tool) {
         return {
@@ -133,8 +228,8 @@ const EdgeMappingModal = ({
     const inputsScrollRef = useRef(null);
     const [linePositions, setLinePositions] = useState([]);
 
-    const sourceIO = getToolIO(sourceNode?.label, sourceNode?.isDummy);
-    const targetIO = getToolIO(targetNode?.label, targetNode?.isDummy);
+    const sourceIO = getToolIO(sourceNode || {});
+    const targetIO = getToolIO(targetNode || {});
 
     // Initialize mappings when modal opens
     useEffect(() => {
@@ -390,35 +485,43 @@ const EdgeMappingModal = ({
                             {sourceIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
                         <div className="io-items-scroll" ref={outputsScrollRef}>
-                            {sourceIO.outputs.map(output => {
+                            {sourceIO.outputs.map((output, idx) => {
                                 // Check if this output is mapped to an incompatible input
                                 const mapping = mappings.find(m => m.sourceOutput === output.name);
                                 const compatibility = mapping
                                     ? getMappingCompatibility(output.name, mapping.targetInput)
                                     : { compatible: true };
 
+                                // Show group header when group changes (custom workflow nodes)
+                                const showGroupHeader = sourceIO.isCustomWorkflow &&
+                                    (idx === 0 || output.group !== sourceIO.outputs[idx - 1]?.group);
+
                                 return (
-                                    <div
-                                        key={output.name}
-                                        ref={el => outputRefs.current[output.name] = el}
-                                        className={`io-item output-item ${
-                                            selectedOutput === output.name ? 'selected' : ''
-                                        } ${isOutputMapped(output.name) ? 'mapped' : ''} ${
-                                            !compatibility.compatible ? 'mismatch-warning' : ''
-                                        }`}
-                                        onClick={() => handleOutputClick(output.name)}
-                                    >
-                                        <div className="io-item-main">
-                                            <span className="io-name">{output.label}</span>
-                                            <span className="io-type">{output.type}</span>
-                                            {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
-                                        </div>
-                                        {output.extensions?.length > 0 && (
-                                            <span className="io-extensions" title={output.extensions.join(', ')}>
-                                                {output.extensions.join(', ')}
-                                            </span>
+                                    <React.Fragment key={output.name}>
+                                        {showGroupHeader && (
+                                            <div className="io-group-header">{output.group}</div>
                                         )}
-                                    </div>
+                                        <div
+                                            ref={el => outputRefs.current[output.name] = el}
+                                            className={`io-item output-item ${
+                                                selectedOutput === output.name ? 'selected' : ''
+                                            } ${isOutputMapped(output.name) ? 'mapped' : ''} ${
+                                                !compatibility.compatible ? 'mismatch-warning' : ''
+                                            }`}
+                                            onClick={() => handleOutputClick(output.name)}
+                                        >
+                                            <div className="io-item-main">
+                                                <span className="io-name">{output.label}</span>
+                                                <span className="io-type">{output.type}</span>
+                                                {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
+                                            </div>
+                                            {output.extensions?.length > 0 && (
+                                                <span className="io-extensions" title={output.extensions.join(', ')}>
+                                                    {output.extensions.join(', ')}
+                                                </span>
+                                            )}
+                                        </div>
+                                    </React.Fragment>
                                 );
                             })}
                         </div>
@@ -517,12 +620,21 @@ const EdgeMappingModal = ({
                                     ? getMappingCompatibility(selectedOutput, input.name)
                                     : { compatible: true };
 
+                                // Show group header when group changes (custom workflow nodes)
+                                const showGroupHeader = targetIO.isCustomWorkflow &&
+                                    (idx === 0 || input.group !== arr[idx - 1]?.group);
+
                                 // Show separator between required and optional inputs
-                                const showOptionalSeparator = !input.required
+                                // Only within the same group (or when no groups)
+                                const sameGroup = !targetIO.isCustomWorkflow || (idx > 0 && input.group === arr[idx - 1]?.group);
+                                const showOptionalSeparator = sameGroup && !input.required
                                     && idx > 0 && arr[idx - 1]?.required;
 
                                 return (
                                     <React.Fragment key={input.name}>
+                                        {showGroupHeader && (
+                                            <div className="io-group-header">{input.group}</div>
+                                        )}
                                         {showOptionalSeparator && (
                                             <div className="io-section-separator">optional</div>
                                         )}

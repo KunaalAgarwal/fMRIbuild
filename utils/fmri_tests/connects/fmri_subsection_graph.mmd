@@ -28,6 +28,19 @@ flowchart LR
 
   %% MRIQC is a QC-only tool (reports/metrics, no image output) — kept as isolated node
 
+  %% Intra-subsection self-loops (allow chaining within multi-tool subsections)
+  FSL_DC --> FSL_DC
+  FSL_STAT --> FSL_STAT
+  FSL_ICA --> FSL_ICA
+  AFNI_STAT --> AFNI_STAT
+  AFNI_CONN --> AFNI_CONN
+  AFNI_MCMP --> AFNI_MCMP
+  AFNI_SM --> AFNI_SM
+  AFNI_ROI --> AFNI_ROI
+  FS_FUNC --> FS_FUNC
+  WB_CIFTI --> WB_CIFTI
+  WB_SURF --> WB_SURF
+
   %% FSL pipeline
   FSL_DC --> FSL_MC
   FSL_MC --> FSL_ST
@@ -35,6 +48,13 @@ flowchart LR
   FSL_SM --> FSL_ICA
   FSL_SM --> FSL_STAT
   FSL_ICA --> FSL_STAT
+
+  %% FSL alternative pipeline orderings (skip steps)
+  FSL_MC --> FSL_SM
+  FSL_MC --> FSL_ICA
+  FSL_MC --> FSL_STAT
+  FSL_ST --> FSL_STAT
+  FSL_ICA --> FSL_SM
 
   %% AFNI pipeline (afni_proc.py block order: despike, tshift, align, volreg, blur, mask, scale, regress)
   AFNI_DESP --> AFNI_ST
@@ -47,8 +67,13 @@ flowchart LR
   AFNI_STAT --> AFNI_MCMP
   AFNI_STAT --> AFNI_CONN
   AFNI_TEMPFILT --> AFNI_CONN
+  AFNI_TEMPFILT --> AFNI_STAT
   AFNI_CONN --> AFNI_ROI
   AFNI_MASK --> AFNI_CONN
+  AFNI_SM --> AFNI_TEMPFILT
+  AFNI_SM --> AFNI_STAT
+  AFNI_ROI --> AFNI_CONN
+  AFNI_ROI --> AFNI_STAT
 
   %% Cross-library motion correction handoffs
   ANTS_MC --> FSL_ICA
@@ -67,8 +92,11 @@ flowchart LR
   FMRIPREP --> AFNI_TEMPFILT
   FMRIPREP --> AFNI_STAT
   FMRIPREP --> AFNI_CONN
+  FMRIPREP --> AFNI_ROI
+  FMRIPREP --> AFNI_MCMP
   FMRIPREP --> FS_FUNC
   FMRIPREP --> WB_CIFTI
+  FMRIPREP --> WB_SURF
 
   %% FreeSurfer / Connectome Workbench
   FS_FUNC --> WB_CIFTI

@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import '../styles/workflowMenuItem.css';
 
-function WorkflowMenuItem({ name, toolInfo, onDragStart }) {
+function WorkflowMenuItem({ name, toolInfo, onDragStart, warningIcon }) {
   const [isHovered, setIsHovered] = useState(false);
   const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
   const itemRef = useRef(null);
@@ -46,7 +46,10 @@ function WorkflowMenuItem({ name, toolInfo, onDragStart }) {
       onMouseLeave={handleMouseLeave}
       onDoubleClick={handleDoubleClick}
     >
-      <span className="tool-name">{name}</span>
+      <span className="tool-name">
+        {warningIcon && <span className="menu-item-warning" title="Workflow has validation warnings">! </span>}
+        {name}
+      </span>
 
       {toolInfo && isHovered && createPortal(
         <div

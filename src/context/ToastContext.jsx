@@ -45,8 +45,8 @@ export function ToastProvider({ children }) {
         addToast(message, 'danger', duration);
     }, [addToast]);
 
-    const showWarning = useCallback((message) => {
-        addToast(message, 'warning', 1800);
+    const showWarning = useCallback((message, duration = 1800) => {
+        addToast(message, 'warning', duration);
     }, [addToast]);
 
     const showSuccess = useCallback((message) => {

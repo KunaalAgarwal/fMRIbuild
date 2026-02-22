@@ -14,11 +14,15 @@ import '../styles/actionsBar.css';
 
 import NodeComponent from './NodeComponent';
 import EdgeMappingModal from './EdgeMappingModal';
+import BIDSDataModal from './BIDSDataModal';
 import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
 import { getInvalidConnectionReason } from '../utils/adjacencyValidation.js';
+import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
+import { parseBIDSDirectory } from '../utils/bidsParser.js';
+import { useToast } from '../context/ToastContext.jsx';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
@@ -27,6 +31,7 @@ const nodeTypes = { default: NodeComponent };
 const EDGE_ARROW = { type: MarkerType.ArrowClosed, width: 10, height: 10 };
 
 function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkflowData, currentWorkspaceIndex }) {
+  const { customWorkflows } = useCustomWorkflowsContext();
   const reactFlowWrapper = useRef(null);
   const prevWorkspaceRef = useRef(currentWorkspaceIndex);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -48,9 +53,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
   // Compute which nodes inherit scatter from upstream (BFS propagation).
   // Used by NodeComponent via ScatterPropagationContext to show badges.
+  // BIDS nodes participate in scatter (they output File[] arrays) but regular dummy nodes don't.
   const scatterContext = useMemo(() => {
-    const dummyIds = new Set(nodes.filter(n => n.data?.isDummy).map(n => n.id));
-    const realNodes = nodes.filter(n => !n.data?.isDummy);
+    const dummyIds = new Set(nodes.filter(n => n.data?.isDummy && !n.data?.isBIDS).map(n => n.id));
+    const realNodes = nodes.filter(n => !n.data?.isDummy || n.data?.isBIDS);
     const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
     const { scatteredNodeIds, sourceNodeIds } = computeScatteredNodes(realNodes, realEdges);
     return { propagatedIds: scatteredNodeIds, sourceNodeIds };
@@ -82,11 +88,57 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     return wiredMap;
   }, [edges, nodeMap]);
 
+  // Sync on-canvas custom workflow nodes when saved workflows change
+  useEffect(() => {
+    if (!customWorkflows || customWorkflows.length === 0) return;
+
+    let changed = false;
+    const updatedNodes = nodes.map(node => {
+      if (!node.data?.isCustomWorkflow || !node.data?.customWorkflowId) return node;
+      const saved = customWorkflows.find(w => w.id === node.data.customWorkflowId);
+      if (!saved) return node;
+
+      // Compare serialized internal data to detect changes
+      const currentInternal = JSON.stringify(node.data.internalNodes);
+      const savedInternal = JSON.stringify(saved.nodes);
+      if (currentInternal === savedInternal &&
+          node.data.label === saved.name &&
+          node.data.hasValidationWarnings === saved.hasValidationWarnings) {
+        return node;
+      }
+
+      changed = true;
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          label: saved.name,
+          internalNodes: structuredClone(saved.nodes),
+          internalEdges: structuredClone(saved.edges),
+          boundaryNodes: { ...saved.boundaryNodes },
+          hasValidationWarnings: saved.hasValidationWarnings,
+        }
+      };
+    });
+
+    if (changed) {
+      setNodes(updatedNodes);
+      updateWorkspaceState(updatedNodes, edgesRef.current);
+    }
+  }, [customWorkflows]);
+
   // Edge mapping modal state
   const [showEdgeModal, setShowEdgeModal] = useState(false);
   const [pendingConnection, setPendingConnection] = useState(null);
   const [editingEdge, setEditingEdge] = useState(null);
   const [edgeModalData, setEdgeModalData] = useState(null);
+
+  // BIDS modal state
+  const [showBIDSModal, setShowBIDSModal] = useState(false);
+  const [bidsModalNodeId, setBidsModalNodeId] = useState(null);
+  const bidsFileInputRef = useRef(null);
+  const bidsPickerTargetRef = useRef(null);
+  const { showError, showWarning, showInfo } = useToast();
 
   // --- INITIALIZATION & Synchronization ---
   // This effect watches for changes in the persistent workspace.
@@ -99,14 +151,43 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       prevWorkspaceRef.current = currentWorkspaceIndex;
 
       if (workspaceSwitched || workflowItems.nodes.length !== nodes.length) {
-        const initialNodes = (workflowItems.nodes || []).map((node) => ({
-          ...node,
-          data: {
+        let anyCustomSynced = false;
+        const initialNodes = (workflowItems.nodes || []).map((node) => {
+          const restoredData = {
             ...node.data,
-            // Reattach the callback so the node remains interactive.
-            onSaveParameters: (newParams) => handleNodeUpdate(node.id, newParams)
+            // Reattach callbacks so nodes remain interactive.
+            onSaveParameters: node.data.isDummy
+              ? null
+              : node.data.isCustomWorkflow
+                ? (newData) => handleCustomNodeUpdate(node.id, newData)
+                : (newParams) => handleNodeUpdate(node.id, newParams),
+            // Reattach BIDS callback
+            ...(node.data.isBIDS ? { onUpdateBIDS: (updates) => handleBIDSNodeUpdate(node.id, updates) } : {}),
+          };
+
+          // Sync custom workflow nodes with latest saved workflow data
+          if (restoredData.isCustomWorkflow && restoredData.customWorkflowId && customWorkflows) {
+            const saved = customWorkflows.find(w => w.id === restoredData.customWorkflowId);
+            if (saved) {
+              const currentInternal = JSON.stringify(restoredData.internalNodes);
+              const savedInternal = JSON.stringify(saved.nodes);
+              if (currentInternal !== savedInternal ||
+                  restoredData.label !== saved.name ||
+                  restoredData.hasValidationWarnings !== saved.hasValidationWarnings) {
+                anyCustomSynced = true;
+                Object.assign(restoredData, {
+                  label: saved.name,
+                  internalNodes: structuredClone(saved.nodes),
+                  internalEdges: structuredClone(saved.edges),
+                  boundaryNodes: { ...saved.boundaryNodes },
+                  hasValidationWarnings: saved.hasValidationWarnings,
+                });
+              }
+            }
           }
-        }));
+
+          return { ...node, data: restoredData };
+        });
         // Restore edges with styling and data (mappings)
         const initialEdges = (workflowItems.edges || []).map((edge, index) => ({
           ...edge,
@@ -118,6 +199,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         }));
         setNodes(initialNodes);
         setEdges(initialEdges);
+        // Persist synced custom workflow data back to workspace state
+        if (anyCustomSynced) {
+          updateWorkspaceState(initialNodes, initialEdges);
+        }
       }
     }
   }, [workflowItems, nodes.length, currentWorkspaceIndex]);
@@ -157,28 +242,138 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     });
   };
 
+  // Update a custom workflow node's internal nodes (parameter edits).
+  const handleCustomNodeUpdate = (nodeId, updatedData) => {
+    setNodes((prevNodes) => {
+      const updatedNodes = prevNodes.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                internalNodes: updatedData.internalNodes || node.data.internalNodes,
+              }
+            }
+          : node
+      );
+      updateWorkspaceState(updatedNodes, edgesRef.current);
+      return updatedNodes;
+    });
+  };
+
+  // --- BIDS node handlers ---
+  const handleBIDSNodeUpdate = (nodeId, updates) => {
+    // Handle signal actions from NodeComponent
+    if (updates._openModal) {
+      setBidsModalNodeId(nodeId);
+      setShowBIDSModal(true);
+      return;
+    }
+    if (updates._pickDirectory) {
+      bidsPickerTargetRef.current = nodeId;
+      bidsFileInputRef.current?.click();
+      return;
+    }
+    // Normal data update
+    setNodes((prevNodes) => {
+      const updatedNodes = prevNodes.map((node) =>
+        node.id === nodeId
+          ? { ...node, data: { ...node.data, ...updates } }
+          : node
+      );
+      updateWorkspaceState(updatedNodes, edgesRef.current);
+      return updatedNodes;
+    });
+  };
+
+  const triggerBIDSDirectoryPicker = (nodeId) => {
+    bidsPickerTargetRef.current = nodeId;
+    bidsFileInputRef.current?.click();
+  };
+
+  const handleBIDSDirectorySelected = async (event) => {
+    const files = event.target.files;
+    if (!files || files.length === 0) return;
+
+    const nodeId = bidsPickerTargetRef.current;
+    if (!nodeId) return;
+
+    const result = await parseBIDSDirectory(files);
+
+    if (result.errors.length > 0) {
+      result.errors.forEach(e => showError(e, 6000));
+      // Reset file input
+      event.target.value = '';
+      return;
+    }
+
+    if (result.warnings.length > 0) {
+      result.warnings.forEach(w => showWarning(w, 5000));
+    }
+
+    if (result.info.length > 0) {
+      showInfo(result.info.join(' '));
+    }
+
+    // Store structure on the node and open modal
+    handleBIDSNodeUpdate(nodeId, { bidsStructure: result.bidsStructure });
+    setBidsModalNodeId(nodeId);
+    setShowBIDSModal(true);
+
+    // Reset file input so same directory can be re-selected
+    event.target.value = '';
+  };
+
+  const handleBIDSModalClose = (bidsSelections) => {
+    if (bidsSelections && bidsModalNodeId) {
+      handleBIDSNodeUpdate(bidsModalNodeId, {
+        bidsSelections,
+        scatterEnabled: true, // BIDS outputs are always arrays
+      });
+    }
+    setShowBIDSModal(false);
+    setBidsModalNodeId(null);
+  };
+
+  // Build a flat node-info object for the EdgeMappingModal from a ReactFlow node.
+  const buildEdgeModalNode = (node) => ({
+    id: node.id,
+    label: node.data.label,
+    isDummy: node.data.isDummy || false,
+    isBIDS: node.data.isBIDS || false,
+    bidsSelections: node.data.bidsSelections || null,
+    isCustomWorkflow: node.data.isCustomWorkflow || false,
+    internalNodes: node.data.internalNodes || [],
+    internalEdges: node.data.internalEdges || [],
+  });
+
+  // Compute adjacency warning for a connection between two nodes.
+  const getAdjacencyWarning = (srcNode, tgtNode) => {
+    if (srcNode.data.isDummy || tgtNode.data.isDummy) return null;
+    const srcLabel = srcNode.data.isCustomWorkflow
+      ? srcNode.data.boundaryNodes?.lastNonDummy
+      : srcNode.data.label;
+    const tgtLabel = tgtNode.data.isCustomWorkflow
+      ? tgtNode.data.boundaryNodes?.firstNonDummy
+      : tgtNode.data.label;
+    return (srcLabel && tgtLabel) ? getInvalidConnectionReason(srcLabel, tgtLabel) : null;
+  };
+
   // Connect edges - open modal to configure mapping.
   const onConnect = useCallback(
       (connection) => {
-        // Store pending connection and open modal
         setPendingConnection(connection);
         setEditingEdge(null);
 
-        // Get source/target node info for modal using O(1) lookup
         const sourceNode = nodeMap.get(connection.source);
         const targetNode = nodeMap.get(connection.target);
 
         if (sourceNode && targetNode) {
-          // Validate connection against consensus adjacency matrix (skip dummy nodes)
-          let adjacencyWarning = null;
-          if (!sourceNode.data.isDummy && !targetNode.data.isDummy) {
-            adjacencyWarning = getInvalidConnectionReason(sourceNode.data.label, targetNode.data.label);
-          }
-
           setEdgeModalData({
-            sourceNode: { id: sourceNode.id, label: sourceNode.data.label, isDummy: sourceNode.data.isDummy || false },
-            targetNode: { id: targetNode.id, label: targetNode.data.label, isDummy: targetNode.data.isDummy || false },
-            adjacencyWarning,
+            sourceNode: buildEdgeModalNode(sourceNode),
+            targetNode: buildEdgeModalNode(targetNode),
+            existingMappings: [],
+            adjacencyWarning: getAdjacencyWarning(sourceNode, targetNode),
           });
           setShowEdgeModal(true);
         }
@@ -190,23 +385,17 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const onEdgeDoubleClick = useCallback(
       (event, edge) => {
         event.stopPropagation();
-        // Use O(1) lookup instead of O(n) find
         const sourceNode = nodeMap.get(edge.source);
         const targetNode = nodeMap.get(edge.target);
 
         if (sourceNode && targetNode) {
-          let adjacencyWarning = null;
-          if (!sourceNode.data.isDummy && !targetNode.data.isDummy) {
-            adjacencyWarning = getInvalidConnectionReason(sourceNode.data.label, targetNode.data.label);
-          }
-
           setEditingEdge(edge);
           setPendingConnection(null);
           setEdgeModalData({
-            sourceNode: { id: sourceNode.id, label: sourceNode.data.label, isDummy: sourceNode.data.isDummy || false },
-            targetNode: { id: targetNode.id, label: targetNode.data.label, isDummy: targetNode.data.isDummy || false },
+            sourceNode: buildEdgeModalNode(sourceNode),
+            targetNode: buildEdgeModalNode(targetNode),
             existingMappings: edge.data?.mappings || [],
-            adjacencyWarning,
+            adjacencyWarning: getAdjacencyWarning(sourceNode, targetNode),
           });
           setShowEdgeModal(true);
         }
@@ -290,6 +479,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     event.preventDefault();
     const name = event.dataTransfer.getData('node/name') || 'Unnamed Node';
     const isDummy = event.dataTransfer.getData('node/isDummy') === 'true';
+    const isBIDS = event.dataTransfer.getData('node/isBIDS') === 'true';
+    const customWorkflowId = event.dataTransfer.getData('node/customWorkflowId');
     if (!reactFlowInstance) return;
 
     const flowPosition = reactFlowInstance.screenToFlowPosition({
@@ -297,28 +488,96 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       y: event.clientY,
     });
 
-    const newNode = {
-      id: crypto.randomUUID(),
-      type: 'default',
-      data: {
-        label: name,
-        parameters: '',
-        dockerVersion: 'latest',
-        scatterEnabled: false,
-        linkMergeOverrides: {},
-        whenExpression: '',
-        expressions: {},
-        isDummy: isDummy,
-        onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(newNode.id, newData),
-      },
-      position: flowPosition,
-    };
+    if (isBIDS) {
+      // BIDS Input node
+      const newNodeId = crypto.randomUUID();
+      const newNode = {
+        id: newNodeId,
+        type: 'default',
+        data: {
+          label: name,
+          isDummy: true,
+          isBIDS: true,
+          bidsStructure: null,
+          bidsSelections: null,
+          parameters: '',
+          dockerVersion: 'latest',
+          scatterEnabled: false,
+          linkMergeOverrides: {},
+          whenExpression: '',
+          expressions: {},
+          onSaveParameters: null,
+          onUpdateBIDS: (updates) => handleBIDSNodeUpdate(newNodeId, updates),
+        },
+        position: flowPosition,
+      };
 
-    setNodes((prevNodes) => {
-      const updatedNodes = [...prevNodes, newNode];
-      updateWorkspaceState(updatedNodes, edgesRef.current);
-      return updatedNodes;
-    });
+      setNodes((prevNodes) => {
+        const updatedNodes = [...prevNodes, newNode];
+        updateWorkspaceState(updatedNodes, edgesRef.current);
+        return updatedNodes;
+      });
+
+      // Trigger directory picker after node creation
+      triggerBIDSDirectoryPicker(newNodeId);
+    } else if (customWorkflowId) {
+      // Custom workflow node
+      const savedWorkflow = customWorkflows.find(w => w.id === customWorkflowId);
+      if (!savedWorkflow) return;
+
+      const newNode = {
+        id: crypto.randomUUID(),
+        type: 'default',
+        data: {
+          label: savedWorkflow.name,
+          isDummy: false,
+          isCustomWorkflow: true,
+          customWorkflowId: savedWorkflow.id,
+          internalNodes: structuredClone(savedWorkflow.nodes),
+          internalEdges: structuredClone(savedWorkflow.edges),
+          boundaryNodes: { ...savedWorkflow.boundaryNodes },
+          hasValidationWarnings: savedWorkflow.hasValidationWarnings,
+          parameters: {},
+          dockerVersion: 'latest',
+          scatterEnabled: false,
+          linkMergeOverrides: {},
+          whenExpression: '',
+          expressions: {},
+          onSaveParameters: (newData) => handleCustomNodeUpdate(newNode.id, newData),
+        },
+        position: flowPosition,
+      };
+
+      setNodes((prevNodes) => {
+        const updatedNodes = [...prevNodes, newNode];
+        updateWorkspaceState(updatedNodes, edgesRef.current);
+        return updatedNodes;
+      });
+    } else {
+      // Regular tool node
+      const newNode = {
+        id: crypto.randomUUID(),
+        type: 'default',
+        data: {
+          label: name,
+          parameters: '',
+          dockerVersion: 'latest',
+          scatterEnabled: false,
+          linkMergeOverrides: {},
+          whenExpression: '',
+          expressions: {},
+          isDummy: isDummy,
+          onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(newNode.id, newData),
+        },
+        position: flowPosition,
+      };
+
+      setNodes((prevNodes) => {
+        const updatedNodes = [...prevNodes, newNode];
+        updateWorkspaceState(updatedNodes, edgesRef.current);
+        return updatedNodes;
+      });
+    }
   };
 
   // Delete nodes and corresponding edges.
@@ -430,6 +689,22 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             targetNode={edgeModalData?.targetNode}
             existingMappings={edgeModalData?.existingMappings || []}
             adjacencyWarning={edgeModalData?.adjacencyWarning || null}
+        />
+
+        {/* Hidden directory picker for BIDS nodes */}
+        <input
+            ref={bidsFileInputRef}
+            type="file"
+            webkitdirectory=""
+            style={{ display: 'none' }}
+            onChange={handleBIDSDirectorySelected}
+        />
+
+        {/* BIDS Data Modal */}
+        <BIDSDataModal
+            show={showBIDSModal}
+            onClose={handleBIDSModalClose}
+            bidsStructure={bidsModalNodeId ? nodeMap.get(bidsModalNodeId)?.data?.bidsStructure : null}
         />
       </div>
   );

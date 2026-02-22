@@ -1,0 +1,378 @@
+{
+  "description": "Cross-modality subsection-level edges for the consensus tool adjacency matrix. Each edge is expanded to tool-level by looking up which tools belong to the source/target subsections in the respective modality's tool_to_subsection_map.json.",
+  "edges": [
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Brain Extraction",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "T1w brain mask for fMRIPrep"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "ANTs / Brain Extraction",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "ANTs brain mask for fMRIPrep"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "AFNI / Brain Extraction",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "AFNI brain mask for fMRIPrep"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Pipelines",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "fsl_anat structural output feeds fMRIPrep"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Tissue Segmentation",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "Tissue priors for fMRI nuisance regression"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "ANTs / Segmentation",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "Tissue segmentation for fMRI preprocessing"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Surface Reconstruction",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "FreeSurfer / Functional Analysis",
+      "rationale": "recon-all surfaces for bbregister, mri_vol2surf, surface-based fMRI"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Parcellation",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "AFNI / Connectivity",
+      "rationale": "Parcellation ROIs for connectivity analysis"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Parcellation",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "AFNI / ROI Analysis",
+      "rationale": "Parcellation labels for ROI extraction"
+    },
+
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Brain Extraction",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "FSL / Preprocessing",
+      "rationale": "Brain mask for eddy and other dMRI preprocessing"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "ANTs / Brain Extraction",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "FSL / Preprocessing",
+      "rationale": "ANTs brain mask for dMRI preprocessing"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Parcellation",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "MRtrix3 / Tractography",
+      "rationale": "Parcellation defines connectome nodes for tck2connectome"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Surface Reconstruction",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "FreeSurfer / Diffusion",
+      "rationale": "FreeSurfer surfaces for diffusion analysis"
+    },
+
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Brain Extraction",
+      "targetModality": "Arterial Spin Labeling",
+      "targetSubsection": "FSL / ASL Processing",
+      "rationale": "Brain mask for oxford_asl/basil"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Tissue Segmentation",
+      "targetModality": "Arterial Spin Labeling",
+      "targetSubsection": "FSL / ASL Processing",
+      "rationale": "PVE maps for ASL partial volume correction"
+    },
+
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Surface Reconstruction",
+      "targetModality": "Positron Emission Tomography",
+      "targetSubsection": "FreeSurfer / PET Processing",
+      "rationale": "FreeSurfer segmentation for mri_gtmpvc PVC"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Parcellation",
+      "targetModality": "Positron Emission Tomography",
+      "targetSubsection": "FreeSurfer / PET Processing",
+      "rationale": "Parcellation labels for PET PVC"
+    },
+
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Brain Extraction",
+      "targetModality": "Multimodal",
+      "targetSubsection": "ANTs / Intermodal Registration",
+      "rationale": "T1 brain mask as reference for intermodal registration"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "ANTs / Brain Extraction",
+      "targetModality": "Multimodal",
+      "targetSubsection": "ANTs / Intermodal Registration",
+      "rationale": "ANTs brain mask as reference for intermodal registration"
+    },
+
+    {
+      "sourceModality": "Diffusion Magnetic Resonance Imaging",
+      "sourceSubsection": "FSL / Preprocessing",
+      "targetModality": "Multimodal",
+      "targetSubsection": "ANTs / Intermodal Registration",
+      "rationale": "b0 scalar image for intermodal registration"
+    },
+
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "fMRIPrep / Pipeline",
+      "targetModality": "Multimodal",
+      "targetSubsection": "ANTs / Intermodal Registration",
+      "rationale": "fMRI reference volume for intermodal registration"
+    },
+
+    {
+      "sourceModality": "Arterial Spin Labeling",
+      "sourceSubsection": "FSL / ASL Processing",
+      "targetModality": "Multimodal",
+      "targetSubsection": "ANTs / Intermodal Registration",
+      "rationale": "ASL calibration image for intermodal registration"
+    },
+
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "ANTs / Preprocessing Utilities",
+      "targetModality": "Structural MRI",
+      "targetSubsection": "FSL / Brain Extraction",
+      "rationale": "DenoiseImage/N4BiasFieldCorrection before brain extraction"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "ANTs / Preprocessing Utilities",
+      "targetModality": "Structural MRI",
+      "targetSubsection": "ANTs / Brain Extraction",
+      "rationale": "DenoiseImage/N4BiasFieldCorrection before brain extraction"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "ANTs / Preprocessing Utilities",
+      "targetModality": "Structural MRI",
+      "targetSubsection": "AFNI / Brain Extraction",
+      "rationale": "DenoiseImage/N4BiasFieldCorrection before brain extraction"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "ANTs / Preprocessing Utilities",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "FSL / Preprocessing",
+      "rationale": "Denoising before dMRI eddy"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "FreeSurfer / Format Conversion",
+      "targetModality": "Structural MRI",
+      "targetSubsection": "FSL / Brain Extraction",
+      "rationale": "mri_convert format conversion before structural processing"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "FreeSurfer / Format Conversion",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "FSL / Preprocessing",
+      "rationale": "Format conversion before dMRI processing"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "FreeSurfer / Format Conversion",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "Format conversion before fMRIPrep"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "FSL / Volume Operations",
+      "targetModality": "Structural MRI",
+      "targetSubsection": "FSL / Brain Extraction",
+      "rationale": "fslreorient2std/robustfov before BET"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "FSL / Volume Operations",
+      "targetModality": "Diffusion Magnetic Resonance Imaging",
+      "targetSubsection": "FSL / Preprocessing",
+      "rationale": "Reorient before dMRI processing"
+    },
+    {
+      "sourceModality": "Utilities",
+      "sourceSubsection": "FSL / Volume Operations",
+      "targetModality": "Functional MRI",
+      "targetSubsection": "fMRIPrep / Pipeline",
+      "rationale": "Reorient before fMRI processing"
+    },
+
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Brain Extraction",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Threshold/process brain mask"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Brain Extraction",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Image Operations",
+      "rationale": "Process brain mask with ANTs tools"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Registration",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Warp Utilities",
+      "rationale": "Apply structural warp fields"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Registration",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Transform Utilities",
+      "rationale": "Apply structural transforms"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "ANTs / Registration",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Warp Utilities",
+      "rationale": "Apply ANTs registration warp fields"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "ANTs / Registration",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Transform Utilities",
+      "rationale": "Apply ANTs registration transforms"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Tissue Segmentation",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Threshold tissue probability maps"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FSL / Tissue Segmentation",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Image Operations",
+      "rationale": "Process tissue maps with ANTs"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Parcellation",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Label Analysis",
+      "rationale": "Label analysis on parcellation output"
+    },
+    {
+      "sourceModality": "Structural MRI",
+      "sourceSubsection": "FreeSurfer / Parcellation",
+      "targetModality": "Utilities",
+      "targetSubsection": "AFNI / ROI Utilities",
+      "rationale": "ROI operations on parcellation labels"
+    },
+    {
+      "sourceModality": "Diffusion Magnetic Resonance Imaging",
+      "sourceSubsection": "FSL / Tensor Fitting",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Process FA/MD maps with fslmaths"
+    },
+    {
+      "sourceModality": "Diffusion Magnetic Resonance Imaging",
+      "sourceSubsection": "FSL / Tensor Fitting",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Image Operations",
+      "rationale": "Process tensor metric maps"
+    },
+    {
+      "sourceModality": "Diffusion Magnetic Resonance Imaging",
+      "sourceSubsection": "FSL / TBSS",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Process TBSS outputs with fslmaths"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "AFNI / Statistical Analysis",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Clustering",
+      "rationale": "Cluster correction on fMRI statistical maps"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "AFNI / Statistical Analysis",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Threshold fMRI statistical maps"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "AFNI / Statistical Analysis",
+      "targetModality": "Utilities",
+      "targetSubsection": "ANTs / Image Operations",
+      "rationale": "Process fMRI statistical maps"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "FSL / Statistical Analysis",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Clustering",
+      "rationale": "Cluster correction on FSL statistical maps"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "FSL / Statistical Analysis",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Threshold FSL statistical maps"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "AFNI / Connectivity",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Image Math",
+      "rationale": "Process connectivity maps"
+    },
+    {
+      "sourceModality": "Functional MRI",
+      "sourceSubsection": "AFNI / Multiple Comparisons",
+      "targetModality": "Utilities",
+      "targetSubsection": "FSL / Clustering",
+      "rationale": "Cluster analysis on multiple comparison output"
+    }
+  ]
+}

@@ -22,6 +22,8 @@ export function buildROCrateMetadata({
     toolCWLPaths,
     toolMetadata,
     dockerImages,
+    singularityFiles = [],
+    hasBIDS = false,
 }) {
     const graph = [];
 
@@ -44,7 +46,9 @@ export function buildROCrateMetadata({
         { '@id': 'Dockerfile' },
         { '@id': 'run.sh' },
         { '@id': 'prefetch_images.sh' },
+        ...singularityFiles.map(f => ({ '@id': f })),
         ...toolCWLPaths.map(p => ({ '@id': p })),
+        ...(hasBIDS ? [{ '@id': 'bids_query.json' }, { '@id': 'resolve_bids.py' }] : []),
     ];
 
     /* ---- Root Data Entity ---- */
@@ -141,6 +145,54 @@ export function buildROCrateMetadata({
         name: 'Image prefetch script',
         description: 'Pre-pull tool Docker images',
     });
+
+    /* ---- Singularity/Apptainer support files ---- */
+    if (singularityFiles.length > 0) {
+        graph.push({
+            '@id': 'Singularity.def',
+            '@type': 'File',
+            name: 'Singularity definition file',
+            description: 'Definition file for building a Singularity/Apptainer orchestration container',
+        });
+
+        graph.push({
+            '@id': 'run_singularity.sh',
+            '@type': 'File',
+            name: 'Singularity run script',
+            description: 'Entrypoint script using cwltool with --singularity flag for HPC execution',
+        });
+
+        graph.push({
+            '@id': 'prefetch_images_singularity.sh',
+            '@type': 'File',
+            name: 'Singularity image prefetch script',
+            description: 'Convert Docker images to Singularity SIF format for offline/HPC use',
+        });
+    }
+
+    /* ---- BIDS integration files ---- */
+    if (hasBIDS) {
+        graph.push({
+            '@id': 'bids_query.json',
+            '@type': 'File',
+            name: 'BIDS query specification',
+            description: 'BIDS input selection parameters for automatic file resolution',
+            encodingFormat: 'application/json',
+        });
+        graph.push({
+            '@id': 'resolve_bids.py',
+            '@type': ['File', 'SoftwareSourceCode'],
+            name: 'BIDS resolver script',
+            description: 'Resolves BIDS directory structure to concrete CWL job inputs',
+            programmingLanguage: { '@id': '#python' },
+        });
+        graph.push({
+            '@id': '#python',
+            '@type': 'ComputerLanguage',
+            name: 'Python',
+            url: { '@id': 'https://www.python.org/' },
+        });
+    }
 
     return JSON.stringify(
         {

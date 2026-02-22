@@ -1,0 +1,432 @@
+/* ============================================
+   BIDS DATA MODAL
+   ============================================ */
+
+.bids-modal .modal-dialog {
+  max-width: 900px;
+}
+
+.bids-modal .modal-content {
+  border-radius: 6px;
+  background-color: var(--bg-tertiary);
+  color: var(--text-light);
+  border: 1px solid var(--border-medium);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+  padding: 8px;
+  font-family: 'Inter', sans-serif;
+}
+
+.bids-modal .modal-header {
+  border-bottom: 1px solid var(--border-subtle);
+  padding: 12px 16px;
+}
+
+.bids-modal .modal-title {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 600;
+  font-size: 0.95rem;
+  color: var(--text-primary);
+}
+
+.bids-modal .modal-subtitle {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.bids-modal .modal-body {
+  padding: 12px 16px;
+}
+
+.bids-modal .modal-footer {
+  border-top: 1px solid var(--border-subtle);
+  padding: 8px 16px;
+}
+
+/* ---- Layout: 3-panel grid ---- */
+.bids-panels {
+  display: grid;
+  grid-template-columns: 260px 1fr;
+  gap: 12px;
+  min-height: 360px;
+}
+
+/* ---- Subject Panel (left) ---- */
+.bids-subject-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  max-height: 420px;
+}
+
+.bids-subject-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+  gap: 6px;
+}
+
+.bids-subject-count {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.bids-select-all-btn {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--color-primary);
+  background: none;
+  border: 1px solid rgba(74, 144, 226, 0.3);
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.bids-select-all-btn:hover {
+  background-color: rgba(74, 144, 226, 0.1);
+}
+
+.bids-search-input {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  color: var(--text-light);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.68rem;
+  padding: 3px 6px;
+  margin-bottom: 6px;
+  width: 100%;
+}
+
+.bids-search-input::placeholder {
+  color: var(--text-secondary);
+}
+
+.bids-subject-list {
+  flex: 1;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.bids-subject-list::-webkit-scrollbar {
+  width: 4px;
+}
+
+.bids-subject-list::-webkit-scrollbar-thumb {
+  background-color: rgba(255, 255, 255, 0.15);
+  border-radius: 4px;
+}
+
+.bids-subject-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px;
+  border-radius: 3px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.68rem;
+  cursor: pointer;
+}
+
+.bids-subject-row:hover {
+  background-color: var(--bg-hover);
+}
+
+.bids-subject-row input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.bids-subject-id {
+  color: var(--text-light);
+  flex-shrink: 0;
+}
+
+.bids-subject-demo {
+  color: var(--text-muted);
+  font-size: 0.6rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- Right panel (data types + files) ---- */
+.bids-right-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+/* ---- Data Type Selection ---- */
+.bids-datatype-section {
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px;
+}
+
+.bids-section-label {
+  font-family: 'Roboto Mono', monospace;
+  font-weight: 500;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 6px;
+}
+
+.bids-datatype-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.bids-datatype-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 8px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.68rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.bids-datatype-chip.selected {
+  border-color: var(--color-primary);
+  background-color: rgba(74, 144, 226, 0.12);
+}
+
+.bids-datatype-chip.unavailable {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.bids-datatype-chip input[type="checkbox"] {
+  accent-color: var(--color-primary);
+  cursor: pointer;
+}
+
+.bids-availability-badge {
+  font-size: 0.58rem;
+  color: var(--text-muted);
+  margin-left: 2px;
+}
+
+/* ---- Output Groups / File Selection ---- */
+.bids-outputs-section {
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 8px;
+  flex: 1;
+  overflow-y: auto;
+  max-height: 280px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.bids-output-group {
+  margin-bottom: 10px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.bids-output-group:last-child {
+  margin-bottom: 0;
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.bids-output-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.bids-output-label-input {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  color: var(--text-light);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.68rem;
+  padding: 2px 6px;
+  flex: 1;
+  max-width: 180px;
+}
+
+.bids-output-label-input:focus {
+  border-color: var(--color-primary);
+  outline: none;
+}
+
+.bids-output-type-badge {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--color-cyan);
+  background-color: rgba(74, 198, 226, 0.08);
+  border: 1px solid rgba(74, 198, 226, 0.2);
+  border-radius: 2px;
+  padding: 1px 4px;
+}
+
+.bids-remove-group-btn {
+  font-size: 0.62rem;
+  color: var(--color-danger);
+  background: none;
+  border: 1px solid rgba(231, 76, 60, 0.3);
+  border-radius: 3px;
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+.bids-remove-group-btn:hover {
+  background-color: rgba(231, 76, 60, 0.1);
+}
+
+.bids-output-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.bids-filter-label {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.bids-filter-select {
+  background-color: var(--bg-primary);
+  border: 1px solid var(--border-subtle);
+  border-radius: 3px;
+  color: var(--text-light);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  padding: 2px 4px;
+}
+
+.bids-filter-check {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.62rem;
+  color: var(--text-muted);
+}
+
+.bids-filter-check input[type="checkbox"] {
+  accent-color: var(--color-primary);
+}
+
+.bids-add-group-btn {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.64rem;
+  color: var(--color-success);
+  background: none;
+  border: 1px solid rgba(76, 175, 80, 0.3);
+  border-radius: 3px;
+  padding: 3px 8px;
+  cursor: pointer;
+  margin-top: 4px;
+}
+
+.bids-add-group-btn:hover {
+  background-color: rgba(76, 175, 80, 0.1);
+}
+
+/* ---- Path Preview ---- */
+.bids-path-preview {
+  margin-top: 8px;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+}
+
+.bids-preview-toggle {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  cursor: pointer;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.bids-preview-toggle:hover {
+  color: var(--text-light);
+}
+
+.bids-preview-list {
+  max-height: 120px;
+  overflow-y: auto;
+  padding: 4px 8px 8px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+}
+
+.bids-preview-path {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+  word-break: break-all;
+}
+
+.bids-preview-more {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--text-secondary);
+  font-style: italic;
+}
+
+/* ---- Modal buttons ---- */
+.bids-modal .btn-save {
+  background-color: var(--color-primary);
+  border-color: var(--color-primary);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  padding: 4px 14px;
+}
+
+.bids-modal .btn-save:hover {
+  background-color: #3a7fcf;
+}
+
+.bids-modal .btn-cancel {
+  background-color: transparent;
+  border: 1px solid var(--border-medium);
+  color: var(--text-muted);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  padding: 4px 14px;
+}
+
+.bids-modal .btn-cancel:hover {
+  background-color: var(--bg-hover);
+  color: var(--text-light);
+}
+
+/* ---- Empty / loading states ---- */
+.bids-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 160px;
+  color: var(--text-secondary);
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.72rem;
+  font-style: italic;
+}

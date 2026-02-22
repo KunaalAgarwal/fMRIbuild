@@ -32,6 +32,12 @@
     white-space: nowrap;
 }
 
+.menu-item-warning {
+    color: #f0ad4e;
+    font-weight: 700;
+    font-size: 0.85em;
+}
+
 .workflow-menu-item:hover {
     background-color: var(--bg-hover);
     transform: scale(1.05); 

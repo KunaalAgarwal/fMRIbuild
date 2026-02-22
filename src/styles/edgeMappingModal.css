@@ -380,6 +380,25 @@ g:hover .connection-dot {
     flex-shrink: 0;
 }
 
+/* Group headers for custom workflow nodes */
+.io-group-header {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 10px 4px;
+    margin-top: 4px;
+    border-left: 2px solid var(--color-primary);
+    background-color: rgba(74, 144, 226, 0.06);
+    border-radius: 0 4px 4px 0;
+}
+
+.io-group-header:first-child {
+    margin-top: 0;
+}
+
 /* Separator between required and optional inputs */
 .io-section-separator {
     font-family: 'Roboto Mono', monospace;

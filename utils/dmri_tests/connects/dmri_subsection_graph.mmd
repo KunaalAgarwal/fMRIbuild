@@ -25,6 +25,21 @@ flowchart LR
   MRT_TENSOR_FOD --> MRT_TRACT
   MRT_PREP --> AMICO_MICRO
 
+  %% Intra-subsection self-loops (allow chaining within multi-tool subsections)
+  FSL_PREP --> FSL_PREP
+  MRT_PREP --> MRT_PREP
+  FSL_TBSS --> FSL_TBSS
+  MRT_TENSOR_FOD --> MRT_TENSOR_FOD
+  MRT_TRACT --> MRT_TRACT
+
+  %% Additional inter-subsection edges
+  FSL_TENSOR --> FSL_TRACT
+  FSL_TENSOR --> MRT_TRACT
+  FSL_PREP --> MRT_TRACT
+  MRT_PREP --> FS_DIFF
+  MRT_PREP --> FSL_FIBERMODEL
+
   %% Mixed-library interoperability edges (commonly feasible handoffs)
+  MRT_PREP --> FSL_PREP
   MRT_PREP --> FSL_TENSOR
   FSL_PREP --> MRT_TENSOR_FOD

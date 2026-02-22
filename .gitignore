@@ -24,6 +24,7 @@ notes/
 # Testing artifacts (downloaded datasets and tool outputs)
 tests/data/
 tests/work/
+utils/bids-examples
 utils/structural_mri_tests/jobs/
 utils/structural_mri_tests/out/
 utils/structural_mri_tests/logs/

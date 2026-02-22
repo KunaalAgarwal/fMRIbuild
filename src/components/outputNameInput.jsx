@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import '../styles/outputNameInput.css';
 
-function WorkflowNameInput({ name, onNameChange, placeholder }) {
+function OutputNameInput({ name, onNameChange }) {
   const [localName, setLocalName] = useState(name || '');
 
   useEffect(() => {
@@ -22,7 +22,7 @@ function WorkflowNameInput({ name, onNameChange, placeholder }) {
 
   return (
     <div className="name-input-row">
-      <span className="name-input-label">Name</span>
+      <span className="name-input-label">Output</span>
       <div className="name-input-wrapper">
         <input
           type="text"
@@ -30,12 +30,13 @@ function WorkflowNameInput({ name, onNameChange, placeholder }) {
           value={localName}
           onChange={handleChange}
           onBlur={handleBlur}
-          placeholder={placeholder || 'Custom Workflow 1'}
+          placeholder="main"
           maxLength={50}
         />
+        <span className="name-input-suffix">.cwl</span>
       </div>
     </div>
   );
 }
 
-export default WorkflowNameInput;
+export default OutputNameInput;

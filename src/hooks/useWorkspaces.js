@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
-const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '' }];
+const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '' }];
 
 export function useWorkspaces() {
   // Initialize state from localStorage or use defaults if nothing is stored.
@@ -15,7 +15,8 @@ export function useWorkspaces() {
           id: ws.id || crypto.randomUUID(),
           nodes: ws.nodes || [],
           edges: ws.edges || [],
-          name: ws.name || ''
+          name: ws.name || '',
+          workflowName: ws.workflowName || ''
         }));
       }
     } catch {
@@ -34,16 +35,34 @@ export function useWorkspaces() {
   useDebouncedStorage('currentWorkspace', currentWorkspace, 300);
 
   const addNewWorkspace = () => {
-    setWorkspaces((prev) => [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '' }]);
-    setCurrentWorkspace((prev) => prev + 1);
+    setWorkspaces((prev) => {
+      const updated = [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '' }];
+      setCurrentWorkspace(updated.length - 1);
+      return updated;
+    });
+  };
+
+  const addNewWorkspaceWithData = (data) => {
+    setWorkspaces((prev) => {
+      const newWs = {
+        id: crypto.randomUUID(),
+        nodes: data.nodes || [],
+        edges: data.edges || [],
+        name: data.name || '',
+        workflowName: data.workflowName || ''
+      };
+      const updated = [...prev, newWs];
+      setCurrentWorkspace(updated.length - 1);
+      return updated;
+    });
   };
 
   const clearCurrentWorkspace = () => {
     setWorkspaces((prevWorkspaces) => {
       const updatedWorkspaces = [...prevWorkspaces];
-      // Preserve the id and name when clearing
+      // Preserve only the id; clear everything else including names
       const ws = updatedWorkspaces[currentWorkspace];
-      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: ws?.name || '' };
+      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '' };
       return updatedWorkspaces;
     });
   };
@@ -57,7 +76,8 @@ export function useWorkspaces() {
       updatedWorkspaces[currentWorkspace] = {
         ...newItems,
         id: ws?.id || crypto.randomUUID(),
-        name: ws?.name || ''
+        name: ws?.name || '',
+        workflowName: ws?.workflowName || ''
       };
       return updatedWorkspaces;
     });
@@ -82,14 +102,27 @@ export function useWorkspaces() {
     });
   };
 
+  const updateWorkflowName = (newName) => {
+    setWorkspaces((prevWorkspaces) => {
+      const updatedWorkspaces = [...prevWorkspaces];
+      updatedWorkspaces[currentWorkspace] = {
+        ...updatedWorkspaces[currentWorkspace],
+        workflowName: newName
+      };
+      return updatedWorkspaces;
+    });
+  };
+
   return {
     workspaces,
     currentWorkspace,
     setCurrentWorkspace,
     addNewWorkspace,
+    addNewWorkspaceWithData,
     clearCurrentWorkspace,
     updateCurrentWorkspaceItems,
     removeCurrentWorkspace,
-    updateWorkspaceName
+    updateWorkspaceName,
+    updateWorkflowName
   };
 }

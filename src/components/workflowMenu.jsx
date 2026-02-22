@@ -1,18 +1,36 @@
-import { useState, useCallback, useMemo, useRef } from 'react';
+import { useState, useCallback, useMemo, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import WorkflowMenuItem from './workflowMenuItem';
 import ModalityTooltip from './modalityTooltip';
 import { toolsByModality, modalityOrder, modalityDescriptions, libraryOrder, dummyNodes } from '../utils/toolAnnotations';
+import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
 import '../styles/workflowMenu.css';
 
-function WorkflowMenu() {
+function WorkflowMenu({ onEditWorkflow }) {
+  const { customWorkflows, deleteWorkflow } = useCustomWorkflowsContext();
+
   const [expandedSections, setExpandedSections] = useState(() => {
-    const initial = { DummyNodes: false };
+    const initial = { DummyNodes: false, MyWorkflows: false };
     modalityOrder.forEach(m => { initial[m] = false; });
     return initial;
   });
 
   const [searchQuery, setSearchQuery] = useState('');
+  const [deleteConfirm, setDeleteConfirm] = useState(null); // { wfId, wfName, position: { top, left } }
+  const deleteConfirmRef = useRef(null);
   const searchInputRef = useRef(null);
+
+  // Click-outside handler to dismiss delete confirmation portal
+  useEffect(() => {
+    if (!deleteConfirm) return;
+    const handleClickOutside = (e) => {
+      if (deleteConfirmRef.current && !deleteConfirmRef.current.contains(e.target)) {
+        setDeleteConfirm(null);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [deleteConfirm]);
 
   const toggleSection = useCallback((key) => {
     setExpandedSections(prev => ({
@@ -24,6 +42,17 @@ function WorkflowMenu() {
   const handleDragStart = useCallback((event, name, isDummy = false) => {
     event.dataTransfer.setData('node/name', name);
     event.dataTransfer.setData('node/isDummy', isDummy.toString());
+    // Pass isBIDS flag for BIDS nodes
+    const dummyDef = dummyNodes['I/O']?.find(d => d.name === name);
+    if (dummyDef?.isBIDS) {
+      event.dataTransfer.setData('node/isBIDS', 'true');
+    }
+  }, []);
+
+  const handleCustomWorkflowDragStart = useCallback((event, workflow) => {
+    event.dataTransfer.setData('node/name', workflow.name);
+    event.dataTransfer.setData('node/isDummy', 'false');
+    event.dataTransfer.setData('node/customWorkflowId', workflow.id);
   }, []);
 
   // Count total tools across all libraries/categories in a modality
@@ -95,8 +124,33 @@ function WorkflowMenu() {
       }
     }
 
+    // Also search custom workflows
+    for (const wf of customWorkflows) {
+      const nonDummyTools = wf.nodes.filter(n => !n.isDummy).map(n => n.label);
+      const matchFields = [
+        wf.name,
+        ...nonDummyTools
+      ];
+      const searchTerm = toolQuery || query;
+      if (matchFields.some(f => f.toLowerCase().includes(searchTerm))) {
+        results.push({
+          modality: 'My Workflows',
+          library: 'Custom',
+          category: 'Custom',
+          tool: {
+            name: wf.name,
+            fullName: wf.name,
+            function: `Custom workflow with ${nonDummyTools.length} tools: ${nonDummyTools.join(', ')}`,
+            typicalUse: `Tools: ${nonDummyTools.join(', ')}`
+          },
+          isCustomWorkflow: true,
+          customWorkflow: wf
+        });
+      }
+    }
+
     return results;
-  }, [searchQuery]);
+  }, [searchQuery, customWorkflows]);
 
   const clearSearch = () => {
     setSearchQuery('');
@@ -136,7 +190,11 @@ function WorkflowMenu() {
                 typicalUse: r.tool.typicalUse,
                 docUrl: r.tool.docUrl
               }}
-              onDragStart={handleDragStart}
+              onDragStart={r.isCustomWorkflow
+                ? (event) => handleCustomWorkflowDragStart(event, r.customWorkflow)
+                : handleDragStart
+              }
+              warningIcon={r.isCustomWorkflow && r.customWorkflow.hasValidationWarnings}
             />
           ))}
         </div>
@@ -146,6 +204,38 @@ function WorkflowMenu() {
 
   return (
     <div className="workflow-menu-container">
+      {deleteConfirm && createPortal(
+        <div
+          ref={deleteConfirmRef}
+          className="delete-confirm-portal"
+          style={{
+            top: deleteConfirm.position.top,
+            left: deleteConfirm.position.left,
+            transform: 'translateY(-50%)'
+          }}
+        >
+          <span className="delete-confirm-text">Delete &lsquo;{deleteConfirm.wfName}&rsquo;?</span>
+          <div className="delete-confirm-buttons">
+            <button
+              className="delete-confirm-btn delete-confirm-yes"
+              onClick={() => {
+                deleteWorkflow(deleteConfirm.wfId);
+                setDeleteConfirm(null);
+              }}
+            >
+              Yes
+            </button>
+            <button
+              className="delete-confirm-btn delete-confirm-no"
+              onClick={() => setDeleteConfirm(null)}
+            >
+              No
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
       <div className="workflow-search">
         <input
           ref={searchInputRef}
@@ -166,7 +256,7 @@ function WorkflowMenu() {
             {/* I/O (Dummy Nodes) Section */}
             <div className="library-section">
               <div
-                className="library-header"
+                className="library-header io-header"
                 onClick={() => toggleSection('DummyNodes')}
               >
                 <span className="chevron">{expandedSections['DummyNodes'] ? '▼' : '▶'}</span>
@@ -193,6 +283,73 @@ function WorkflowMenu() {
                 </div>
               )}
             </div>
+
+            {/* My Workflows Section */}
+            {customWorkflows.length > 0 && (
+              <div className="library-section">
+                <div
+                  className="library-header my-workflows-header"
+                  onClick={() => toggleSection('MyWorkflows')}
+                >
+                  <span className="chevron">{expandedSections['MyWorkflows'] ? '\u25BC' : '\u25B6'}</span>
+                  <span className="library-name">My Workflows</span>
+                  <span className="tool-count">{customWorkflows.length}</span>
+                </div>
+
+                {expandedSections['MyWorkflows'] && (
+                  <div className="library-tools">
+                    <div className="subsection-tools">
+                      {customWorkflows.map((wf) => {
+                        const nonDummyTools = wf.nodes.filter(n => !n.isDummy).map(n => n.label);
+                        return (
+                          <div key={wf.id} className="custom-workflow-item-wrapper">
+                            <WorkflowMenuItem
+                              name={wf.name}
+                              toolInfo={{
+                                fullName: wf.name,
+                                function: `Custom workflow with ${nonDummyTools.length} tools`,
+                                typicalUse: `Tools: ${nonDummyTools.join(', ')}`
+                              }}
+                              onDragStart={(event) => handleCustomWorkflowDragStart(event, wf)}
+                              warningIcon={wf.hasValidationWarnings}
+                            />
+                            <div className="custom-workflow-action-left">
+                              <button
+                                className="custom-workflow-action-btn edit-btn"
+                                title="Edit in new workspace"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (onEditWorkflow) onEditWorkflow(wf);
+                                }}
+                              >
+                                &#9998;
+                              </button>
+                            </div>
+                            <div className="custom-workflow-action-right">
+                              <button
+                                className="custom-workflow-action-btn delete-btn"
+                                title="Delete workflow"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const rect = e.currentTarget.getBoundingClientRect();
+                                  setDeleteConfirm({
+                                    wfId: wf.id,
+                                    wfName: wf.name,
+                                    position: { top: rect.top + rect.height / 2, left: rect.right + 8 }
+                                  });
+                                }}
+                              >
+                                &#10005;
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Modality Sections */}
             {modalityOrder.map((modality) => {

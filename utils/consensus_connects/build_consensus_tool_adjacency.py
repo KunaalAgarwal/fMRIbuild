@@ -4,18 +4,37 @@
 Consensus rule:
 - consensus[src][dst] = 1 if any input matrix has src->dst = 1
 - otherwise 0
+
+Cross-modality edges (optional):
+- Reads a JSON file defining subsection-level edges between modalities.
+- Expands each edge to tool-level using per-modality tool_to_subsection_map.json files.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import json
+import re
 import sys
 from pathlib import Path
-from typing import Iterable, List, Set, Tuple
+from typing import Dict, Iterable, List, Optional, Set, Tuple
 
 
 DEFAULT_PATTERN = "*_tests/connects/*_tool_adjacency_matrix.csv"
+DEFAULT_MAP_PATTERN = "*_tests/connects/*_tool_to_subsection_map.json"
+
+
+def _normalize_subsection(label: str) -> str:
+    """Normalize subsection labels for matching (lowercase, collapse whitespace,
+    normalize '&' to 'and', treat '-' and '/' equivalently in subsection text)."""
+    raw = " ".join(label.strip().split()).replace("&", " and ")
+    parts = re.split(r"\s*/\s*", raw, maxsplit=1)
+    if len(parts) == 2:
+        library = re.sub(r"-+", " ", parts[0].lower()).strip()
+        subsection = re.sub(r"[-/]+", " ", parts[1].lower()).strip()
+        return f"{' '.join(library.split())} / {' '.join(subsection.split())}"
+    return " ".join(re.sub(r"[-/]+", " ", raw.lower()).split())
 
 
 def parse_args(argv: Iterable[str]) -> argparse.Namespace:
@@ -37,6 +56,12 @@ def parse_args(argv: Iterable[str]) -> argparse.Namespace:
         "--pattern",
         default=DEFAULT_PATTERN,
         help="Glob pattern (relative to --search-root) for input adjacency CSVs.",
+    )
+    parser.add_argument(
+        "--cross-modality",
+        type=Path,
+        default=None,
+        help="Path to cross-modality subsection edges JSON file.",
     )
     parser.add_argument(
         "--out",
@@ -121,6 +146,90 @@ def discover_input_csvs(search_root: Path, pattern: str) -> List[Path]:
     return files
 
 
+def discover_subsection_maps(search_root: Path, pattern: str = DEFAULT_MAP_PATTERN) -> List[Path]:
+    return sorted(path.resolve() for path in search_root.glob(pattern) if path.is_file())
+
+
+def load_subsection_maps(
+    search_root: Path,
+) -> Dict[str, Dict[str, List[str]]]:
+    """Load all per-modality tool_to_subsection_map.json files.
+
+    Returns: { modality_name: { normalized_subsection_key: [tool1, tool2, ...] } }
+    """
+    map_files = discover_subsection_maps(search_root)
+    modality_maps: Dict[str, Dict[str, List[str]]] = {}
+
+    for map_path in map_files:
+        try:
+            data = json.loads(map_path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, OSError) as exc:
+            print(f"WARN: Could not read {map_path}: {exc}", file=sys.stderr)
+            continue
+
+        modality = data.get("modality", "")
+        by_tool = data.get("byTool", {})
+        if not modality or not by_tool:
+            continue
+
+        subsection_to_tools: Dict[str, List[str]] = {}
+        for tool_name, tool_info in by_tool.items():
+            subsection_key = tool_info.get("subsectionKey", "")
+            if not subsection_key:
+                continue
+            normalized = _normalize_subsection(subsection_key)
+            subsection_to_tools.setdefault(normalized, []).append(tool_name)
+
+        modality_maps[modality] = subsection_to_tools
+
+    return modality_maps
+
+
+def expand_cross_modality_edges(
+    cross_modality_path: Path,
+    modality_maps: Dict[str, Dict[str, List[str]]],
+) -> Tuple[Set[Tuple[str, str]], int, int]:
+    """Read cross-modality JSON and expand subsection edges to tool-level edges.
+
+    Returns: (tool_edges, num_subsection_edges_processed, num_subsection_edges_skipped)
+    """
+    data = json.loads(cross_modality_path.read_text(encoding="utf-8"))
+    edges_def = data.get("edges", [])
+
+    tool_edges: Set[Tuple[str, str]] = set()
+    processed = 0
+    skipped = 0
+
+    for edge in edges_def:
+        src_mod = edge.get("sourceModality", "")
+        src_sub = _normalize_subsection(edge.get("sourceSubsection", ""))
+        dst_mod = edge.get("targetModality", "")
+        dst_sub = _normalize_subsection(edge.get("targetSubsection", ""))
+
+        src_map = modality_maps.get(src_mod, {})
+        dst_map = modality_maps.get(dst_mod, {})
+
+        src_tools = src_map.get(src_sub, [])
+        dst_tools = dst_map.get(dst_sub, [])
+
+        if not src_tools or not dst_tools:
+            skipped += 1
+            rationale = edge.get("rationale", "")
+            print(
+                f"WARN: Cross-modality edge skipped (no tools found): "
+                f"{src_mod}/{src_sub} -> {dst_mod}/{dst_sub} ({rationale})",
+                file=sys.stderr,
+            )
+            continue
+
+        processed += 1
+        for src_tool in src_tools:
+            for dst_tool in dst_tools:
+                tool_edges.add((src_tool, dst_tool))
+
+    return tool_edges, processed, skipped
+
+
 def write_matrix_csv(out_path: Path, tool_order: List[str], edges: Set[Tuple[str, str]]) -> None:
     out_path.parent.mkdir(parents=True, exist_ok=True)
     with out_path.open("w", encoding="utf-8", newline="") as handle:
@@ -135,6 +244,9 @@ def main(argv: Iterable[str]) -> int:
     args = parse_args(argv)
     search_root = args.search_root.resolve()
     out_path = args.out.resolve()
+    cross_modality_path: Optional[Path] = (
+        args.cross_modality.resolve() if args.cross_modality else None
+    )
 
     input_csvs = discover_input_csvs(search_root, args.pattern)
 
@@ -148,6 +260,27 @@ def main(argv: Iterable[str]) -> int:
 
     if not all_tools:
         raise ValueError("No tools found across input CSV files.")
+
+    # Cross-modality edge expansion
+    cross_modality_edge_count = 0
+    if cross_modality_path is not None:
+        if not cross_modality_path.exists():
+            raise FileNotFoundError(
+                f"Cross-modality edges file not found: {cross_modality_path}"
+            )
+
+        modality_maps = load_subsection_maps(search_root)
+        xmod_edges, processed, skipped = expand_cross_modality_edges(
+            cross_modality_path, modality_maps
+        )
+        cross_modality_edge_count = len(xmod_edges)
+        consensus_edges.update(xmod_edges)
+        # Include tools from cross-modality edges that may not be in any CSV
+        for src, dst in xmod_edges:
+            all_tools.add(src)
+            all_tools.add(dst)
+
+        print(f"  cross-modality: {processed} subsection edges -> {cross_modality_edge_count} tool edges ({skipped} skipped)")
 
     tool_order = sorted(all_tools)
     write_matrix_csv(out_path, tool_order, consensus_edges)

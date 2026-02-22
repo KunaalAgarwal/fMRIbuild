@@ -21,19 +21,39 @@ flowchart LR
 
   WB_SURF_REG["Connectome Workbench / Surface Registration"]
 
+  %% Intra-subsection self-loops (allow chaining within multi-tool subsections)
+  FSL_TISSUE --> FSL_TISSUE
+  FSL_REG --> FSL_REG
+  FSL_PIPE --> FSL_PIPE
+  ANTS_SEG --> ANTS_SEG
+  ANTS_REG --> ANTS_REG
+  ANTS_CT --> ANTS_CT
+  FS_SURF --> FS_SURF
+  FS_PARC --> FS_PARC
+  FS_MORPH --> FS_MORPH
+  AFNI_BRAIN --> AFNI_BRAIN
+  AFNI_REG --> AFNI_REG
+
   %% Directed subsection edges for realistic structural MRI pipelines
   FSL_BRAIN --> FSL_TISSUE
   FSL_BRAIN --> FSL_REG
   FSL_BRAIN --> FSL_PIPE
+  FSL_BRAIN --> FSL_LESION
   FSL_TISSUE --> FSL_LESION
+  FSL_TISSUE --> FSL_REG
   FSL_REG --> FSL_LESION
+  FSL_REG --> FSL_TISSUE
   FSL_PIPE --> FSL_TISSUE
   FSL_PIPE --> FSL_REG
   FSL_PIPE --> FSL_LESION
 
   ANTS_BRAIN --> ANTS_SEG
   ANTS_BRAIN --> ANTS_REG
+  ANTS_BRAIN --> ANTS_CT
   ANTS_SEG --> ANTS_CT
+  ANTS_REG --> ANTS_CT
+  ANTS_REG --> ANTS_SEG
+  ANTS_SEG --> ANTS_REG
 
   FS_SURF --> FS_PARC
   FS_SURF --> FS_MORPH
@@ -47,6 +67,10 @@ flowchart LR
 
   %% Cross-library handoff edges commonly used in mixed pipelines
   FSL_BRAIN --> ANTS_SEG
+  FSL_BRAIN --> ANTS_REG
   ANTS_BRAIN --> FSL_TISSUE
+  ANTS_BRAIN --> FSL_REG
   FSL_REG --> ANTS_REG
   AFNI_BRAIN --> FSL_TISSUE
+  AFNI_BRAIN --> ANTS_SEG
+  AFNI_BRAIN --> ANTS_REG

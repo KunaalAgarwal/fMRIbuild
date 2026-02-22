@@ -124,6 +124,12 @@ button:focus {
   margin-bottom: clamp(8px, 2vw, 15px);
 }
 
+@media (max-width: 768px) {
+  .toolbar-row {
+    flex-wrap: wrap;
+  }
+}
+
 /* Global Scrollbar Styling */
 *::-webkit-scrollbar {
   width: 10px;

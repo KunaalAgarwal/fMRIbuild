@@ -8,6 +8,7 @@ import { EXPRESSION_TEMPLATES } from '../utils/expressionTemplates.js';
 import TagDropdown from './TagDropdown.jsx';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
+import CustomWorkflowParamModal from './CustomWorkflowParamModal.jsx';
 import '../styles/workflowItem.css';
 
 // Map DOCKER_IMAGES keys to DOCKER_TAGS keys
@@ -66,6 +67,14 @@ const NodeComponent = ({ data, id }) => {
     const [infoTooltipPinned, setInfoTooltipPinned] = useState(false);
     const [infoTooltipPos, setInfoTooltipPos] = useState({ top: 0, left: 0 });
     const infoIconRef = useRef(null);
+
+    // Custom workflow node state (must be at top level for hooks rules)
+    const [showCustomModal, setShowCustomModal] = useState(false);
+    const [showCustomInfoTooltip, setShowCustomInfoTooltip] = useState(false);
+    const [customInfoTooltipPinned, setCustomInfoTooltipPinned] = useState(false);
+    const [customInfoTooltipPos, setCustomInfoTooltipPos] = useState({ top: 0, left: 0 });
+    const customInfoIconRef = useRef(null);
+    const customInfoTooltipRef = useRef(null);
 
     // Get tool definition
     const tool = getToolConfigSync(data.label);
@@ -388,16 +397,303 @@ const NodeComponent = ({ data, id }) => {
         return () => document.removeEventListener('mousedown', handleClickOutside, true);
     }, [infoTooltipPinned]);
 
-    // Render simplified UI for dummy nodes (no decoration)
-    if (isDummy) {
+    // Close pinned custom-workflow info tooltip when clicking outside
+    useEffect(() => {
+        if (!customInfoTooltipPinned) return;
+        const handleClickOutside = (e) => {
+            if (
+                customInfoIconRef.current?.contains(e.target) ||
+                customInfoTooltipRef.current?.contains(e.target)
+            ) return;
+            setCustomInfoTooltipPinned(false);
+            setShowCustomInfoTooltip(false);
+        };
+        document.addEventListener('mousedown', handleClickOutside, true);
+        return () => document.removeEventListener('mousedown', handleClickOutside, true);
+    }, [customInfoTooltipPinned]);
+
+    // Render I/O dummy nodes (Input/Output) with green-styled 3-row layout
+    if (isDummy && !data.isBIDS) {
         return (
-            <div className="node-wrapper">
+            <div className="node-wrapper node-io">
+                <div className="node-top-row">
+                    <span className="node-io-badge"><span className="node-io-badge-text">I/O</span></span>
+                    <span className="handle-label">IN</span>
+                    <span className="node-info-spacer"></span>
+                </div>
                 <div className="node-content">
                     <Handle type="target" position={Position.Top} />
                     <span className="node-label">{data.label}</span>
                     <Handle type="source" position={Position.Bottom} />
                 </div>
+                <div className="node-bottom-row">
+                    <span className="node-bottom-left"></span>
+                    <span className="handle-label">OUT</span>
+                    <span className="node-info-spacer"></span>
+                </div>
             </div>
+        );
+    }
+
+    // Render BIDS node with hexagonal decoration and dynamic output ports
+    if (isDummy && data.isBIDS) {
+        const selectionCount = data.bidsSelections
+            ? Object.keys(data.bidsSelections.selections).length
+            : 0;
+        const hasData = data.bidsStructure != null;
+
+        return (
+            <>
+                <div className="node-wrapper node-io node-bids">
+                    <div className="node-top-row">
+                        <span className="node-io-badge">
+                            {hasData && selectionCount > 0
+                                ? <span className="node-io-badge-text">{selectionCount} output{selectionCount !== 1 ? 's' : ''}</span>
+                                : <span className="node-io-badge-text">BIDS</span>}
+                        </span>
+                        <span className="handle-label">IN</span>
+                        <span
+                            className="node-params-btn"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (hasData) {
+                                    data.onUpdateBIDS?.({ _openModal: true });
+                                } else {
+                                    data.onUpdateBIDS?.({ _pickDirectory: true });
+                                }
+                            }}
+                        >
+                            Data
+                        </span>
+                    </div>
+                    <div className="node-content">
+                        <Handle type="target" position={Position.Top} />
+                        <span className="node-label">{data.label}</span>
+                        <Handle type="source" position={Position.Bottom} />
+                    </div>
+                    <div className="node-bottom-row">
+                        <span className="node-bottom-left">
+                            {!hasData && <span className="node-warning-badge">!</span>}
+                            {isScatterInherited && <span className="node-scatter-badge">{'\u21BB'}</span>}
+                        </span>
+                        <span className="handle-label">OUT</span>
+                        <span
+                            ref={infoIconRef}
+                            className="node-info-btn"
+                            onMouseEnter={() => { updateInfoPosition(); setShowInfoTooltip(true); }}
+                            onMouseLeave={() => { if (!infoTooltipPinned) setShowInfoTooltip(false); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                if (infoTooltipPinned) {
+                                    setInfoTooltipPinned(false);
+                                    setShowInfoTooltip(false);
+                                } else {
+                                    updateInfoPosition();
+                                    setShowInfoTooltip(true);
+                                    setInfoTooltipPinned(true);
+                                }
+                            }}
+                        >
+                            Info
+                        </span>
+                    </div>
+                </div>
+
+                {/* BIDS Info tooltip */}
+                {showInfoTooltip && createPortal(
+                    <div ref={infoTooltipRef} className="workflow-tooltip" style={{
+                        top: infoTooltipPos.top,
+                        left: infoTooltipPos.left,
+                        transform: 'translateY(-50%)'
+                    }}>
+                        <div className="tooltip-section tooltip-fullname">
+                            <span className="tooltip-text">BIDS Dataset Input</span>
+                        </div>
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">BIDS:</span>
+                            <span className="tooltip-text">
+                                Brain Imaging Data Structure — a standard for organizing neuroimaging datasets
+                            </span>
+                        </div>
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">Function:</span>
+                            <span className="tooltip-text">
+                                Loads a BIDS-formatted dataset and exposes selected data streams as output ports
+                            </span>
+                        </div>
+                        {data.bidsStructure && (
+                            <>
+                                <div className="tooltip-section">
+                                    <span className="tooltip-label">Dataset:</span>
+                                    <span className="tooltip-text">{data.bidsStructure.datasetName || 'Unknown'}</span>
+                                </div>
+                                <div className="tooltip-section">
+                                    <span className="tooltip-label">Subjects:</span>
+                                    <span className="tooltip-text">
+                                        {Object.keys(data.bidsStructure.subjects).length}
+                                    </span>
+                                </div>
+                            </>
+                        )}
+                        {data.bidsSelections && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Outputs:</span>
+                                <span className="tooltip-text">
+                                    {Object.keys(data.bidsSelections.selections).join(', ')}
+                                </span>
+                            </div>
+                        )}
+                        {!data.bidsStructure && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label" style={{ color: '#f0ad4e' }}>Status:</span>
+                                <span className="tooltip-text">
+                                    No dataset loaded. Click &quot;Data&quot; to select a BIDS directory.
+                                </span>
+                            </div>
+                        )}
+                    </div>,
+                    document.body
+                )}
+            </>
+        );
+    }
+
+    // Render custom workflow nodes with distinct styling
+    if (data.isCustomWorkflow) {
+        const nonDummyInternalNodes = (data.internalNodes || []).filter(n => !n.isDummy);
+        const nonDummyCount = nonDummyInternalNodes.length;
+        const hasAnyWhen = nonDummyInternalNodes.some(n => n.whenExpression);
+        const hasAnyFx = nonDummyInternalNodes.some(n => n.expressions && Object.keys(n.expressions).length > 0);
+        const hasAnyScatter = nonDummyInternalNodes.some(n => n.scatterEnabled);
+
+        const handleOpenCustomModal = () => setShowCustomModal(true);
+
+        const handleCloseCustomModal = (updatedInternalNodes) => {
+            if (updatedInternalNodes && typeof data.onSaveParameters === 'function') {
+                data.onSaveParameters({ internalNodes: updatedInternalNodes });
+            }
+            setShowCustomModal(false);
+        };
+
+        // Custom workflow info tooltip handlers
+        const updateCustomInfoPosition = () => {
+            if (customInfoIconRef.current) {
+                const rect = customInfoIconRef.current.getBoundingClientRect();
+                setCustomInfoTooltipPos({ top: rect.top + rect.height / 2, left: rect.right + 10 });
+            }
+        };
+
+        const handleCustomInfoMouseEnter = () => {
+            updateCustomInfoPosition();
+            setShowCustomInfoTooltip(true);
+        };
+
+        const handleCustomInfoMouseLeave = () => {
+            if (!customInfoTooltipPinned) setShowCustomInfoTooltip(false);
+        };
+
+        const handleCustomInfoClick = (e) => {
+            e.stopPropagation();
+            if (customInfoTooltipPinned) {
+                setCustomInfoTooltipPinned(false);
+                setShowCustomInfoTooltip(false);
+            } else {
+                updateCustomInfoPosition();
+                setShowCustomInfoTooltip(true);
+                setCustomInfoTooltipPinned(true);
+            }
+        };
+
+        const toolLabels = nonDummyInternalNodes.map(n => n.label);
+        const internalEdgeCount = (data.internalEdges || []).filter(e => {
+            const src = (data.internalNodes || []).find(n => n.id === e.source);
+            const tgt = (data.internalNodes || []).find(n => n.id === e.target);
+            return src && tgt && !src.isDummy && !tgt.isDummy;
+        }).length;
+
+        return (
+            <>
+                <div className="node-wrapper node-custom-workflow" onDoubleClick={handleOpenCustomModal}>
+                    <div className="node-top-row">
+                        <span className="node-custom-badge"><span className="node-custom-badge-text">{nonDummyCount} tools</span></span>
+                        <span className="handle-label">IN</span>
+                        <span className="node-params-btn" onClick={handleOpenCustomModal}>Params</span>
+                    </div>
+                    <div className="node-content">
+                        <Handle type="target" position={Position.Top} />
+                        <span className="node-label">{data.label}</span>
+                        <Handle type="source" position={Position.Bottom} />
+                    </div>
+                    <div className="node-bottom-row">
+                        <span className="node-bottom-left">
+                            {(isScatterInherited || hasAnyScatter) && <span className="node-scatter-badge">&#x21BB;</span>}
+                            {hasAnyWhen && <span className="node-when-badge">?</span>}
+                            {hasAnyFx && <span className="node-fx-badge">fx</span>}
+                            {data.hasValidationWarnings && <span className="node-warning-badge">!</span>}
+                        </span>
+                        <span className="handle-label">OUT</span>
+                        <span
+                            ref={customInfoIconRef}
+                            className="node-info-btn"
+                            onMouseEnter={handleCustomInfoMouseEnter}
+                            onMouseLeave={handleCustomInfoMouseLeave}
+                            onClick={handleCustomInfoClick}
+                        >Info</span>
+                    </div>
+                </div>
+
+                {showCustomInfoTooltip && createPortal(
+                    <div
+                        ref={customInfoTooltipRef}
+                        className="workflow-tooltip"
+                        style={{
+                            top: customInfoTooltipPos.top,
+                            left: customInfoTooltipPos.left,
+                            transform: 'translateY(-50%)'
+                        }}
+                    >
+                        <div className="tooltip-section tooltip-fullname">
+                            <span className="tooltip-text">{data.label}</span>
+                        </div>
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">Tools ({nonDummyCount}):</span>
+                            <span className="tooltip-text">{toolLabels.join(' \u2192 ')}</span>
+                        </div>
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">Internal Edges:</span>
+                            <span className="tooltip-text">{internalEdgeCount}</span>
+                        </div>
+                        {(hasAnyScatter || hasAnyWhen || hasAnyFx) && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Features:</span>
+                                <span className="tooltip-text">
+                                    {[
+                                        hasAnyScatter && 'Scatter',
+                                        hasAnyWhen && 'Conditional',
+                                        hasAnyFx && 'Expressions',
+                                    ].filter(Boolean).join(', ')}
+                                </span>
+                            </div>
+                        )}
+                        {data.hasValidationWarnings && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label" style={{ color: '#f0ad4e' }}>Warning:</span>
+                                <span className="tooltip-text">Contains invalid edges or parameter mappings</span>
+                            </div>
+                        )}
+                    </div>,
+                    document.body
+                )}
+
+                <CustomWorkflowParamModal
+                    show={showCustomModal}
+                    onClose={handleCloseCustomModal}
+                    workflowName={data.label}
+                    internalNodes={data.internalNodes || []}
+                    internalEdges={data.internalEdges || []}
+                    wiredInputs={wiredInputs}
+                />
+            </>
         );
     }
 

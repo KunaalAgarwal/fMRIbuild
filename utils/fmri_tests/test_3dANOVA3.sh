@@ -129,8 +129,19 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 echo "── Verifying ${TOOL} outputs ──"
 TOOL_OUT="${OUT_DIR}/${TOOL}"
 
-verify_afni "${TOOL_OUT}/anova3_fa+orig.HEAD"
-verify_afni "${TOOL_OUT}/anova3_fb+orig.HEAD"
-verify_afni "${TOOL_OUT}/anova3_fc+orig.HEAD"
-verify_afni "${TOOL_OUT}/anova3_bucket+orig.HEAD"
+# F-tests may be folded into bucket; check whichever exists
+for prefix in anova3_fa anova3_fb anova3_fc; do
+  for head in "${TOOL_OUT}"/${prefix}+*.HEAD; do
+    [[ -f "$head" ]] && verify_afni "$head"
+  done
+done
+found=0
+for head in "${TOOL_OUT}"/anova3_bucket+*.HEAD; do
+  [[ -f "$head" ]] || continue
+  verify_afni "$head"
+  found=1
+done
+if (( found == 0 )); then
+  echo "  FAIL: no anova3_bucket+{orig,tlrc}.HEAD found"; exit 1
+fi
 verify_log "$TOOL"

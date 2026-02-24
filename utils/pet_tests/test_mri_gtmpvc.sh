@@ -198,6 +198,14 @@ for t in setA setB setC setD setE; do
   verify_directory "${dir}/gtmpvc_${t}"
   # gtm_stats is nullable — produced inside output directory
   verify_file_optional "${dir}/gtmpvc_${t}/gtm.stats.dat"
+  # Check NIfTI/MGZ headers for PVC-corrected volumes
+  for nii in "${dir}/gtmpvc_${t}"/*.nii* "${dir}/gtmpvc_${t}"/*.mgz; do
+    [[ -f "$nii" ]] || continue
+    case "$nii" in
+      *.nii|*.nii.gz) verify_nifti "$nii" ;;
+      *.mgz)          verify_mgz "$nii" ;;
+    esac
+  done
   verify_log "${TOOL}_${t}"
 done
 

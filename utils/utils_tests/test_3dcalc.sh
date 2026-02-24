@@ -46,11 +46,7 @@ for t in copy scale thresh; do
   dir="${OUT_DIR}/${TOOL}_${t}"
   for f in "$dir"/*.HEAD; do
     [[ -f "$f" ]] || continue
-    if [[ ! -s "$f" ]]; then
-      echo "  WARN: zero-byte: $f"
-    else
-      echo "  Header (${t}): $(docker_afni 3dinfo "$f" 2>&1 | head -3 || true)"
-    fi
+    verify_afni "$f"
   done
   verify_log "${TOOL}_${t}"
 done

@@ -44,6 +44,17 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 echo "── Verifying ${TOOL} outputs ──"
 TOOL_OUT="${OUT_DIR}/${TOOL}"
 
-verify_afni "${TOOL_OUT}/anova_ftr+orig.HEAD"
-verify_afni "${TOOL_OUT}/anova_bucket+orig.HEAD"
+# F-test may be folded into bucket; check whichever exists
+for head in "${TOOL_OUT}"/anova_ftr+*.HEAD; do
+  [[ -f "$head" ]] && verify_afni "$head"
+done
+found=0
+for head in "${TOOL_OUT}"/anova_bucket+*.HEAD; do
+  [[ -f "$head" ]] || continue
+  verify_afni "$head"
+  found=1
+done
+if (( found == 0 )); then
+  echo "  FAIL: no anova_bucket+{orig,tlrc}.HEAD found"; exit 1
+fi
 verify_log "$TOOL"

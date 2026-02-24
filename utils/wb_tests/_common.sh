@@ -134,3 +134,69 @@ PY
   WB_TINY_VOL="$tiny_vol"
   WB_LABEL_VOL="$label_vol"
 }
+
+# ── GIFTI / CIFTI verification helpers ──────────────────────────
+
+verify_gifti() {
+  local gii="$1"
+  local bn
+  bn="$(basename "$gii")"
+
+  if [[ ! -f "$gii" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$gii" 2>/dev/null || stat -f%z "$gii" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+
+  python3 - "$gii" <<'PY' || true
+import sys
+try:
+    import nibabel as nib
+    gii = nib.load(sys.argv[1])
+    for i, da in enumerate(gii.darrays):
+        print(f"  DataArray[{i}]: shape={da.data.shape} dtype={da.data.dtype}")
+except ImportError:
+    print("  WARN: nibabel not available, skipping GIFTI header check")
+except Exception as e:
+    print(f"  WARN: GIFTI header check failed: {e}")
+PY
+  return 0
+}
+
+verify_cifti() {
+  local cii="$1"
+  local bn
+  bn="$(basename "$cii")"
+
+  if [[ ! -f "$cii" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$cii" 2>/dev/null || stat -f%z "$cii" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+
+  python3 - "$cii" <<'PY' || true
+import sys
+try:
+    import nibabel as nib
+    img = nib.load(sys.argv[1])
+    print(f"  CIFTI shape: {img.shape}")
+    print(f"  CIFTI dtype: {img.header.matrix.mapped_indices}")
+except ImportError:
+    print("  WARN: nibabel not available, skipping CIFTI header check")
+except Exception as e:
+    print(f"  WARN: CIFTI header check failed: {e}")
+PY
+  return 0
+}

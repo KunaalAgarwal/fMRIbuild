@@ -51,16 +51,12 @@ mul_value: 2.0
 EOF
 run_tool "${TOOL}_mul" "${JOB_DIR}/${TOOL}_mul.yml" "$CWL"
 
-# ── Non-null & header checks ─────────────────────────────────
+# ── Verify outputs ───────────────────────────────────────────
 for t in bin smooth thr mul; do
   dir="${OUT_DIR}/${TOOL}_${t}"
   for f in "$dir"/*.nii*; do
     [[ -f "$f" ]] || continue
-    if [[ ! -s "$f" ]]; then
-      echo "  WARN: zero-byte output: $f"
-    else
-      echo "  Header (${t}): $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
-    fi
+    verify_nifti "$f"
   done
   verify_log "${TOOL}_${t}"
 done

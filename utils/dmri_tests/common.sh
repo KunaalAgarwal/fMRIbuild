@@ -31,7 +31,7 @@ validate_cwl() {
     local cwl_file="$1"
     local result_file="$2"
     echo "--- CWL Validation ---" | tee -a "$result_file"
-    if cwltool --validate "$cwl_file" 2>&1 | tee -a "$result_file"; then
+    if (cd /tmp && cwltool --validate "$cwl_file") 2>&1 | tee -a "$result_file"; then
         echo -e "${GREEN}PASS: CWL validation${NC}" | tee -a "$result_file"
         return 0
     else

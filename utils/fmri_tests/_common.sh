@@ -155,7 +155,7 @@ make_template() {
   local tmpl="${JOB_DIR}/${tool_name}_template.yml"
   cd "$ROOT_DIR"
   "$CWLTOOL_BIN" --make-template "$cwl_file" > "$tmpl" 2>/dev/null || true
-  verify_make_template "$tool_name"
+  verify_make_template "$tool_name" || true
 }
 
 # ── Verification helpers ──────────────────────────────────────

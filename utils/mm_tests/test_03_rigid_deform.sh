@@ -34,23 +34,14 @@ EOF
 
 run_tool "$NAME" "${JOB_DIR}/${NAME}.yml" "$CWL"
 
-# Extra checks — deformable transforms should also produce warp fields
+# ── Verify outputs ────────────────────────────────────────────────
 TOOL_OUT="${OUT_DIR}/${NAME}"
 if [[ -d "$TOOL_OUT" ]]; then
-  echo "  Extra checks:"
-  check_nonempty "${TOOL_OUT}/${PREFIX}anatomical.nii.gz" "warped_image" || true
-  check_nonempty "${TOOL_OUT}/${PREFIX}0GenericAffine.mat" "affine_transform" || true
-  check_nifti_header "${TOOL_OUT}/${PREFIX}anatomical.nii.gz" "warped_image" || true
+  verify_nifti "${TOOL_OUT}/${PREFIX}anatomical.nii.gz"
+  verify_file "${TOOL_OUT}/${PREFIX}0GenericAffine.mat"
 
   # Warp fields should exist for transform_type 2 (rigid + small deformation)
-  if [[ -f "${TOOL_OUT}/${PREFIX}1Warp.nii.gz" ]]; then
-    check_nonempty "${TOOL_OUT}/${PREFIX}1Warp.nii.gz" "warp_field" || true
-    check_nifti_header "${TOOL_OUT}/${PREFIX}1Warp.nii.gz" "warp_field" || true
-  else
-    echo "    [WARN] Warp field not produced (may be expected for small deformations on low-res data)"
-  fi
-  if [[ -f "${TOOL_OUT}/${PREFIX}1InverseWarp.nii.gz" ]]; then
-    check_nonempty "${TOOL_OUT}/${PREFIX}1InverseWarp.nii.gz" "inverse_warp_field" || true
-  fi
+  verify_nifti_optional "${TOOL_OUT}/${PREFIX}1Warp.nii.gz"
+  verify_nifti_optional "${TOOL_OUT}/${PREFIX}1InverseWarp.nii.gz"
 fi
 verify_log "$NAME"

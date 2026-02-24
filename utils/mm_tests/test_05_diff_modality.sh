@@ -34,12 +34,10 @@ EOF
 
 run_tool "$NAME" "${JOB_DIR}/${NAME}.yml" "$CWL"
 
-# Extra checks
+# ── Verify outputs ────────────────────────────────────────────────
 TOOL_OUT="${OUT_DIR}/${NAME}"
 if [[ -d "$TOOL_OUT" ]]; then
-  echo "  Extra checks:"
-  check_nonempty "${TOOL_OUT}/${PREFIX}anatomical.nii.gz" "warped_image" || true
-  check_nonempty "${TOOL_OUT}/${PREFIX}0GenericAffine.mat" "affine_transform" || true
-  check_nifti_header "${TOOL_OUT}/${PREFIX}anatomical.nii.gz" "warped_image" || true
+  verify_nifti "${TOOL_OUT}/${PREFIX}anatomical.nii.gz"
+  verify_file "${TOOL_OUT}/${PREFIX}0GenericAffine.mat"
 fi
 verify_log "$NAME"

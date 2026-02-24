@@ -49,6 +49,7 @@ for pattern in "${expected_patterns[@]}"; do
       echo "  FAIL: zero-byte output: $found_file"; exit 1
     fi
     echo "  OK: $(basename "$found_file") ($(wc -c < "$found_file") bytes)"
+    verify_nifti "$found_file"
   else
     echo "  WARN: ${pattern} not found"
   fi

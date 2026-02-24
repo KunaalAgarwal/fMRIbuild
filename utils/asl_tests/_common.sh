@@ -101,6 +101,26 @@ make_template() {
   local cwl_file="$1" tool_name="$2"
   local tmpl="${JOB_DIR}/${tool_name}_template.yml"
   "$CWLTOOL_BIN" --make-template "$cwl_file" > "$tmpl" 2>/dev/null || true
+  verify_make_template "$tool_name" || true
+}
+
+verify_make_template() {
+  local tool_name="$1"
+  local tmpl="${JOB_DIR}/${tool_name}_template.yml"
+  if [[ ! -f "$tmpl" ]]; then
+    echo "  WARN: make-template did not produce ${tmpl}"
+    return 1
+  fi
+  if [[ ! -s "$tmpl" ]]; then
+    echo "  WARN: make-template output is empty: ${tmpl}"
+    return 1
+  fi
+  if ! grep -q ':' "$tmpl" 2>/dev/null; then
+    echo "  WARN: make-template output does not look like YAML: ${tmpl}"
+    return 1
+  fi
+  echo "  make-template: OK ($(wc -l < "$tmpl") lines)"
+  return 0
 }
 
 # ── Verification & run ─────────────────────────────────────────────
@@ -222,16 +242,16 @@ run_tool() {
   echo "  CWL:  ${cwl_file}"
   echo "  Job:  ${job_file}"
 
-  # Validate
-  if ! "$CWLTOOL_BIN" --validate "$cwl_file" >>"$log_file" 2>&1; then
+  # Validate (run from /tmp to avoid Docker+WSL os.getcwd() breakage)
+  if ! (cd /tmp && "$CWLTOOL_BIN" --validate "$cwl_file") >>"$log_file" 2>&1; then
     echo "  Result: FAIL (CWL validation failed)"
     RUN_TOOL_STATUS=1
     echo -e "${name}\tFAIL" >>"$SUMMARY_FILE"
     return 0
   fi
 
-  # Execute
-  if "$CWLTOOL_BIN" "${CWLTOOL_ARGS[@]}" --outdir "$tool_out_dir" "$cwl_file" "$job_file" \
+  # Execute (run from /tmp to avoid Docker+WSL os.getcwd() breakage)
+  if (cd /tmp && "$CWLTOOL_BIN" "${CWLTOOL_ARGS[@]}" --outdir "$tool_out_dir" "$cwl_file" "$job_file") \
       >"$out_json" 2>"$log_file"; then
     if verify_outputs "$out_json" >>"$log_file" 2>&1; then
       status="PASS"

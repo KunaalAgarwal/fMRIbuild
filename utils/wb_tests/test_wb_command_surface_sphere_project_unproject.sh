@@ -30,19 +30,8 @@ EOF
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 
 # ── Verify outputs ─────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
 dir="${OUT_DIR}/${TOOL}"
-found=0
-for f in "$dir"/output_sphere*; do
-  [[ -f "$f" ]] || continue
-  [[ "$(basename "$f")" == *.log ]] && continue
-  found=1
-  if [[ ! -s "$f" ]]; then
-    echo "  FAIL: zero-byte output: $f"; exit 1
-  fi
-  echo "  OK: $(basename "$f") ($(wc -c < "$f") bytes)"
-done
 
-if [[ "$found" -eq 0 ]]; then
-  echo "  WARN: no output sphere found"
-fi
+verify_gifti "${dir}/output_sphere.surf.gii"
 verify_log "$TOOL"

@@ -27,19 +27,8 @@ EOF
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 
 # ── Verify outputs ─────────────────────────────────────────────
-dir="${OUT_DIR}/${TOOL}"
-found=0
-for f in "$dir"/smoothed*; do
-  [[ -f "$f" ]] || continue
-  [[ "$(basename "$f")" == *.log ]] && continue
-  found=1
-  if [[ ! -s "$f" ]]; then
-    echo "  FAIL: zero-byte output: $f"; exit 1
-  fi
-  echo "  OK: $(basename "$f") ($(wc -c < "$f") bytes)"
-done
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
 
-if [[ "$found" -eq 0 ]]; then
-  echo "  WARN: no smoothed metric output found"
-fi
+verify_gifti "${TOOL_OUT}/smoothed.func.gii"
 verify_log "$TOOL"

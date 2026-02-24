@@ -268,11 +268,6 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
     });
   }, []);
 
-  const toggleAllSubjects = useCallback(() => {
-    setSelectedSubjects(prev =>
-      prev.size === allSubjectIds.length ? new Set() : new Set(allSubjectIds)
-    );
-  }, [allSubjectIds]);
 
   // --- Data type handlers ---
   const toggleDataType = useCallback((dt) => {
@@ -398,9 +393,14 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
           {/* ---- Level 1: Subject Panel ---- */}
           <div className="bids-subject-panel">
             <div className="bids-subject-header">
-              <button className="bids-select-all-btn" onClick={toggleAllSubjects}>
-                {selectedSubjects.size === allSubjectIds.length ? 'Deselect all' : 'Select all'}
-              </button>
+              <div className="bids-select-btns">
+                <button className="bids-select-all-btn" onClick={() => setSelectedSubjects(new Set(allSubjectIds))}>
+                  Select all
+                </button>
+                <button className="bids-select-all-btn" onClick={() => setSelectedSubjects(new Set())}>
+                  Deselect all
+                </button>
+              </div>
               <span className="bids-subject-count">
                 {selectedSubjects.size}/{allSubjectIds.length}
               </span>

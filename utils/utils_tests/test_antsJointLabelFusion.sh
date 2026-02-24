@@ -46,13 +46,10 @@ atlas_labels:
 EOF
 run_tool "${TOOL}_default" "${JOB_DIR}/${TOOL}_default.yml" "$CWL"
 
-# ── Non-null & header checks ─────────────────────────────────
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
 dir="${OUT_DIR}/${TOOL}_default"
-for f in "$dir"/*.nii*; do
-  [[ -f "$f" ]] || continue
-  if [[ ! -s "$f" ]]; then
-    echo "  WARN: zero-byte: $f"
-  else
-    echo "  Header: $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
-  fi
-done
+
+verify_nifti "${dir}/jlf_outLabels.nii.gz" "INT"
+verify_nifti_optional "${dir}/jlf_outIntensity.nii.gz"
+verify_log "${TOOL}_default"

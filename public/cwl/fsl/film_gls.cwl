@@ -31,6 +31,12 @@ inputs:
     inputBinding:
       prefix: --pd=
       separate: false
+  contrast_file:
+    type: ['null', File]
+    label: Contrast definition file (.con)
+    inputBinding:
+      prefix: --con=
+      separate: false
   threshold:
     type: ['null', double]
     label: Threshold for FILM estimation (default 1000)
@@ -145,6 +151,42 @@ outputs:
       glob:
         - $(inputs.results_dir || 'results')/threshac1.nii.gz
         - $(inputs.results_dir || 'results')/threshac1.nii
+  cope:
+    type:
+      - 'null'
+      - type: array
+        items: File
+    outputBinding:
+      glob:
+        - $(inputs.results_dir || 'results')/cope*.nii.gz
+        - $(inputs.results_dir || 'results')/cope*.nii
+  varcope:
+    type:
+      - 'null'
+      - type: array
+        items: File
+    outputBinding:
+      glob:
+        - $(inputs.results_dir || 'results')/varcope*.nii.gz
+        - $(inputs.results_dir || 'results')/varcope*.nii
+  tstat:
+    type:
+      - 'null'
+      - type: array
+        items: File
+    outputBinding:
+      glob:
+        - $(inputs.results_dir || 'results')/tstat*.nii.gz
+        - $(inputs.results_dir || 'results')/tstat*.nii
+  zstat:
+    type:
+      - 'null'
+      - type: array
+        items: File
+    outputBinding:
+      glob:
+        - $(inputs.results_dir || 'results')/zstat*.nii.gz
+        - $(inputs.results_dir || 'results')/zstat*.nii
   log:
     type: File
     outputBinding:

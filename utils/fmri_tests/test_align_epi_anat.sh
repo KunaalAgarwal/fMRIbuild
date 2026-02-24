@@ -32,3 +32,23 @@ deoblique: "off"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# align_epi_anat produces outputs named from the input basenames
+# with epi2anat: aligned EPI gets _al suffix, plus a .aff12.1D matrix
+found_al=0
+for f in "${TOOL_OUT}"/*_al+orig.HEAD "${TOOL_OUT}"/*_al.nii*; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  found_al=1
+  break
+done
+if [[ "$found_al" -eq 0 ]]; then
+  echo "  WARN: no aligned output (*_al) found"
+fi
+
+verify_file_optional "${TOOL_OUT}"/*_al_mat.aff12.1D
+verify_log "$TOOL"

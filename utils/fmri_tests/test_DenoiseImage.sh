@@ -26,3 +26,11 @@ shrink_factor: 2
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/denoise_denoised.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/denoise_noise.nii.gz"
+verify_log "$TOOL"

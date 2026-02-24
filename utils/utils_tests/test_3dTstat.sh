@@ -50,4 +50,5 @@ for t in mean stdev; do
       echo "  Header (${t}): $(docker_afni 3dinfo "$f" 2>&1 | head -3 || true)"
     fi
   done
+  verify_log "${TOOL}_${t}"
 done

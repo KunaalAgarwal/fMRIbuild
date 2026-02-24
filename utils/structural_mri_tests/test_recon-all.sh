@@ -53,7 +53,9 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 echo "Finished at: $(date)"
 
 # ── Verify outputs ─────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
 dir="${OUT_DIR}/${TOOL}"
+
 if [[ -d "${dir}/test_recon" ]]; then
   echo "  Subject directory found: ${dir}/test_recon"
   for subdir in mri surf label stats; do
@@ -63,6 +65,19 @@ if [[ -d "${dir}/test_recon" ]]; then
       echo "  WARN: ${subdir}/ not found"
     fi
   done
+
+  # Key volume outputs
+  verify_mgz_optional "${dir}/test_recon/mri/T1.mgz"
+  verify_mgz_optional "${dir}/test_recon/mri/brain.mgz"
+  verify_mgz_optional "${dir}/test_recon/mri/aparc+aseg.mgz" "INT"
+
+  # Key surface outputs
+  verify_surface_optional "${dir}/test_recon/surf/lh.white"
+  verify_surface_optional "${dir}/test_recon/surf/rh.white"
+  verify_surface_optional "${dir}/test_recon/surf/lh.pial"
+  verify_surface_optional "${dir}/test_recon/surf/rh.pial"
 else
   echo "  WARN: subject output directory not found"
 fi
+
+verify_log "$TOOL"

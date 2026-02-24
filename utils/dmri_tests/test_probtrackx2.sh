@@ -68,6 +68,26 @@ fi
 echo "--- Output validation ---" | tee -a "$RESULTS_FILE"
 check_file_exists "$OUTPUT_DIR/probtrack_out" "output_directory" "$RESULTS_FILE" || PASS=false
 
+# Check for key tractography output files
+if [[ -d "$OUTPUT_DIR/probtrack_out" ]]; then
+  for expected in fdt_paths.nii.gz lookup_tractspace_fdt_matrix2.nii.gz; do
+    f="$OUTPUT_DIR/probtrack_out/$expected"
+    if [[ -f "$f" ]]; then
+      check_file_nonempty "$f" "$expected" "$RESULTS_FILE" || PASS=false
+      check_nifti_header "$f" "$expected" "$RESULTS_FILE" || true
+    fi
+  done
+
+  # Check log for errors
+  if [[ -f "$RESULTS_FILE" ]]; then
+    if grep -qiE 'segfault|core dump|fatal' "$RESULTS_FILE" 2>/dev/null; then
+      echo -e "${RED}WARN: potential errors in execution log${NC}" | tee -a "$RESULTS_FILE"
+    else
+      echo "  Log: no critical errors detected" | tee -a "$RESULTS_FILE"
+    fi
+  fi
+fi
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

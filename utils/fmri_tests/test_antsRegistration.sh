@@ -35,3 +35,16 @@ use_float: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/antsreg_Warped.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/antsreg_InverseWarped.nii.gz"
+# forward_transforms: affine + optional warp
+verify_mat "${TOOL_OUT}/antsreg_0GenericAffine.mat"
+verify_nifti_optional "${TOOL_OUT}/antsreg_1Warp.nii.gz"
+# inverse_transforms
+verify_nifti_optional "${TOOL_OUT}/antsreg_1InverseWarp.nii.gz"
+verify_log "$TOOL"

@@ -45,3 +45,4 @@ done
 if [[ "$found" -eq 0 ]]; then
   echo "  WARN: no output sphere found"
 fi
+verify_log "$TOOL"

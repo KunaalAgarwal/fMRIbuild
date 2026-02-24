@@ -62,6 +62,13 @@ template:
   path: "${BRAIN_MGZ}"
 EOF
   run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+  # ── Verify outputs ────────────────────────────────────────────────
+  echo "── Verifying ${TOOL} outputs ──"
+  dir="${OUT_DIR}/${TOOL}"
+
+  verify_mgz "${dir}/surf2vol.mgz"
+  verify_log "$TOOL"
 else
   echo "SKIP: ${TOOL} - missing mri_vol2surf output"
   echo -e "${TOOL}\tSKIP" >>"$SUMMARY_FILE"

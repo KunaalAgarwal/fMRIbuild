@@ -70,6 +70,13 @@ glmdir: "mri_glmfit_out"
 osgm: true
 EOF
   run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+  # ── Verify outputs ────────────────────────────────────────────────
+  echo "── Verifying ${TOOL} outputs ──"
+  dir="${OUT_DIR}/${TOOL}"
+
+  verify_directory "${dir}/mri_glmfit_out"
+  verify_log "$TOOL"
 else
   echo "SKIP: ${TOOL} - missing mris_preproc output"
   echo -e "${TOOL}\tSKIP" >>"$SUMMARY_FILE"

@@ -43,3 +43,10 @@ output: "lh.aparc.ca.annot"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_file "${dir}/lh.aparc.ca.annot"
+verify_log "$TOOL"

@@ -33,3 +33,11 @@ ctab_default: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_csv "${dir}/segstats.txt" 2
+# avgwf_file, avgwfvol_file are nullable — only with --avgwf/--avgwfvol (not used here)
+verify_log "$TOOL"

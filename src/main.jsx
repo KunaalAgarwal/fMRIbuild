@@ -16,7 +16,7 @@ import { CustomWorkflowsProvider, useCustomWorkflowsContext } from './context/Cu
 import { TOOL_ANNOTATIONS } from './utils/toolAnnotations.js';
 import { preloadAllCWL } from './utils/cwlParser.js';
 import { invalidateMergeCache } from './utils/toolRegistry.js';
-import { getInvalidConnectionReason } from './utils/adjacencyValidation.js';
+
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
 
@@ -115,23 +115,9 @@ function hasUnsavedChanges(workspace, savedWorkflow) {
  * Validate internal edges of a workflow before saving.
  * Returns true if any validation warnings exist.
  */
-function validateWorkflowEdges(nodes, edges) {
-    const dummyIds = getDummyIds(nodes);
-    const nodeMap = new Map(nodes.map(n => [n.id, n]));
-
-    for (const edge of edges) {
-        if (dummyIds.has(edge.source) || dummyIds.has(edge.target)) continue;
-        const sourceNode = nodeMap.get(edge.source);
-        const targetNode = nodeMap.get(edge.target);
-        if (!sourceNode || !targetNode) continue;
-
-        const srcLabel = sourceNode.label || sourceNode.data?.label;
-        const tgtLabel = targetNode.label || targetNode.data?.label;
-        if (srcLabel && tgtLabel) {
-            const reason = getInvalidConnectionReason(srcLabel, tgtLabel);
-            if (reason) return true;
-        }
-    }
+// Disabled — adjacency matrix has too many cross-modality false positives;
+// type/extension validation in EdgeMappingModal is sufficient.
+function validateWorkflowEdges(/* nodes, edges */) {
     return false;
 }
 
@@ -147,7 +133,8 @@ function App() {
         removeCurrentWorkspace,
         updateWorkspaceName,
         updateWorkflowName,
-        removeWorkflowNodesFromAll
+        removeWorkflowNodesFromAll,
+        saveViewportForWorkspace
     } = useWorkspaces();
 
     const currentOutputName = workspaces[currentWorkspace]?.name || '';
@@ -309,7 +296,7 @@ function App() {
                         onClearWorkspace={clearCurrentWorkspace}
                         onRemoveWorkspace={removeCurrentWorkspace}
                         workspaceCount={workspaces.length}
-                        onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName, workspaces)}
+                        onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName)}
                         onSaveWorkflow={handleSaveAsCustomNode}
                         saveButtonLabel={saveButtonLabel}
                     />
@@ -333,6 +320,7 @@ function App() {
                             updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
                             onSetWorkflowData={setGetWorkflowData}
                             currentWorkspaceIndex={currentWorkspace}
+                            saveViewportForWorkspace={saveViewportForWorkspace}
                         />
                         <CWLPreviewPanel
                             getWorkflowData={getWorkflowData}

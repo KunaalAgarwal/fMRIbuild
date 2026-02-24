@@ -37,15 +37,12 @@ num_thresholds: 1
 EOF
 run_tool "${TOOL}_otsu" "${JOB_DIR}/${TOOL}_otsu.yml" "$CWL"
 
-# ── Non-null & header checks ─────────────────────────────────
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+
 for t in explicit otsu; do
   dir="${OUT_DIR}/${TOOL}_${t}"
-  for f in "$dir"/*.nii*; do
-    [[ -f "$f" ]] || continue
-    if [[ ! -s "$f" ]]; then
-      echo "  WARN: zero-byte: $f"
-    else
-      echo "  Header (${t}): $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
-    fi
-  done
+  echo "  --- variant: ${t} ---"
+  verify_nifti "${dir}/threshold_${t}.nii.gz" "INT"
+  verify_log "${TOOL}_${t}"
 done

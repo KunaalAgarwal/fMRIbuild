@@ -29,3 +29,11 @@ oned_matrix_save: "allineate.aff12.1D"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_afni "${TOOL_OUT}/allineate+orig.HEAD"
+verify_file "${TOOL_OUT}/allineate.aff12.1D"
+verify_log "$TOOL"

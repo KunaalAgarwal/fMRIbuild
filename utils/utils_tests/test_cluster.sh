@@ -49,3 +49,6 @@ for f in "${OUT_DIR}/${TOOL}_index"/*.nii*; do
     echo "  Index header: $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
   fi
 done
+for t in basic index; do
+  verify_log "${TOOL}_${t}"
+done

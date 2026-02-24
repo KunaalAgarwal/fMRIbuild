@@ -50,3 +50,10 @@ meas: thickness
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_file "${dir}/mris_preproc.mgh"
+verify_log "$TOOL"

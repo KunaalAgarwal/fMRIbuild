@@ -30,3 +30,19 @@ nocleanup: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# fsl_anat produces a .anat directory
+ANAT_DIR=""
+for d in "${TOOL_OUT}"/*.anat "${TOOL_OUT}"/fsl_anat_out.anat; do
+  [[ -d "$d" ]] && ANAT_DIR="$d" && break
+done
+if [[ -n "$ANAT_DIR" ]]; then
+  verify_directory "$ANAT_DIR"
+else
+  echo "  WARN: no .anat output directory found"
+fi
+verify_log "$TOOL"

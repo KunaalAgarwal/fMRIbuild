@@ -59,6 +59,23 @@ fi
 echo "--- Output validation ---" | tee -a "$RESULTS_FILE"
 check_file_exists "$OUTPUT_DIR/FA" "FA_directory" "$RESULTS_FILE" || PASS=false
 
+# Check for registered FA images
+if [[ -d "$OUTPUT_DIR/FA" ]]; then
+  for fa in "$OUTPUT_DIR/FA"/*_FA_to_target*.nii* "$OUTPUT_DIR/FA"/*_FA.nii*; do
+    [[ -f "$fa" ]] || continue
+    check_file_nonempty "$fa" "$(basename "$fa")" "$RESULTS_FILE" || PASS=false
+    check_nifti_header "$fa" "$(basename "$fa")" "$RESULTS_FILE" || true
+    break  # Just check first match
+  done
+fi
+
+# Check log for errors
+if grep -qiE 'segfault|core dump|fatal' "$RESULTS_FILE" 2>/dev/null; then
+  echo -e "${RED}WARN: potential errors in execution log${NC}" | tee -a "$RESULTS_FILE"
+else
+  echo "  Log: no critical errors detected" | tee -a "$RESULTS_FILE"
+fi
+
 # Save intermediate for tbss_3
 ensure_intermediate
 if [[ -d "$OUTPUT_DIR/FA" ]]; then

@@ -70,6 +70,8 @@ echo "--- Output validation ---" | tee -a "$RESULTS_FILE"
 check_file_exists "$OUTPUT_DIR/sift_tracks.tck" "filtered_tractogram" "$RESULTS_FILE" || PASS=false
 check_file_nonempty "$OUTPUT_DIR/sift_tracks.tck" "filtered_tractogram" "$RESULTS_FILE" || PASS=false
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

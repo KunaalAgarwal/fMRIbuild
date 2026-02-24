@@ -44,3 +44,32 @@ EOF
 # outside /tmp). Use --no-read-only so cwltool does not pass --read-only.
 CWLTOOL_ARGS+=("--no-read-only")
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# SSwarper skull-stripped output
+found_ss=0
+for f in "${TOOL_OUT}"/anatSS.sub01.nii* "${TOOL_OUT}"/anatSS.sub01+*.HEAD; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  found_ss=1
+  break
+done
+if [[ "$found_ss" -eq 0 ]]; then
+  echo "  WARN: no skull-stripped output (anatSS) found"
+fi
+
+# SSwarper warped output (may not exist with skipwarp)
+found_qq=0
+for f in "${TOOL_OUT}"/anatQQ.sub01+tlrc.HEAD "${TOOL_OUT}"/anatQQ.sub01.nii*; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  found_qq=1
+  break
+done
+if [[ "$found_qq" -eq 0 ]]; then
+  echo "  OPTIONAL-SKIP: anatQQ output (not produced with skipwarp)"
+fi
+verify_log "$TOOL"

@@ -44,3 +44,19 @@ interp: linear
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+found_nwa=0
+for f in "${TOOL_OUT}"/nwarp_apply+*.HEAD "${TOOL_OUT}"/nwarp_apply.nii*; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  found_nwa=1
+  break
+done
+if [[ "$found_nwa" -eq 0 ]]; then
+  echo "  WARN: no warped output found"
+fi
+verify_log "$TOOL"

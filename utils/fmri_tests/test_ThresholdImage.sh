@@ -28,3 +28,10 @@ num_thresholds: 2
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/threshold_out.nii.gz" "INT"
+verify_log "$TOOL"

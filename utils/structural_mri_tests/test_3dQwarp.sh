@@ -80,3 +80,4 @@ fi
 if [[ "$found" -eq 0 ]]; then
   echo "  WARN: no output dataset files found"
 fi
+verify_log "$TOOL"

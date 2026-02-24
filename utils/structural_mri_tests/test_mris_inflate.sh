@@ -33,3 +33,12 @@ n: 5
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_surface "${dir}/lh.inflated.test"
+# sulc_file is nullable — produced when mris_inflate writes .sulc alongside output
+verify_surface_optional "${dir}/lh.inflated.test.sulc"
+verify_log "$TOOL"

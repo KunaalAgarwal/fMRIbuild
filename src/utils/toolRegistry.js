@@ -79,6 +79,8 @@ function mergeToolData(toolName, parsed, annotation) {
             type,
             label: inputDef.label,
             flag: inputDef.flag || null,
+            hasDefault: inputDef.hasDefault || false,
+            defaultValue: inputDef.defaultValue,
         };
 
         // Add acceptedExtensions if present in annotations

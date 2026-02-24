@@ -82,5 +82,15 @@ for variant in pcasl calib pasl; do
       "oxford_asl_${variant}/native_space/perfusion.nii.gz" \
       "oxford_asl_${variant}/native_space/arrival.nii.gz" \
       || echo "  WARN: NIfTI header check failed for ${variant}"
+
+    LOG_FILE="${LOG_DIR}/${TOOL}_${variant}.log"
+    if [[ -f "$LOG_FILE" ]]; then
+      if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
+        echo "  WARN: potential errors in ${variant} log:"
+        grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
+      else
+        echo "  Log (${variant}): no errors detected"
+      fi
+    fi
   fi
 done

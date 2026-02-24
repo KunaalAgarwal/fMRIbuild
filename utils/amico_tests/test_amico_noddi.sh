@@ -53,3 +53,4 @@ for pattern in "${expected_patterns[@]}"; do
     echo "  WARN: ${pattern} not found"
   fi
 done
+verify_log "$TOOL"

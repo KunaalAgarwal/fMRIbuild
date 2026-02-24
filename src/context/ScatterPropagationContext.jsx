@@ -4,5 +4,6 @@ import { createContext } from 'react';
 // and know which nodes are source nodes (no incoming edges).
 export const ScatterPropagationContext = createContext({
     propagatedIds: new Set(),
-    sourceNodeIds: new Set()
+    sourceNodeIds: new Set(),
+    gatherNodeIds: new Set()
 });

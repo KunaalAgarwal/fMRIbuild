@@ -28,3 +28,13 @@ mask:
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_afni "${TOOL_OUT}/rsfc_LFF+orig.HEAD"
+verify_afni_optional "${TOOL_OUT}/rsfc_ALFF+orig.HEAD"
+verify_afni_optional "${TOOL_OUT}/rsfc_fALFF+orig.HEAD"
+verify_afni_optional "${TOOL_OUT}/rsfc_RSFA+orig.HEAD"
+verify_log "$TOOL"

@@ -41,3 +41,10 @@ Rbuck: "remlfit"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_afni "${TOOL_OUT}/remlfit+orig.HEAD"
+verify_log "$TOOL"

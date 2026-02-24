@@ -34,3 +34,13 @@ num_images: 5
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/motcorr__corrected.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/motcorr__avg.nii.gz"
+verify_csv "${TOOL_OUT}/motcorr_MOCOparams.csv" 1
+verify_nifti_optional "${TOOL_OUT}/motcorr_Warp.nii.gz"
+verify_log "$TOOL"

@@ -38,4 +38,5 @@ for t in default verbose; do
   else
     echo "  WARN: ${t} output missing or empty"
   fi
+  verify_log "${TOOL}_${t}"
 done

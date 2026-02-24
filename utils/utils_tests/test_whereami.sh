@@ -29,3 +29,4 @@ if [[ -f "$out" && -s "$out" ]]; then
 else
   echo "  WARN: output missing or empty"
 fi
+verify_log "${TOOL}_coord"

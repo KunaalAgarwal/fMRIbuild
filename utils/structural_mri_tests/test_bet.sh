@@ -23,3 +23,11 @@ mask: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/bet_out.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/bet_out_mask.nii.gz"
+verify_log "$TOOL"

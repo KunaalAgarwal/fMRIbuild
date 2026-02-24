@@ -29,3 +29,10 @@ tablefile: "aparcstats.tsv"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_csv "${dir}/aparcstats.tsv" 2
+verify_log "$TOOL"

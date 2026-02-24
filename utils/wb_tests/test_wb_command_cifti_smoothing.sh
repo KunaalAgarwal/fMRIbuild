@@ -63,3 +63,4 @@ done
 if [[ "$found" -eq 0 ]]; then
   echo "  WARN: no smoothed CIFTI output found"
 fi
+verify_log "$TOOL"

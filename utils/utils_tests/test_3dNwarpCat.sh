@@ -35,3 +35,4 @@ for f in "$dir"/*.HEAD "$dir"/*.nii*; do
     echo "  Header: $(docker_afni 3dinfo "$f" 2>&1 | head -3 || true)"
   fi
 done
+verify_log "${TOOL}_single"

@@ -28,3 +28,11 @@ outdir: "annotation_labels"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_directory "${dir}/annotation_labels"
+# border_file is nullable — only produced with --border flag (not used here)
+verify_log "$TOOL"

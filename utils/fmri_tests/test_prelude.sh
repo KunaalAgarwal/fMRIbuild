@@ -54,3 +54,24 @@ done
 if [[ "$found" -eq 0 ]]; then
   echo "  WARN: no output files found"
 fi
+
+# Range checks on NIfTI outputs
+for nii in "$dir"/unwrapped_phase*.nii*; do
+  [[ -f "$nii" ]] || continue
+  bn="$(basename "$nii")"
+  range="$(docker_fsl fslstats "$nii" -R 2>/dev/null || true)"
+  echo "  Range  (${bn}): ${range}"
+  if [[ "$range" == "0.000000 0.000000" ]]; then
+    echo "  WARN: image appears to be all zeros: ${bn}"
+  fi
+done
+
+LOG_FILE="${LOG_DIR}/${TOOL}.log"
+if [[ -f "$LOG_FILE" ]]; then
+  if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
+    echo "  WARN: potential errors in log:"
+    grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
+  else
+    echo "  Log: no errors detected"
+  fi
+fi

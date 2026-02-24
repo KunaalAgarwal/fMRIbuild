@@ -32,3 +32,10 @@ output: "bert_orig.nii.gz"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${dir}/bert_orig.nii.gz"
+verify_log "$TOOL"

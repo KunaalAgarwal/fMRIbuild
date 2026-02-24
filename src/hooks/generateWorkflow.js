@@ -573,7 +573,7 @@ export function useGenerateWorkflow() {
      * Works both in `npm run dev` (BASE_URL = "/") and on GitHub Pages
      * (BASE_URL = "/niBuild/").
      */
-    const generateWorkflow = async (getWorkflowData, workflowName = '', allWorkspaces = null) => {
+    const generateWorkflow = async (getWorkflowData, workflowName = '') => {
         if (typeof getWorkflowData !== 'function') {
             console.error('generateWorkflow expects a function');
             return;
@@ -593,9 +593,9 @@ export function useGenerateWorkflow() {
         let runtimeInputs;
         try {
             const result = buildCWLWorkflowObject(graph);
-            const { wf, jobDefaults } = result;
+            const { wf, jobDefaults, cwlDefaultKeys } = result;
             mainCWL = YAML.dump(wf, { noRefs: true });
-            jobYml = buildJobTemplate(wf, jobDefaults);
+            jobYml = buildJobTemplate(wf, jobDefaults, cwlDefaultKeys);
             runtimeInputs = extractRuntimeFileInputs(wf, jobDefaults);
         } catch (err) {
             showError(`Workflow build failed: ${err.message}`);
@@ -650,11 +650,8 @@ export function useGenerateWorkflow() {
         const dockerImages = collectUniqueDockerImages(dockerVersionMap);
 
         /* ---------- fetch each unique tool file and inject Docker version ---------- */
-        const allRealNodes = allWorkspaces
-            ? allWorkspaces.flatMap(ws => (ws.nodes || []).filter(n => !n.data?.isDummy))
-            : realNodes;
         const uniquePaths = [
-            ...new Set(allRealNodes.map(n => getToolConfigSync(n.data.label)?.cwlPath).filter(Boolean))
+            ...new Set(realNodes.map(n => getToolConfigSync(n.data.label)?.cwlPath).filter(Boolean))
         ];
 
         try {
@@ -733,7 +730,7 @@ export function useGenerateWorkflow() {
         /* ---------- generate RO-Crate metadata (Workflow RO-Crate 1.0) ---------- */
         const toolMeta = {};
         for (const p of uniquePaths) {
-            const node = allRealNodes.find(n => getToolConfigSync(n.data.label)?.cwlPath === p);
+            const node = realNodes.find(n => getToolConfigSync(n.data.label)?.cwlPath === p);
             if (node) {
                 const tool = getToolConfigSync(node.data.label);
                 toolMeta[p] = {

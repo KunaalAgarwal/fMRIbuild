@@ -74,6 +74,8 @@ if [[ -f "$OUTPUT_DIR/all_FA_skeletonised.nii.gz" ]]; then
     check_nifti_header "$OUTPUT_DIR/all_FA_skeletonised.nii.gz" "all_FA_skeletonised" "$RESULTS_FILE" || PASS=false
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

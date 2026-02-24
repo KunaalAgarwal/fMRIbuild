@@ -41,3 +41,16 @@ tol1d: 0.1
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_file "${dir}/bbregister.dat"
+# out_fsl_mat is nullable — only produced with --fslmat flag (not used here)
+verify_file_optional "${dir}/bbregister.fsl.mat"
+# mincost is nullable — glob matches *.mincost
+for f in "${dir}"/*.mincost; do
+  [[ -f "$f" ]] && verify_file "$f"
+done
+verify_log "$TOOL"

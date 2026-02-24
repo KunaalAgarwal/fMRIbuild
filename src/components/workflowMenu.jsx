@@ -9,6 +9,23 @@ import '../styles/workflowMenu.css';
 function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
   const { customWorkflows, deleteWorkflow } = useCustomWorkflowsContext();
 
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    try {
+      const saved = localStorage.getItem('workflowMenuCollapsed');
+      return saved === null ? false : JSON.parse(saved) === true;
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleCollapse = useCallback(() => {
+    setIsCollapsed(prev => {
+      const next = !prev;
+      try { localStorage.setItem('workflowMenuCollapsed', JSON.stringify(next)); } catch { /* private browsing */ }
+      return next;
+    });
+  }, []);
+
   const [expandedSections, setExpandedSections] = useState(() => {
     const initial = { DummyNodes: false, MyWorkflows: false };
     modalityOrder.forEach(m => { initial[m] = false; });
@@ -124,6 +141,23 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
       }
     }
 
+    // Also search I/O (dummy) nodes
+    if (!modalityFilter || 'i/o'.includes(modalityFilter)) {
+      for (const tool of dummyNodes['I/O']) {
+        const searchTerm = toolQuery || query;
+        const matchFields = [tool.name, tool.fullName || '', tool.function || '', 'I/O'];
+        if (matchFields.some(f => f.toLowerCase().includes(searchTerm))) {
+          results.push({
+            modality: 'I/O',
+            library: 'I/O',
+            category: 'I/O',
+            tool,
+            isDummyNode: true
+          });
+        }
+      }
+    }
+
     // Also search custom workflows
     for (const wf of customWorkflows) {
       const nonDummyTools = wf.nodes.filter(n => !n.isDummy).map(n => n.label);
@@ -192,7 +226,9 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
               }}
               onDragStart={r.isCustomWorkflow
                 ? (event) => handleCustomWorkflowDragStart(event, r.customWorkflow)
-                : handleDragStart
+                : r.isDummyNode
+                  ? (event, name) => handleDragStart(event, name, true)
+                  : handleDragStart
               }
               warningIcon={r.isCustomWorkflow && r.customWorkflow.hasValidationWarnings}
             />
@@ -203,7 +239,12 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
   };
 
   return (
-    <div className="workflow-menu-container">
+    <div className={`workflow-menu-container${isCollapsed ? ' menu-collapsed' : ''}`}>
+      {isCollapsed ? (
+        <div className="menu-collapsed-strip" onClick={toggleCollapse} title="Expand Tools">
+          <span className="menu-collapsed-label">Tools</span>
+        </div>
+      ) : (<>
       {deleteConfirm && createPortal(
         <div
           ref={deleteConfirmRef}
@@ -238,6 +279,9 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
       )}
 
       <div className="workflow-search">
+        <button className="menu-collapse-btn" onClick={toggleCollapse} title="Collapse menu">
+          &laquo;
+        </button>
         <input
           ref={searchInputRef}
           type="text"
@@ -441,6 +485,7 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
           </>
         )}
       </div>
+      </>)}
     </div>
   );
 }

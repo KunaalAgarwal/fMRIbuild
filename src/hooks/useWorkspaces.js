@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
-const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '' }];
+const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', viewport: null }];
 
 export function useWorkspaces() {
   // Initialize state from localStorage or use defaults if nothing is stored.
@@ -16,7 +16,8 @@ export function useWorkspaces() {
           nodes: ws.nodes || [],
           edges: ws.edges || [],
           name: ws.name || '',
-          workflowName: ws.workflowName || ''
+          workflowName: ws.workflowName || '',
+          viewport: ws.viewport || null
         }));
       }
     } catch {
@@ -36,7 +37,7 @@ export function useWorkspaces() {
 
   const addNewWorkspace = () => {
     setWorkspaces((prev) => {
-      const updated = [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '' }];
+      const updated = [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', viewport: null }];
       setCurrentWorkspace(updated.length - 1);
       return updated;
     });
@@ -49,7 +50,8 @@ export function useWorkspaces() {
         nodes: data.nodes || [],
         edges: data.edges || [],
         name: data.name || '',
-        workflowName: data.workflowName || ''
+        workflowName: data.workflowName || '',
+        viewport: null
       };
       const updated = [...prev, newWs];
       setCurrentWorkspace(updated.length - 1);
@@ -62,7 +64,7 @@ export function useWorkspaces() {
       const updatedWorkspaces = [...prevWorkspaces];
       // Preserve only the id; clear everything else including names
       const ws = updatedWorkspaces[currentWorkspace];
-      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '' };
+      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', viewport: null };
       return updatedWorkspaces;
     });
   };
@@ -77,7 +79,8 @@ export function useWorkspaces() {
         ...newItems,
         id: ws?.id || crypto.randomUUID(),
         name: ws?.name || '',
-        workflowName: ws?.workflowName || ''
+        workflowName: ws?.workflowName || '',
+        viewport: newItems.viewport !== undefined ? newItems.viewport : (ws?.viewport || null)
       };
       return updatedWorkspaces;
     });
@@ -136,6 +139,15 @@ export function useWorkspaces() {
     });
   };
 
+  const saveViewportForWorkspace = (index, viewport) => {
+    setWorkspaces((prev) => {
+      if (index < 0 || index >= prev.length) return prev;
+      const updated = [...prev];
+      updated[index] = { ...updated[index], viewport };
+      return updated;
+    });
+  };
+
   return {
     workspaces,
     currentWorkspace,
@@ -147,6 +159,7 @@ export function useWorkspaces() {
     removeCurrentWorkspace,
     updateWorkspaceName,
     updateWorkflowName,
-    removeWorkflowNodesFromAll
+    removeWorkflowNodesFromAll,
+    saveViewportForWorkspace
   };
 }

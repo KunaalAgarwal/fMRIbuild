@@ -50,3 +50,12 @@ EOF
 fi
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti_optional "${TOOL_OUT}/fnirt_warped.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fnirt_coeff.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fnirt_field.nii.gz"
+verify_log "$TOOL"

@@ -33,3 +33,13 @@ transform_type: "0"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/intermodal_anatomical.nii.gz"
+verify_mat "${TOOL_OUT}/intermodal_0GenericAffine.mat"
+verify_nifti_optional "${TOOL_OUT}/intermodal_1Warp.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/intermodal_1InverseWarp.nii.gz"
+verify_log "$TOOL"

@@ -27,3 +27,19 @@ quiet: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# ClustSim produces .NN*.1D and/or .NN*.niml text files
+found_cs=0
+for f in "${TOOL_OUT}"/clustsim.NN*.1D "${TOOL_OUT}"/clustsim.NN*.niml; do
+  [[ -f "$f" ]] || continue
+  verify_file "$f"
+  found_cs=1
+done
+if [[ "$found_cs" -eq 0 ]]; then
+  echo "  WARN: no ClustSim output tables found"
+fi
+verify_log "$TOOL"

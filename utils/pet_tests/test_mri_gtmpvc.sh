@@ -189,6 +189,18 @@ EOF
 
 run_tool "$TOOL_E" "${JOB_DIR}/${TOOL_E}.yml" "$CWL"
 
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+
+for t in setA setB setC setD setE; do
+  dir="${OUT_DIR}/${TOOL}_${t}"
+  echo "  --- variant: ${t} ---"
+  verify_directory "${dir}/gtmpvc_${t}"
+  # gtm_stats is nullable — produced inside output directory
+  verify_file_optional "${dir}/gtmpvc_${t}/gtm.stats.dat"
+  verify_log "${TOOL}_${t}"
+done
+
 # ── Summary ───────────────────────────────────────────────────────
 
 echo ""

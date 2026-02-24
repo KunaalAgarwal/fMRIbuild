@@ -41,3 +41,4 @@ if [[ -d "$TOOL_OUT" ]]; then
   check_nonempty "${TOOL_OUT}/${PREFIX}0GenericAffine.mat" "affine_transform" || true
   check_nifti_header "${TOOL_OUT}/${PREFIX}anatomical.nii.gz" "warped_image" || true
 fi
+verify_log "$NAME"

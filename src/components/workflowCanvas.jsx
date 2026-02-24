@@ -19,7 +19,6 @@ import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
-import { getInvalidConnectionReason } from '../utils/adjacencyValidation.js';
 import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
 import { parseBIDSDirectory } from '../utils/bidsParser.js';
 import { useToast } from '../context/ToastContext.jsx';
@@ -30,7 +29,10 @@ const nodeTypes = { default: NodeComponent };
 // Shared edge arrow marker config
 const EDGE_ARROW = { type: MarkerType.ArrowClosed, width: 10, height: 10 };
 
-function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkflowData, currentWorkspaceIndex }) {
+// Consistent default viewport so every workspace starts with the same canvas size
+const DEFAULT_VIEWPORT = { x: 0, y: 0, zoom: 1 };
+
+function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkflowData, currentWorkspaceIndex, saveViewportForWorkspace }) {
   const { customWorkflows } = useCustomWorkflowsContext();
   const reactFlowWrapper = useRef(null);
   const prevWorkspaceRef = useRef(currentWorkspaceIndex);
@@ -60,7 +62,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     if (needsSyncRef.current) {
       needsSyncRef.current = false;
       if (updateCurrentWorkspaceItems) {
-        updateCurrentWorkspaceItems({ nodes, edges });
+        const viewport = reactFlowInstance?.getViewport() || null;
+        updateCurrentWorkspaceItems({ nodes, edges, viewport });
       }
     }
   }, [nodes, edges, updateCurrentWorkspaceItems]);
@@ -72,8 +75,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     const dummyIds = new Set(nodes.filter(n => n.data?.isDummy && !n.data?.isBIDS).map(n => n.id));
     const realNodes = nodes.filter(n => !n.data?.isDummy || n.data?.isBIDS);
     const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
-    const { scatteredNodeIds, sourceNodeIds } = computeScatteredNodes(realNodes, realEdges);
-    return { propagatedIds: scatteredNodeIds, sourceNodeIds };
+    const { scatteredNodeIds, sourceNodeIds, gatherNodeIds } = computeScatteredNodes(realNodes, realEdges);
+    return { propagatedIds: scatteredNodeIds, sourceNodeIds, gatherNodeIds };
   }, [nodes, edges]);
 
   // Compute which inputs on each node are wired from upstream edge mappings.
@@ -151,6 +154,46 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     }
   }, [customWorkflows]);
 
+  // Compute display labels for duplicate node names (e.g., "flirt (1)", "flirt (2)").
+  // Runs as an effect to avoid infinite re-render loops from mutating nodes in useMemo.
+  const prevLabelKeyRef = useRef('');
+  useEffect(() => {
+    // Build a key from node ids + labels to detect meaningful changes
+    const labelKey = nodes.map(n => `${n.id}:${n.data?.label}`).join('|');
+    if (labelKey === prevLabelKeyRef.current) return;
+    prevLabelKeyRef.current = labelKey;
+
+    // Count occurrences of each label
+    const labelCounts = {};
+    for (const n of nodes) {
+      const label = n.data?.label || '';
+      labelCounts[label] = (labelCounts[label] || 0) + 1;
+    }
+
+    // Assign display labels only for duplicates
+    const labelSeq = {};
+    let anyChange = false;
+    const updated = nodes.map(n => {
+      const label = n.data?.label || '';
+      let displayLabel;
+      if (labelCounts[label] > 1) {
+        labelSeq[label] = (labelSeq[label] || 0) + 1;
+        displayLabel = `${label} (${labelSeq[label]})`;
+      } else {
+        displayLabel = label;
+      }
+      if (n.data?.displayLabel !== displayLabel) {
+        anyChange = true;
+        return { ...n, data: { ...n.data, displayLabel } };
+      }
+      return n;
+    });
+
+    if (anyChange) {
+      setNodes(updated);
+    }
+  }, [nodes]);
+
   // Edge mapping modal state
   const [showEdgeModal, setShowEdgeModal] = useState(false);
   const [pendingConnection, setPendingConnection] = useState(null);
@@ -172,6 +215,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   useEffect(() => {
     if (workflowItems && typeof workflowItems.nodes !== 'undefined') {
       const workspaceSwitched = prevWorkspaceRef.current !== currentWorkspaceIndex;
+      // Save outgoing workspace's viewport before switching
+      if (workspaceSwitched && reactFlowInstance && saveViewportForWorkspace) {
+        saveViewportForWorkspace(prevWorkspaceRef.current, reactFlowInstance.getViewport());
+      }
       prevWorkspaceRef.current = currentWorkspaceIndex;
 
       if (workspaceSwitched || workflowItems.nodes.length !== nodes.length) {
@@ -187,6 +234,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 : (newParams) => handleNodeUpdate(node.id, newParams),
             // Reattach BIDS callback
             ...(node.data.isBIDS ? { onUpdateBIDS: (updates) => handleBIDSNodeUpdate(node.id, updates) } : {}),
+            // Reattach I/O edit callback for dummy nodes
+            onSaveIO: node.data.isDummy ? (data) => handleIONodeUpdate(node.id, data) : null,
           };
 
           // Sync custom workflow nodes with latest saved workflow data
@@ -223,6 +272,20 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         }));
         setNodes(initialNodes);
         setEdges(initialEdges);
+
+        // Restore saved viewport or fitView for new/empty workspaces
+        if (workspaceSwitched && reactFlowInstance) {
+          const savedViewport = workflowItems.viewport;
+          // Defer to next frame so nodes render before viewport is set
+          setTimeout(() => {
+            if (savedViewport) {
+              reactFlowInstance.setViewport(savedViewport);
+            } else {
+              reactFlowInstance.setViewport(DEFAULT_VIEWPORT);
+            }
+          }, 0);
+        }
+
         // Persist synced custom workflow data back to workspace state
         if (anyCustomSynced) {
           markForSync();
@@ -245,11 +308,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                     scatterEnabled: updatedData.scatterEnabled !== undefined
                         ? updatedData.scatterEnabled
                         : (node.data.scatterEnabled || false),
+                    gatherEnabled: updatedData.gatherEnabled !== undefined
+                        ? updatedData.gatherEnabled
+                        : (node.data.gatherEnabled || false),
                     linkMergeOverrides: updatedData.linkMergeOverrides || node.data.linkMergeOverrides || {},
                     whenExpression: updatedData.whenExpression !== undefined
                         ? updatedData.whenExpression
                         : (node.data.whenExpression || ''),
                     expressions: updatedData.expressions || node.data.expressions || {},
+                    notes: updatedData.notes ?? node.data.notes ?? '',
                   }
                 }
               : node
@@ -268,6 +335,26 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
               data: {
                 ...node.data,
                 internalNodes: updatedData.internalNodes || node.data.internalNodes,
+                notes: updatedData.notes ?? node.data.notes ?? '',
+              }
+            }
+          : node
+      )
+    );
+    markForSync();
+  };
+
+  // Update an I/O (dummy) node's label and notes.
+  const handleIONodeUpdate = (nodeId, updatedData) => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                label: updatedData.label ?? node.data.label,
+                notes: updatedData.notes ?? node.data.notes ?? '',
               }
             }
           : node
@@ -359,19 +446,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     isCustomWorkflow: node.data.isCustomWorkflow || false,
     internalNodes: node.data.internalNodes || [],
     internalEdges: node.data.internalEdges || [],
+    isScattered: scatterContext.propagatedIds.has(node.id),
   });
-
-  // Compute adjacency warning for a connection between two nodes.
-  const getAdjacencyWarning = (srcNode, tgtNode) => {
-    if (srcNode.data.isDummy || tgtNode.data.isDummy) return null;
-    const srcLabel = srcNode.data.isCustomWorkflow
-      ? srcNode.data.boundaryNodes?.lastNonDummy
-      : srcNode.data.label;
-    const tgtLabel = tgtNode.data.isCustomWorkflow
-      ? tgtNode.data.boundaryNodes?.firstNonDummy
-      : tgtNode.data.label;
-    return (srcLabel && tgtLabel) ? getInvalidConnectionReason(srcLabel, tgtLabel) : null;
-  };
 
   // Connect edges - open modal to configure mapping.
   const onConnect = useCallback(
@@ -387,7 +463,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             sourceNode: buildEdgeModalNode(sourceNode),
             targetNode: buildEdgeModalNode(targetNode),
             existingMappings: [],
-            adjacencyWarning: getAdjacencyWarning(sourceNode, targetNode),
+            adjacencyWarning: null, // disabled — cross-modality false positives; type/extension validation is sufficient
           });
           setShowEdgeModal(true);
         }
@@ -409,7 +485,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             sourceNode: buildEdgeModalNode(sourceNode),
             targetNode: buildEdgeModalNode(targetNode),
             existingMappings: edge.data?.mappings || [],
-            adjacencyWarning: getAdjacencyWarning(sourceNode, targetNode),
+            adjacencyWarning: null, // disabled — cross-modality false positives; type/extension validation is sufficient
           });
           setShowEdgeModal(true);
         }
@@ -507,9 +583,11 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           parameters: '',
           dockerVersion: 'latest',
           scatterEnabled: false,
+          gatherEnabled: false,
           linkMergeOverrides: {},
           whenExpression: '',
           expressions: {},
+          notes: '',
           ...dataOverrides(newNodeId),
         },
       };
@@ -525,6 +603,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         bidsStructure: null,
         bidsSelections: null,
         onSaveParameters: null,
+        onSaveIO: (data) => handleIONodeUpdate(id, data),
         onUpdateBIDS: (updates) => handleBIDSNodeUpdate(id, updates),
       }), (id) => triggerBIDSDirectoryPicker(id));
     } else if (customWorkflowId) {
@@ -545,6 +624,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       createNode((id) => ({
         isDummy: isDummy,
         onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(id, newData),
+        onSaveIO: isDummy ? (data) => handleIONodeUpdate(id, data) : null,
       }));
     }
   };
@@ -623,10 +703,17 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 onConnect={onConnect}
                 onNodesDelete={onNodesDelete}
                 onEdgeDoubleClick={onEdgeDoubleClick}
-                fitView
-                fitViewOptions={{ maxZoom: 1, padding: 0.2 }}
                 nodeTypes={nodeTypes}
-                onInit={(instance) => setReactFlowInstance(instance)}
+                onInit={(instance) => {
+                  setReactFlowInstance(instance);
+                  // Initial fitView on first load (before any workspace viewport is restored)
+                  const savedViewport = workflowItems?.viewport;
+                  if (savedViewport) {
+                    instance.setViewport(savedViewport);
+                  } else {
+                    instance.setViewport(DEFAULT_VIEWPORT);
+                  }
+                }}
             >
               <MiniMap
                 nodeColor="var(--color-primary)"
@@ -649,6 +736,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             targetNode={edgeModalData?.targetNode}
             existingMappings={edgeModalData?.existingMappings || []}
             adjacencyWarning={edgeModalData?.adjacencyWarning || null}
+            sourceIsScattered={edgeModalData?.sourceNode?.isScattered || false}
         />
 
         {/* Hidden directory picker for BIDS nodes */}

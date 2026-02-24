@@ -80,6 +80,8 @@ if [[ -d "$OUTPUT_DIR/FA" ]]; then
     cp -r "$OUTPUT_DIR/FA" "$INTERMEDIATE_DIR/tbss_FA_step3"
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

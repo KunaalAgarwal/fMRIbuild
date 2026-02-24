@@ -138,6 +138,8 @@ if [[ -f "$SKEL_FILE" ]]; then
     check_nifti_header "$SKEL_FILE" "all_MD_skeletonised" "$RESULTS_FILE" || PASS=false
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

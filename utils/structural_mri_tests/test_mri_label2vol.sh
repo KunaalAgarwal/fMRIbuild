@@ -38,3 +38,11 @@ identity: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_mgz "${dir}/label2vol.mgz"
+# hits_volume is nullable — only produced with --hits flag (not used here)
+verify_log "$TOOL"

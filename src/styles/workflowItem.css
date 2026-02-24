@@ -108,6 +108,14 @@
   margin-top: 3px;
 }
 
+.param-default-hint {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.6rem;
+  color: var(--color-primary);
+  margin-top: 3px;
+  font-style: italic;
+}
+
 /* Inline controls — switches */
 .param-switch .form-check-input,
 .scatter-switch .form-check-input {
@@ -621,6 +629,10 @@
     font-size: 0.55rem;
   }
 
+  .param-default-hint {
+    font-size: 0.55rem;
+  }
+
   .input-source {
     font-size: 0.62rem;
   }
@@ -743,8 +755,10 @@
 
 /* Shared badge base */
 .node-scatter-badge,
+.node-gather-badge,
 .node-when-badge,
-.node-fx-badge {
+.node-fx-badge,
+.node-notes-badge {
   font-size: 6px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
@@ -760,6 +774,12 @@
   color: var(--color-cyan);
   background-color: rgba(74, 198, 226, 0.12);
   border: 1px solid rgba(74, 198, 226, 0.3);
+}
+
+.node-gather-badge {
+  color: var(--color-success, #2ecc71);
+  background-color: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
 .node-fx-badge {
@@ -1085,6 +1105,28 @@
   color: var(--color-warning, #ffc107);
   background-color: rgba(255, 193, 7, 0.12);
   border: 1px solid rgba(255, 193, 7, 0.3);
+}
+
+.node-notes-badge {
+  color: var(--color-success, #2ecc71);
+  background-color: rgba(46, 204, 113, 0.12);
+  border: 1px solid rgba(46, 204, 113, 0.3);
+}
+
+.node-notes-textarea {
+  background-color: var(--bg-primary) !important;
+  border: 1px solid rgba(255, 255, 255, 0.08) !important;
+  color: var(--text-light) !important;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.75rem;
+  border-radius: 6px;
+  resize: vertical;
+  min-height: 60px;
+}
+
+.node-notes-textarea:focus {
+  border-color: var(--border-focus) !important;
+  box-shadow: none !important;
 }
 
 /* ============================================

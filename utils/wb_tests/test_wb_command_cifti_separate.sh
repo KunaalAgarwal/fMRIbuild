@@ -59,3 +59,4 @@ done
 if [[ "$found" -eq 0 ]]; then
   echo "  WARN: no separated metric found"
 fi
+verify_log "$TOOL"

@@ -67,23 +67,17 @@ out_orientation: LPI
 EOF
 run_tool "${TOOL}_orient" "${JOB_DIR}/${TOOL}_orient.yml" "$CWL"
 
-# ── Non-null & header checks ─────────────────────────────────
-for t in mgz conform orient; do
-  dir="${OUT_DIR}/${TOOL}_${t}"
-  for f in "$dir"/*.mgz; do
-    [[ -f "$f" ]] || continue
-    if [[ ! -s "$f" ]]; then
-      echo "  WARN: zero-byte: $f"
-    else
-      echo "  Header (${t}/mgz): $(docker_fs mri_info "$f" 2>&1 | head -5 || true)"
-    fi
-  done
-  for f in "$dir"/*.nii*; do
-    [[ -f "$f" ]] || continue
-    if [[ ! -s "$f" ]]; then
-      echo "  WARN: zero-byte: $f"
-    else
-      echo "  Header (${t}/nii): $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
-    fi
-  done
-done
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+
+echo "  --- variant: mgz ---"
+verify_mgz "${OUT_DIR}/${TOOL}_mgz/converted_out.mgz"
+verify_log "${TOOL}_mgz"
+
+echo "  --- variant: conform ---"
+verify_nifti "${OUT_DIR}/${TOOL}_conform/converted_conform.nii.gz"
+verify_log "${TOOL}_conform"
+
+echo "  --- variant: orient ---"
+verify_nifti "${OUT_DIR}/${TOOL}_orient/converted_lpi.nii.gz"
+verify_log "${TOOL}_orient"

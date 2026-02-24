@@ -53,3 +53,4 @@ if [[ -d "$TOOL_OUT" ]]; then
     check_nonempty "${TOOL_OUT}/${PREFIX}1InverseWarp.nii.gz" "inverse_warp_field" || true
   fi
 fi
+verify_log "$NAME"

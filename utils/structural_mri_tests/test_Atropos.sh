@@ -32,3 +32,24 @@ mrf: "[0.1,1x1x1]"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/atropos_seg.nii.gz" "INT"
+
+# Posteriors array (produced only when using formatted -o syntax)
+post_count=0
+for post in "${TOOL_OUT}"/atropos_seg*Posteriors*.nii.gz; do
+  [[ -f "$post" ]] || continue
+  verify_nifti "$post" "FLOAT"
+  ((post_count++))
+done
+if [[ "$post_count" -gt 0 ]]; then
+  echo "  Posteriors found: ${post_count}"
+else
+  echo "  OPTIONAL-SKIP: posteriors (not produced with simple output prefix)"
+fi
+
+verify_log "$TOOL"

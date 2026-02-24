@@ -122,3 +122,15 @@ check_test_data() {
 ensure_intermediate() {
     mkdir -p "$INTERMEDIATE_DIR"
 }
+
+scan_log_for_errors() {
+    local result_file="$1"
+    local label="${2:-results}"
+    echo "--- Log scan ---" | tee -a "$result_file"
+    if grep -qiE 'segfault|core dump|fatal|Traceback' "$result_file" 2>/dev/null; then
+        echo -e "${RED}WARN: potential errors in ${label}:${NC}" | tee -a "$result_file"
+        grep -iE 'segfault|core dump|fatal|Traceback' "$result_file" | head -5
+    else
+        echo -e "${GREEN}Log: no critical errors detected${NC}" | tee -a "$result_file"
+    fi
+}

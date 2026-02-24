@@ -34,8 +34,10 @@ function CWLPreviewPanel({ getWorkflowData }) {
     const [activeTab, setActiveTab] = useState('workflow');
     const [showFullscreen, setShowFullscreen] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [copiedPane, setCopiedPane] = useState(null);
     const debounceRef = useRef(null);
     const copiedTimerRef = useRef(null);
+    const copiedPaneTimerRef = useRef(null);
 
     const [isCollapsed, setIsCollapsed] = useState(() => {
         try {
@@ -76,9 +78,9 @@ function CWLPreviewPanel({ getWorkflowData }) {
                     return;
                 }
                 setShowPlaceholder(false);
-                const { wf, jobDefaults } = buildCWLWorkflowObject(graph);
+                const { wf, jobDefaults, cwlDefaultKeys } = buildCWLWorkflowObject(graph);
                 setCwlOutput(SHEBANG + YAML.dump(wf, { noRefs: true }));
-                setJobOutput(buildJobTemplate(wf, jobDefaults));
+                setJobOutput(buildJobTemplate(wf, jobDefaults, cwlDefaultKeys));
                 setError(null);
             } catch (err) {
                 setShowPlaceholder(false);
@@ -91,8 +93,11 @@ function CWLPreviewPanel({ getWorkflowData }) {
 
     const activeContent = activeTab === 'workflow' ? cwlOutput : jobOutput;
 
-    // Clean up copied-reset timer on unmount
-    useEffect(() => () => { if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current); }, []);
+    // Clean up copied-reset timers on unmount
+    useEffect(() => () => {
+        if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+        if (copiedPaneTimerRef.current) clearTimeout(copiedPaneTimerRef.current);
+    }, []);
 
     const handleCopy = useCallback(() => {
         navigator.clipboard.writeText(activeContent).then(() => {
@@ -103,6 +108,16 @@ function CWLPreviewPanel({ getWorkflowData }) {
     }, [activeContent]);
 
     const highlightedHtml = useMemo(() => activeContent ? highlightYaml(activeContent) : '', [activeContent]);
+    const highlightedCwl = useMemo(() => cwlOutput ? highlightYaml(cwlOutput) : '', [cwlOutput]);
+    const highlightedJob = useMemo(() => jobOutput ? highlightYaml(jobOutput) : '', [jobOutput]);
+
+    const handleCopyPane = useCallback((content, pane) => {
+        navigator.clipboard.writeText(content).then(() => {
+            setCopiedPane(pane);
+            if (copiedPaneTimerRef.current) clearTimeout(copiedPaneTimerRef.current);
+            copiedPaneTimerRef.current = setTimeout(() => setCopiedPane(null), 1500);
+        }).catch(() => showWarning('Copy to clipboard failed'));
+    }, []);
 
     return (
         <>
@@ -186,22 +201,43 @@ function CWLPreviewPanel({ getWorkflowData }) {
                 className="cwl-fullscreen-modal"
             >
                 <Modal.Header>
-                    <Modal.Title>
-                        {activeTab === 'workflow' ? 'CWL Workflow Preview' : 'Job Template Preview'}
-                    </Modal.Title>
-                    <button
-                        className="cwl-action-btn"
-                        onClick={handleCopy}
-                        disabled={!activeContent}
-                    >
-                        {copied ? 'Copied!' : 'Copy'}
-                    </button>
+                    <Modal.Title>CWL Preview</Modal.Title>
                 </Modal.Header>
                 <Modal.Body>
-                    <pre
-                        className="cwl-code cwl-code-fullscreen"
-                        dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-                    />
+                    <div className="cwl-split-container">
+                        <div className="cwl-split-pane">
+                            <div className="cwl-split-pane-header">
+                                <span className="cwl-split-pane-label">.cwl</span>
+                                <button
+                                    className="cwl-action-btn"
+                                    onClick={() => handleCopyPane(cwlOutput, 'cwl')}
+                                    disabled={!cwlOutput}
+                                >
+                                    {copiedPane === 'cwl' ? 'Copied!' : 'Copy'}
+                                </button>
+                            </div>
+                            <pre
+                                className="cwl-code cwl-code-fullscreen"
+                                dangerouslySetInnerHTML={{ __html: highlightedCwl }}
+                            />
+                        </div>
+                        <div className="cwl-split-pane">
+                            <div className="cwl-split-pane-header">
+                                <span className="cwl-split-pane-label">.yml</span>
+                                <button
+                                    className="cwl-action-btn"
+                                    onClick={() => handleCopyPane(jobOutput, 'job')}
+                                    disabled={!jobOutput}
+                                >
+                                    {copiedPane === 'job' ? 'Copied!' : 'Copy'}
+                                </button>
+                            </div>
+                            <pre
+                                className="cwl-code cwl-code-fullscreen"
+                                dangerouslySetInnerHTML={{ __html: highlightedJob }}
+                            />
+                        </div>
+                    </div>
                 </Modal.Body>
             </Modal>
         </>

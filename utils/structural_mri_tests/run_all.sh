@@ -51,6 +51,7 @@ run_test "${SCRIPT_DIR}/test_antsAtroposN4.sh" "$@"
 run_test "${SCRIPT_DIR}/test_antsRegistration.sh" "$@"
 run_test "${SCRIPT_DIR}/test_antsRegistrationSyN.sh" "$@"
 run_test "${SCRIPT_DIR}/test_antsRegistrationSyNQuick.sh" "$@"
+run_test "${SCRIPT_DIR}/../utils_tests/test_LabelGeometryMeasures.sh" "$@"
 
 # FreeSurfer
 run_test "${SCRIPT_DIR}/test_mri_convert.sh" "$@"

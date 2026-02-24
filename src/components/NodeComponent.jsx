@@ -10,6 +10,7 @@ import TagDropdown from './TagDropdown.jsx';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import CustomWorkflowParamModal from './CustomWorkflowParamModal.jsx';
+import IONodeModal from './IONodeModal.jsx';
 import '../styles/workflowItem.css';
 
 const NodeComponent = ({ data, id }) => {
@@ -17,9 +18,10 @@ const NodeComponent = ({ data, id }) => {
     const isDummy = data.isDummy === true;
 
     // Check scatter propagation and source-node status
-    const { propagatedIds, sourceNodeIds } = useContext(ScatterPropagationContext);
+    const { propagatedIds, sourceNodeIds, gatherNodeIds } = useContext(ScatterPropagationContext);
     const isScatterInherited = propagatedIds.has(id);
     const isSourceNode = sourceNodeIds.has(id);
+    const isGatherNode = gatherNodeIds.has(id);
 
     // Get wired input state from context
     const wiredContext = useContext(WiredInputsContext);
@@ -31,18 +33,23 @@ const NodeComponent = ({ data, id }) => {
     const [versionValid, setVersionValid] = useState(true);
     const [versionWarning, setVersionWarning] = useState('');
     const [scatterEnabled, setScatterEnabled] = useState(data.scatterEnabled || false);
+    const [gatherEnabled, setGatherEnabled] = useState(data.gatherEnabled || false);
     const [linkMergeValues, setLinkMergeValues] = useState(data.linkMergeOverrides || {});
     const [whenParam, setWhenParam] = useState('');
     const [whenCondition, setWhenCondition] = useState('');
     const [whenTouched, setWhenTouched] = useState(false);
     const [expressionValues, setExpressionValues] = useState(data.expressions || {});
     const [expressionToggles, setExpressionToggles] = useState({});
+    const [nodeNotes, setNodeNotes] = useState(data.notes || '');
 
     // Info tooltip state (hover to show, click to pin, click-outside to dismiss)
     const [showInfoTooltip, setShowInfoTooltip] = useState(false);
     const [infoTooltipPinned, setInfoTooltipPinned] = useState(false);
     const [infoTooltipPos, setInfoTooltipPos] = useState({ top: 0, left: 0 });
     const infoIconRef = useRef(null);
+
+    // I/O node modal state
+    const [showIOModal, setShowIOModal] = useState(false);
 
     // Custom workflow node state (must be at top level for hooks rules)
     const [showCustomModal, setShowCustomModal] = useState(false);
@@ -254,6 +261,9 @@ const NodeComponent = ({ data, id }) => {
             setScatterEnabled(true);
         }
 
+        // Initialize gather state from saved data
+        setGatherEnabled(data.gatherEnabled || false);
+
         // Initialize linkMergeOverrides, whenExpression, and expressions from saved data
         setLinkMergeValues(data.linkMergeOverrides || {});
         const whenExpr = data.whenExpression || '';
@@ -290,6 +300,7 @@ const NodeComponent = ({ data, id }) => {
             setParamValues({});
         }
 
+        setNodeNotes(data.notes || '');
         setShowModal(true);
     };
 
@@ -314,6 +325,7 @@ const NodeComponent = ({ data, id }) => {
                 params: paramValues,
                 dockerVersion: finalDockerVersion,
                 scatterEnabled: scatterEnabled,
+                gatherEnabled: gatherEnabled,
                 linkMergeOverrides: linkMergeValues,
                 whenExpression: whenParam && whenCondition.trim() && !whenWarning
                     ? `$(inputs.${whenParam} ${whenCondition.trim()})`
@@ -391,23 +403,34 @@ const NodeComponent = ({ data, id }) => {
     // Render I/O dummy nodes (Input/Output) with green-styled 3-row layout
     if (isDummy && !data.isBIDS) {
         return (
-            <div className="node-wrapper node-io">
-                <div className="node-top-row">
-                    <span className="node-io-badge"><span className="node-io-badge-text">I/O</span></span>
-                    <span className="handle-label">IN</span>
-                    <span className="node-info-spacer"></span>
+            <>
+                <div className="node-wrapper node-io" onDoubleClick={() => setShowIOModal(true)}>
+                    <div className="node-top-row">
+                        <span className="node-io-badge"><span className="node-io-badge-text">I/O</span></span>
+                        <span className="handle-label">IN</span>
+                        <span className="node-info-spacer">
+                            {data.notes && <span className="node-notes-badge">N</span>}
+                        </span>
+                    </div>
+                    <div className="node-content">
+                        <Handle type="target" position={Position.Top} />
+                        <span className="node-label">{data.displayLabel || data.label}</span>
+                        <Handle type="source" position={Position.Bottom} />
+                    </div>
+                    <div className="node-bottom-row">
+                        <span className="node-bottom-left"></span>
+                        <span className="handle-label">OUT</span>
+                        <span className="node-info-spacer"></span>
+                    </div>
                 </div>
-                <div className="node-content">
-                    <Handle type="target" position={Position.Top} />
-                    <span className="node-label">{data.label}</span>
-                    <Handle type="source" position={Position.Bottom} />
-                </div>
-                <div className="node-bottom-row">
-                    <span className="node-bottom-left"></span>
-                    <span className="handle-label">OUT</span>
-                    <span className="node-info-spacer"></span>
-                </div>
-            </div>
+                <IONodeModal
+                    show={showIOModal}
+                    onHide={() => setShowIOModal(false)}
+                    label={data.label}
+                    notes={data.notes || ''}
+                    onSave={(updated) => data.onSaveIO?.(updated)}
+                />
+            </>
         );
     }
 
@@ -420,7 +443,7 @@ const NodeComponent = ({ data, id }) => {
 
         return (
             <>
-                <div className="node-wrapper node-io node-bids">
+                <div className="node-wrapper node-io node-bids" onDoubleClick={() => setShowIOModal(true)}>
                     <div className="node-top-row">
                         <span className="node-io-badge">
                             {hasData && selectionCount > 0
@@ -444,13 +467,15 @@ const NodeComponent = ({ data, id }) => {
                     </div>
                     <div className="node-content">
                         <Handle type="target" position={Position.Top} />
-                        <span className="node-label">{data.label}</span>
+                        <span className="node-label">{data.displayLabel || data.label}</span>
                         <Handle type="source" position={Position.Bottom} />
                     </div>
                     <div className="node-bottom-row">
                         <span className="node-bottom-left">
                             {!hasData && <span className="node-warning-badge">!</span>}
-                            {isScatterInherited && <span className="node-scatter-badge">{'\u21BB'}</span>}
+                            {isGatherNode && <span className="node-gather-badge">G</span>}
+                            {isScatterInherited && !isGatherNode && <span className="node-scatter-badge">{'\u21BB'}</span>}
+                            {data.notes && <span className="node-notes-badge">N</span>}
                         </span>
                         <span className="handle-label">OUT</span>
                         <span
@@ -530,6 +555,13 @@ const NodeComponent = ({ data, id }) => {
                     </div>,
                     document.body
                 )}
+                <IONodeModal
+                    show={showIOModal}
+                    onHide={() => setShowIOModal(false)}
+                    label={data.label}
+                    notes={data.notes || ''}
+                    onSave={(updated) => data.onSaveIO?.(updated)}
+                />
             </>
         );
     }
@@ -597,7 +629,7 @@ const NodeComponent = ({ data, id }) => {
                     </div>
                     <div className="node-content">
                         <Handle type="target" position={Position.Top} />
-                        <span className="node-label">{data.label}</span>
+                        <span className="node-label">{data.displayLabel || data.label}</span>
                         <Handle type="source" position={Position.Bottom} />
                     </div>
                     <div className="node-bottom-row">
@@ -688,13 +720,14 @@ const NodeComponent = ({ data, id }) => {
 
                 <div onDoubleClick={handleOpenModal} className="node-content">
                     <Handle type="target" position={Position.Top} />
-                    <span className="node-label">{data.label}</span>
+                    <span className="node-label">{data.displayLabel || data.label}</span>
                     <Handle type="source" position={Position.Bottom} />
                 </div>
 
                 <div className="node-bottom-row">
                     <span className="node-bottom-left">
-                        {isScatterInherited && <span className="node-scatter-badge">&#x21BB;</span>}
+                        {isGatherNode && <span className="node-gather-badge">G</span>}
+                        {isScatterInherited && !isGatherNode && <span className="node-scatter-badge">&#x21BB;</span>}
                         {data.whenExpression && <span className="node-when-badge">?</span>}
                         {data.expressions && Object.keys(data.expressions).length > 0 && <span className="node-fx-badge">fx</span>}
                     </span>
@@ -816,6 +849,30 @@ const NodeComponent = ({ data, id }) => {
                                 {!isSourceNode
                                     ? 'Scatter can only be enabled on source nodes (nodes with no incoming connections). Downstream nodes inherit scatter automatically from upstream.'
                                     : 'Run this step once per input file instead of once total. Enable on the first node to batch-process multiple subjects \u2014 the exported CWL will loop over every file in the input array. Downstream nodes inherit scatter automatically.'}
+                            </div>
+                        </Form.Group>
+
+                        {/* Gather Toggle */}
+                        <Form.Group className="scatter-toggle-group">
+                            <div className="scatter-toggle-row">
+                                <Form.Label className="modal-label" style={{ marginBottom: 0 }}>
+                                    Gather (Collect Scattered Outputs)
+                                </Form.Label>
+                                <Form.Check
+                                    type="switch"
+                                    id={`gather-toggle-${id}`}
+                                    checked={gatherEnabled}
+                                    onChange={(e) => setGatherEnabled(e.target.checked)}
+                                    disabled={isSourceNode || !isScatterInherited}
+                                    className="scatter-switch"
+                                />
+                            </div>
+                            <div className="scatter-help-text">
+                                {isSourceNode
+                                    ? 'Gather is not available on source nodes.'
+                                    : !isScatterInherited
+                                        ? 'Gather is only available on nodes that receive scattered input from upstream.'
+                                        : 'Collect all scattered outputs into a single array and run this step once instead of per-element. Stops scatter propagation to downstream nodes.'}
                             </div>
                         </Form.Group>
 
@@ -1000,6 +1057,9 @@ const NodeComponent = ({ data, id }) => {
                                                     {param.bounds && (
                                                         <div className="param-bounds">bounds: {param.bounds[0]} – {param.bounds[1]}</div>
                                                     )}
+                                                    {param.hasDefault && (
+                                                        <div className="param-default-hint">default: {String(param.defaultValue)}</div>
+                                                    )}
                                                 </div>
                                             );
                                         })}
@@ -1017,6 +1077,7 @@ const NodeComponent = ({ data, id }) => {
                                 </div>
                             )}
                         </div>
+
                     </Form>
                 </Modal.Body>
             </Modal>

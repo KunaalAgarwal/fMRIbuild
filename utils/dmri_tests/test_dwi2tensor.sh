@@ -71,6 +71,8 @@ if [[ -f "$OUTPUT_DIR/tensor.mif" ]]; then
     cp "$OUTPUT_DIR/tensor.mif" "$INTERMEDIATE_DIR/tensor.mif" 2>/dev/null || true
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

@@ -76,6 +76,11 @@
   white-space: nowrap;
 }
 
+.bids-select-btns {
+  display: flex;
+  gap: 4px;
+}
+
 .bids-select-all-btn {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.62rem;

@@ -62,4 +62,5 @@ for t in bin smooth thr mul; do
       echo "  Header (${t}): $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
     fi
   done
+  verify_log "${TOOL}_${t}"
 done

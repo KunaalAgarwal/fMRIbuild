@@ -44,3 +44,4 @@ fi
 if [[ -f "$CIFTI_OUT" ]]; then
   echo "$CIFTI_OUT" > "${DERIVED_DIR}/cifti_dtseries_path.txt"
 fi
+verify_log "$TOOL"

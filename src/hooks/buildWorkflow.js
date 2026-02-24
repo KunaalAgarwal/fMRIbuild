@@ -32,6 +32,7 @@ function expandCustomWorkflowNodes(graph) {
                     parameters: iNode.parameters || {},
                     dockerVersion: iNode.dockerVersion || 'latest',
                     scatterEnabled: iNode.scatterEnabled || false,
+                    gatherEnabled: iNode.gatherEnabled || false,
                     linkMergeOverrides: iNode.linkMergeOverrides || {},
                     whenExpression: iNode.whenExpression || '',
                     expressions: iNode.expressions || {},
@@ -162,8 +163,9 @@ function getUserParams(nodeData) {
     return null;
 }
 
-/** Return a sensible default value for a CWL type. */
+/** Return a sensible default value for a CWL type. Prefers CWL-defined defaults. */
 function defaultForType(type, inputDef) {
+    if (inputDef?.hasDefault) return inputDef.defaultValue;
     switch (type) {
         case 'boolean': return false;
         case 'int':     return inputDef?.bounds ? inputDef.bounds[0] : 0;
@@ -230,7 +232,8 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         } else {
             // Not wired - expose as workflow input
             const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-            const inputType = ctx.scatteredSteps.has(nodeId) && (type === 'File' || type === 'Directory')
+            const inputType = ctx.scatteredSteps.has(nodeId) && !ctx.gatherNodeIds.has(nodeId)
+                && (type === 'File' || type === 'Directory')
                 ? toArrayType(type)
                 : toCWLType(type);
             ctx.wf.inputs[wfInputName] = { type: inputType };
@@ -317,6 +320,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
                 value = userValue;
             } else {
                 value = defaultForType(type, inputDef);
+                if (inputDef?.hasDefault) ctx.cwlDefaultKeys.add(wfInputName);
             }
             if (value !== null && value !== undefined) {
                 ctx.jobDefaults[wfInputName] = value;
@@ -334,6 +338,8 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
  */
 function computeStepScatter(ctx, nodeId, effectiveTool, incomingEdges) {
     if (!ctx.scatteredSteps.has(nodeId)) return null;
+    // Gather nodes receive scattered input but do NOT scatter themselves
+    if (ctx.gatherNodeIds.has(nodeId)) return null;
 
     const scatterInputs = [];
 
@@ -390,7 +396,7 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
         const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
         const stepId = ctx.getStepId(node.id);
         const isSingleTerminal = terminalNodes.length === 1;
-        const isScattered = ctx.scatteredSteps.has(node.id);
+        const isScattered = ctx.scatteredSteps.has(node.id) && !ctx.gatherNodeIds.has(node.id);
 
         Object.entries(outputs).forEach(([outputName, outputDef]) => {
             const wfOutputName = isSingleTerminal
@@ -511,7 +517,7 @@ export function buildCWLWorkflowObject(graph) {
     /* ---------- compute scatter propagation ---------- */
     const scatterNodes = [...nodes, ...bidsNodes];
     const scatterEdges = [...edges, ...bidsEdges];
-    const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges);
+    const { scatteredNodeIds: scatteredSteps, sourceNodeIds, gatherNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges);
 
     /* ---------- build CWL skeleton ---------- */
     const wf = {
@@ -536,6 +542,7 @@ export function buildCWLWorkflowObject(graph) {
 
     const conditionalStepIds = new Set();
     const jobDefaults = {};
+    const cwlDefaultKeys = new Set();
 
     /* ---------- pre-compute wired inputs per node from edge mappings ---------- */
     // wiredInputsMap: Map<nodeId, Map<inputName, Array<{ sourceNodeId, sourceOutput, isBIDSInput? }>>>
@@ -575,7 +582,7 @@ export function buildCWLWorkflowObject(graph) {
 
     /* ---------- shared context for extracted helpers ---------- */
     const ctx = {
-        wf, jobDefaults, wiredInputsMap, scatteredSteps, sourceNodeIds,
+        wf, jobDefaults, cwlDefaultKeys, wiredInputsMap, scatteredSteps, sourceNodeIds, gatherNodeIds,
         bidsEdges, resolveWiredSource, getStepId,
         needsMultipleInputFeature: false,
         needsInlineJavascript: false,
@@ -662,7 +669,7 @@ export function buildCWLWorkflowObject(graph) {
     const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
     declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds);
 
-    return { wf, jobDefaults };
+    return { wf, jobDefaults, cwlDefaultKeys };
 }
 
 
@@ -671,7 +678,7 @@ export function buildCWLWorkflowObject(graph) {
  * Generate a job input template from a CWL workflow object.
  * Mirrors the behavior of `cwltool --make-template`.
  */
-export function buildJobTemplate(wf, jobDefaults = {}) {
+export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set()) {
     const placeholderForType = (cwlType) => {
         if (cwlType == null) return null;
 
@@ -701,14 +708,23 @@ export function buildJobTemplate(wf, jobDefaults = {}) {
     };
 
     const template = {};
+    const defaultKeys = new Set(cwlDefaultKeys);
     for (const [name, def] of Object.entries(wf.inputs)) {
         if (jobDefaults[name] !== undefined) {
             template[name] = jobDefaults[name];
         } else if (def.default !== undefined) {
             template[name] = def.default;
+            defaultKeys.add(name);
         } else {
             template[name] = placeholderForType(def.type);
         }
     }
-    return YAML.dump(template, { noRefs: true });
+    let yaml = YAML.dump(template, { noRefs: true });
+    // Annotate lines whose values come from CWL tool defaults
+    for (const key of defaultKeys) {
+        const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const re = new RegExp(`^(${escaped}:.*)$`, 'm');
+        yaml = yaml.replace(re, `$1  # tool default`);
+    }
+    return yaml;
 }

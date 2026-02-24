@@ -44,3 +44,4 @@ for f in "$dir"/*.nii*; do
     echo "  Header: $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-5]' || true)"
   fi
 done
+verify_log "${TOOL}_affine"

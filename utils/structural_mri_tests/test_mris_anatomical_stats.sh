@@ -34,3 +34,15 @@ tablefile: "anatomical_stats.tsv"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+# stats_table is nullable — produced when --tablefile is specified
+verify_file_optional "${dir}/anatomical_stats.tsv"
+# stats is nullable — glob matches *.stats
+for f in "${dir}"/*.stats; do
+  [[ -f "$f" ]] && verify_file "$f"
+done
+verify_log "$TOOL"

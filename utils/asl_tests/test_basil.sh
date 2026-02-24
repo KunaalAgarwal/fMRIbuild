@@ -115,5 +115,15 @@ for variant in pcasl spatial pasl; do
     else
       echo "  WARN: mean_ftiss.nii.gz not found for ${variant}"
     fi
+
+    LOG_FILE="${LOG_DIR}/${TOOL}_${variant}.log"
+    if [[ -f "$LOG_FILE" ]]; then
+      if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
+        echo "  WARN: potential errors in ${variant} log:"
+        grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
+      else
+        echo "  Log (${variant}): no errors detected"
+      fi
+    fi
   fi
 done

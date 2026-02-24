@@ -27,3 +27,20 @@ maxite: 1
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# auto_tlrc produces +tlrc version of input
+found_tlrc=0
+for f in "${TOOL_OUT}"/*+tlrc.HEAD; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  found_tlrc=1
+  break
+done
+if [[ "$found_tlrc" -eq 0 ]]; then
+  echo "  WARN: no +tlrc output found"
+fi
+verify_log "$TOOL"

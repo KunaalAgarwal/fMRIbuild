@@ -56,6 +56,8 @@ if [[ -d "$OUTPUT_DIR/bedpostx_input.bedpostX" ]]; then
     cp -r "$OUTPUT_DIR/bedpostx_input.bedpostX" "$INTERMEDIATE_DIR/bedpostx_output" 2>/dev/null || true
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

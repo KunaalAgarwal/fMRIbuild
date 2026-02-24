@@ -47,15 +47,13 @@ convergence: "[50x50,0.001]"
 EOF
 run_tool "${TOOL}_converge" "${JOB_DIR}/${TOOL}_converge.yml" "$CWL"
 
-# ── Non-null & header checks ─────────────────────────────────
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+
 for t in default masked converge; do
   dir="${OUT_DIR}/${TOOL}_${t}"
-  for f in "$dir"/*.nii*; do
-    [[ -f "$f" ]] || continue
-    if [[ ! -s "$f" ]]; then
-      echo "  WARN: zero-byte: $f"
-    else
-      echo "  Header (${t}): $(docker_fsl fslhd "$f" 2>&1 | grep -E '^dim[1-4]' || true)"
-    fi
-  done
+  echo "  --- variant: ${t} ---"
+  verify_nifti "${dir}/n4_${t}_corrected.nii.gz"
+  verify_nifti_optional "${dir}/n4_${t}_biasfield.nii.gz"
+  verify_log "${TOOL}_${t}"
 done

@@ -75,6 +75,8 @@ if [[ -f "$OUTPUT_DIR/wm_fod.mif" ]]; then
     cp "$OUTPUT_DIR/wm_fod.mif" "$INTERMEDIATE_DIR/wm_fod.mif" 2>/dev/null || true
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

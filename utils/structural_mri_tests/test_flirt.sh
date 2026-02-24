@@ -26,3 +26,11 @@ output_matrix: "flirt_affine.mat"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/flirt_out.nii.gz"
+verify_mat "${TOOL_OUT}/flirt_affine.mat"
+verify_log "$TOOL"

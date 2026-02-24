@@ -33,3 +33,25 @@ use_floatingpoint: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/brainextract_BrainExtractionBrain.nii.gz"
+verify_nifti "${TOOL_OUT}/brainextract_BrainExtractionMask.nii.gz" "INT"
+verify_nifti_optional "${TOOL_OUT}/brainextract_BrainExtractionBrain_N4.nii.gz"
+
+# registration_template uses a glob pattern — check for any match
+found_reg_tmpl=0
+for f in "${TOOL_OUT}"/brainextract_BrainExtractionPrior*Warped.nii.gz; do
+  [[ -f "$f" ]] || continue
+  verify_nifti "$f"
+  found_reg_tmpl=1
+  break
+done
+if [[ "$found_reg_tmpl" -eq 0 ]]; then
+  echo "  OPTIONAL-SKIP: registration_template (not produced)"
+fi
+
+verify_log "$TOOL"

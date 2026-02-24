@@ -51,4 +51,5 @@ for t in time z; do
     fi
   done
   echo "  ${t}-split produced ${count} volumes"
+  verify_log "${TOOL}_${t}"
 done

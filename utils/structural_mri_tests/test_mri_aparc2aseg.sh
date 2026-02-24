@@ -31,3 +31,10 @@ EOF
 # memory pressure from copy-on-write buffering.
 CWLTOOL_ARGS+=("--no-read-only")
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_mgz "${dir}/aparc2aseg.mgz" "INT"
+verify_log "$TOOL"

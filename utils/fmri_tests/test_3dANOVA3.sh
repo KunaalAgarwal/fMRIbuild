@@ -124,3 +124,13 @@ bucket: "anova3_bucket"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_afni "${TOOL_OUT}/anova3_fa+orig.HEAD"
+verify_afni "${TOOL_OUT}/anova3_fb+orig.HEAD"
+verify_afni "${TOOL_OUT}/anova3_fc+orig.HEAD"
+verify_afni "${TOOL_OUT}/anova3_bucket+orig.HEAD"
+verify_log "$TOOL"

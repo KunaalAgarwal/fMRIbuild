@@ -15,6 +15,14 @@ const getBaseType = (type) => {
 
 const isArrayType = (type) => type?.includes('[]') || false;
 
+/** When the source node is scattered, scalar File/Directory outputs are effectively arrays. */
+const getEffectiveOutputType = (type, sourceIsScattered) => {
+    if (!sourceIsScattered) return type;
+    const base = getBaseType(type);
+    if (!isArrayType(type) && (base === 'File' || base === 'Directory')) return `${base}[]`;
+    return type;
+};
+
 const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, inputAcceptedExtensions = null) => {
     if (!outputType || !inputType) return { compatible: true, warning: true, reason: 'Type information unavailable' };
 
@@ -221,6 +229,7 @@ const EdgeMappingModal = ({
     targetNode,
     existingMappings = [],
     adjacencyWarning = null,
+    sourceIsScattered = false,
 }) => {
     const { showWarning } = useToast();
     const [mappings, setMappings] = useState([]);
@@ -437,8 +446,9 @@ const EdgeMappingModal = ({
     const getMappingCompatibility = (outputName, inputName) => {
         const output = sourceIO.outputs.find(o => o.name === outputName);
         const input = targetIO.inputs.find(i => i.name === inputName);
+        const effectiveOutputType = getEffectiveOutputType(output?.type, sourceIsScattered);
         return checkTypeCompatibility(
-            output?.type,
+            effectiveOutputType,
             input?.type,
             output?.extensions,
             input?.acceptedExtensions
@@ -516,7 +526,7 @@ const EdgeMappingModal = ({
                                         >
                                             <div className="io-item-main">
                                                 <span className="io-name">{output.label}</span>
-                                                <span className="io-type">{output.type}</span>
+                                                <span className="io-type">{getEffectiveOutputType(output.type, sourceIsScattered)}</span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
                                             {output.extensions?.length > 0 && (

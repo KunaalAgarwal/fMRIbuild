@@ -30,3 +30,10 @@ output: "brain.nii.gz"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+dir="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${dir}/brain.nii.gz"
+verify_log "$TOOL"

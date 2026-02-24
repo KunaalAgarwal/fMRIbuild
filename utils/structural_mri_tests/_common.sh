@@ -161,6 +161,342 @@ make_template() {
   local cwl_file="$1" tool_name="$2"
   local tmpl="${JOB_DIR}/${tool_name}_template.yml"
   (cd /tmp && "$CWLTOOL_BIN" --make-template "$cwl_file") > "$tmpl" 2>/dev/null || true
+  verify_make_template "$tool_name"
+}
+
+# ── Verification helpers ──────────────────────────────────────
+
+verify_make_template() {
+  local tool_name="$1"
+  local tmpl="${JOB_DIR}/${tool_name}_template.yml"
+  if [[ ! -f "$tmpl" ]]; then
+    echo "  WARN: make-template did not produce ${tmpl}"
+    return 1
+  fi
+  if [[ ! -s "$tmpl" ]]; then
+    echo "  WARN: make-template output is empty: ${tmpl}"
+    return 1
+  fi
+  if ! grep -q ':' "$tmpl" 2>/dev/null; then
+    echo "  WARN: make-template output does not look like YAML: ${tmpl}"
+    return 1
+  fi
+  echo "  make-template: OK ($(wc -l < "$tmpl") lines)"
+  return 0
+}
+
+verify_nifti() {
+  local nii="$1"
+  local expected_dtype="${2:-}"
+  local bn
+  bn="$(basename "$nii")"
+
+  if [[ ! -f "$nii" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$nii" 2>/dev/null || stat -f%z "$nii" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+
+  local dims
+  dims="$(docker_fsl fslhd "$nii" 2>&1 | grep -E '^dim[1-4]\s' || true)"
+  echo "  Dims   (${bn}): ${dims}"
+
+  local pixdims
+  pixdims="$(docker_fsl fslhd "$nii" 2>&1 | grep -E '^pixdim[1-3]\s' || true)"
+  echo "  Pixdim (${bn}): ${pixdims}"
+
+  local dtype
+  dtype="$(docker_fsl fslhd "$nii" 2>&1 | grep -E '^data_type\s' || true)"
+  echo "  Dtype  (${bn}): ${dtype}"
+  if [[ -n "$expected_dtype" && -n "$dtype" ]]; then
+    if ! echo "$dtype" | grep -qi "$expected_dtype"; then
+      echo "  WARN: expected datatype ${expected_dtype}, got: ${dtype}"
+    fi
+  fi
+
+  local range
+  range="$(docker_fsl fslstats "$nii" -R 2>/dev/null || true)"
+  echo "  Range  (${bn}): ${range}"
+  if [[ "$range" == "0.000000 0.000000" ]]; then
+    echo "  WARN: image appears to be all zeros: ${bn}"
+  fi
+
+  return 0
+}
+
+verify_nifti_optional() {
+  local nii="$1"
+  local expected_dtype="${2:-}"
+  local bn
+  bn="$(basename "$nii")"
+  if [[ ! -f "$nii" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn} (not produced)"
+    return 0
+  fi
+  verify_nifti "$nii" "$expected_dtype"
+}
+
+verify_mat() {
+  local mat="$1"
+  local expected_rows="${2:-4}"
+  local bn
+  bn="$(basename "$mat")"
+
+  if [[ ! -f "$mat" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  if [[ ! -s "$mat" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  local rows
+  rows="$(wc -l < "$mat" 2>/dev/null || echo 0)"
+  echo "  FOUND: ${bn} (${rows} rows)"
+  if [[ "$rows" -lt "$expected_rows" ]]; then
+    echo "  WARN: expected at least ${expected_rows} rows, got ${rows}: ${bn}"
+  fi
+  return 0
+}
+
+verify_mat_optional() {
+  local mat="$1"
+  local expected_rows="${2:-4}"
+  local bn
+  bn="$(basename "$mat")"
+  if [[ ! -f "$mat" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn} (not produced)"
+    return 0
+  fi
+  verify_mat "$mat" "$expected_rows"
+}
+
+verify_csv() {
+  local csv="$1"
+  local min_rows="${2:-1}"
+  local bn
+  bn="$(basename "$csv")"
+
+  if [[ ! -f "$csv" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  if [[ ! -s "$csv" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  local rows
+  rows="$(wc -l < "$csv" 2>/dev/null || echo 0)"
+  echo "  FOUND: ${bn} (${rows} rows)"
+  if [[ "$rows" -lt "$min_rows" ]]; then
+    echo "  WARN: expected at least ${min_rows} rows, got ${rows}: ${bn}"
+  fi
+  return 0
+}
+
+verify_log() {
+  local tool_name="$1"
+  local log_file="${LOG_DIR}/${tool_name}.log"
+  if [[ ! -f "$log_file" ]]; then
+    echo "  WARN: log file not found: ${log_file}"
+    return 0
+  fi
+  if grep -qiE 'error|exception|segfault|core dump|fatal' "$log_file" 2>/dev/null; then
+    echo "  WARN: potential errors in log:"
+    grep -iE 'error|exception|segfault|core dump|fatal' "$log_file" | head -5
+  else
+    echo "  Log: no errors detected"
+  fi
+}
+
+verify_mgz() {
+  local mgz="$1"
+  local expected_dtype="${2:-}"
+  local bn
+  bn="$(basename "$mgz")"
+
+  if [[ ! -f "$mgz" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$mgz" 2>/dev/null || stat -f%z "$mgz" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+
+  local info
+  info="$(docker_fs mri_info "$mgz" 2>&1 || true)"
+
+  local dims
+  dims="$(echo "$info" | grep -E '^\s*dimensions' || true)"
+  echo "  Dims   (${bn}): ${dims}"
+
+  local voxel
+  voxel="$(echo "$info" | grep -E '^\s*voxel sizes' || true)"
+  echo "  Voxel  (${bn}): ${voxel}"
+
+  local dtype
+  dtype="$(echo "$info" | grep -E '^\s*type' || true)"
+  echo "  Dtype  (${bn}): ${dtype}"
+  if [[ -n "$expected_dtype" && -n "$dtype" ]]; then
+    if ! echo "$dtype" | grep -qi "$expected_dtype"; then
+      echo "  WARN: expected datatype ${expected_dtype}, got: ${dtype}"
+    fi
+  fi
+
+  return 0
+}
+
+verify_mgz_optional() {
+  local mgz="$1"
+  local expected_dtype="${2:-}"
+  local bn
+  bn="$(basename "$mgz")"
+  if [[ ! -f "$mgz" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn} (not produced)"
+    return 0
+  fi
+  verify_mgz "$mgz" "$expected_dtype"
+}
+
+verify_surface() {
+  local surf="$1"
+  local bn
+  bn="$(basename "$surf")"
+
+  if [[ ! -f "$surf" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$surf" 2>/dev/null || stat -f%z "$surf" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+
+  local info
+  info="$(docker_fs mris_info "$surf" 2>&1 || true)"
+
+  local vertices
+  vertices="$(echo "$info" | grep -iE 'num_vert|vertices' | head -1 || true)"
+  echo "  Vertices (${bn}): ${vertices}"
+
+  local faces
+  faces="$(echo "$info" | grep -iE 'num_face|faces' | head -1 || true)"
+  echo "  Faces    (${bn}): ${faces}"
+
+  return 0
+}
+
+verify_surface_optional() {
+  local surf="$1"
+  local bn
+  bn="$(basename "$surf")"
+  if [[ ! -f "$surf" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn} (not produced)"
+    return 0
+  fi
+  verify_surface "$surf"
+}
+
+verify_file() {
+  local f="$1"
+  local bn
+  bn="$(basename "$f")"
+
+  if [[ ! -f "$f" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$f" 2>/dev/null || stat -f%z "$f" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+  return 0
+}
+
+verify_file_optional() {
+  local f="$1"
+  local bn
+  bn="$(basename "$f")"
+  if [[ ! -f "$f" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn} (not produced)"
+    return 0
+  fi
+  verify_file "$f"
+}
+
+verify_afni() {
+  local dset="$1"
+  local bn
+  bn="$(basename "$dset")"
+
+  if [[ ! -f "$dset" ]]; then
+    echo "  FAIL: MISSING: ${bn}"
+    return 1
+  fi
+  local fsize
+  fsize="$(stat --printf='%s' "$dset" 2>/dev/null || stat -f%z "$dset" 2>/dev/null || echo '?')"
+  if [[ "$fsize" == "0" ]]; then
+    echo "  FAIL: zero-byte: ${bn}"
+    return 1
+  fi
+  echo "  FOUND: ${bn} (${fsize} bytes)"
+
+  local info
+  info="$(docker_afni 3dinfo -n4 -ad3 -space "$dset" 2>&1 | grep -v '^\*\*' || true)"
+  echo "  3dinfo (${bn}): ${info}"
+
+  local ni
+  ni="$(echo "$info" | awk '{print $1}')"
+  if [[ -z "$ni" || "$ni" == "0" ]]; then
+    echo "  WARN: could not verify dimensions: ${bn}"
+  fi
+
+  return 0
+}
+
+verify_afni_optional() {
+  local dset="$1"
+  local bn
+  bn="$(basename "$dset")"
+  if [[ ! -f "$dset" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn} (not produced)"
+    return 0
+  fi
+  verify_afni "$dset"
+}
+
+verify_directory() {
+  local d="$1"
+  local bn
+  bn="$(basename "$d")"
+
+  if [[ ! -d "$d" ]]; then
+    echo "  FAIL: MISSING directory: ${bn}"
+    return 1
+  fi
+  local count
+  count="$(find "$d" -maxdepth 1 -type f | wc -l)"
+  echo "  FOUND: ${bn}/ (${count} files)"
+  if [[ "$count" -eq 0 ]]; then
+    echo "  WARN: directory is empty: ${bn}"
+  fi
+  return 0
 }
 
 # ── Verification & run ─────────────────────────────────────────────

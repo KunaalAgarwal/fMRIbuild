@@ -57,6 +57,7 @@ run_test "${SCRIPT_DIR}/test_fslsplit.sh" "$@"
 run_test "${SCRIPT_DIR}/test_fslreorient2std.sh" "$@"
 run_test "${SCRIPT_DIR}/test_melodic.sh" "$@"
 run_test "${SCRIPT_DIR}/test_film_gls.sh" "$@"
+run_test "${SCRIPT_DIR}/test_feat.sh" "$@"
 
 # AFNI - preprocessing
 run_test "${SCRIPT_DIR}/test_3dvolreg.sh" "$@"
@@ -133,7 +134,6 @@ echo ""
 run_test "${SCRIPT_DIR}/test_fast.sh" "$@"
 run_test "${SCRIPT_DIR}/test_fnirt.sh" "$@"
 run_test "${SCRIPT_DIR}/test_fslmerge.sh" "$@"
-
 # AFNI
 run_test "${SCRIPT_DIR}/test_3dREMLfit.sh" "$@"
 run_test "${SCRIPT_DIR}/test_3dNwarpApply.sh" "$@"

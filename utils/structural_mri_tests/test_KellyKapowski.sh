@@ -33,3 +33,11 @@ convergence: "[5,0.01,10]"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/thickness.nii.gz" "FLOAT"
+
+verify_log "$TOOL"

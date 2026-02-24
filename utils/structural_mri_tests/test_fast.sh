@@ -33,3 +33,13 @@ output: "fast_out"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/fast_out_seg.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fast_out_pve_0.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fast_out_pve_1.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fast_out_pve_2.nii.gz"
+verify_log "$TOOL"

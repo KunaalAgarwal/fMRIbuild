@@ -27,3 +27,11 @@ convergence: "[20x10x0,0.0]"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/n4_corrected.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/n4_biasfield.nii.gz"
+verify_log "$TOOL"

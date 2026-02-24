@@ -518,19 +518,38 @@ export const TOOL_ANNOTATIONS = {
         "function": "Fits general linear model to fMRI time series with prewhitening using autocorrelation correction.",
         "modality": "4D fMRI NIfTI time series plus design matrix and contrast files.",
         "keyParameters": "--in (input 4D), --pd (design matrix), --con (contrast file), --thr (threshold), --sa (smoothed autocorrelation)",
-        "keyPoints": "Core statistical engine of FEAT. Design matrix must be pre-generated (e.g., via Feat_model). Outputs parameter estimates (pe), contrasts (cope), and stats (zstat).",
+        "keyPoints": "Core statistical engine of FEAT. Design matrix must be pre-generated (e.g., via Feat_model). When --con is provided, directly computes COPEs, VARCOPEs, T-statistics, and Z-statistics alongside parameter estimates (pe) and residuals.",
         "typicalUse": "First-level statistical analysis within FEAT or standalone.",
 "inputExtensions": {
             "input": [".nii",".nii.gz"],
-            "design_file": [".mat"]
+            "design_file": [".mat"],
+            "contrast_file": [".con"]
         },
                 "outputExtensions": {
             "residual4d": [".nii",".nii.gz"],
             "param_estimates": [".nii",".nii.gz"],
             "sigmasquareds": [".nii",".nii.gz"],
-            "threshac1": [".nii",".nii.gz"]
+            "threshac1": [".nii",".nii.gz"],
+            "cope": [".nii",".nii.gz"],
+            "varcope": [".nii",".nii.gz"],
+            "tstat": [".nii",".nii.gz"],
+            "zstat": [".nii",".nii.gz"]
         },
                 "docUrl": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FILM"
+    },
+    "feat": {
+        "cwlPath": "cwl/fsl/feat.cwl",
+        "fullName": "FMRI Expert Analysis Tool (FEAT)",
+        "function": "Complete fMRI analysis pipeline combining preprocessing (motion correction, spatial smoothing, temporal filtering), first-level statistical modeling (GLM with autocorrelation correction), and higher-level group analysis.",
+        "modality": "FEAT design file (.fsf) encoding all analysis parameters including input data paths, preprocessing options, design matrix, and contrasts.",
+        "keyParameters": "design_file (.fsf file with all configuration), input_data (4D BOLD data referenced by the .fsf)",
+        "keyPoints": "Pipeline controlled by the .fsf file. input_data must be provided separately for containerized execution (paths are rewritten at runtime). Internally runs BET, MCFLIRT, spatial smoothing, film_gls (with --con for contrast computation), registration, and optionally higher-level analysis. Outputs a .feat directory.",
+        "typicalUse": "Complete first-level or higher-level fMRI analysis when all parameters are pre-configured in an FSF file.",
+        "inputExtensions": {
+            "design_file": [".fsf"]
+        },
+        "outputExtensions": {},
+        "docUrl": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/FEAT"
     },
     "flameo": {
         "cwlPath": "cwl/fsl/flameo.cwl",
@@ -3340,7 +3359,8 @@ export const MODALITY_ASSIGNMENTS = {
       'Distortion Correction': ['fugue', 'topup', 'applytopup', 'fsl_prepare_fieldmap', 'prelude'],
       'Smoothing': ['susan'],
       'Statistical Analysis': ['film_gls', 'flameo', 'randomise'],
-      'ICA/Denoising': ['melodic', 'dual_regression']
+      'ICA/Denoising': ['melodic', 'dual_regression'],
+      'Pipelines': ['feat']
     },
     AFNI: {
       'Motion Correction': ['3dvolreg'],

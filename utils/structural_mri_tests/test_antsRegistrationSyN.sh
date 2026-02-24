@@ -33,3 +33,14 @@ reproducible: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_nifti "${TOOL_OUT}/syn_Warped.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/syn_InverseWarped.nii.gz"
+verify_mat "${TOOL_OUT}/syn_0GenericAffine.mat"
+verify_nifti_optional "${TOOL_OUT}/syn_1Warp.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/syn_1InverseWarp.nii.gz"
+verify_log "$TOOL"

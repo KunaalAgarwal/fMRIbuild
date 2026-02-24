@@ -30,3 +30,26 @@ quiet: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# Qwarp may produce +orig or +tlrc depending on base space
+found_qw=0
+for f in "${TOOL_OUT}"/qwarp_out+*.HEAD "${TOOL_OUT}"/qwarp_out.nii*; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  found_qw=1
+  break
+done
+if [[ "$found_qw" -eq 0 ]]; then
+  echo "  WARN: no warped output found"
+fi
+
+for f in "${TOOL_OUT}"/qwarp_out_WARP+*.HEAD "${TOOL_OUT}"/qwarp_out_WARP.nii*; do
+  [[ -f "$f" ]] || continue
+  verify_afni "$f"
+  break
+done
+verify_log "$TOOL"

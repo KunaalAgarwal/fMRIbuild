@@ -41,3 +41,34 @@ keep_temporary: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+# Required output
+verify_nifti "${TOOL_OUT}/cortical_BrainExtractionMask.nii.gz" "INT"
+
+# Optional outputs (may not all be produced with quick/stage1)
+verify_nifti_optional "${TOOL_OUT}/cortical_BrainSegmentation.nii.gz" "INT"
+verify_nifti_optional "${TOOL_OUT}/cortical_CorticalThickness.nii.gz" "FLOAT"
+verify_nifti_optional "${TOOL_OUT}/cortical_BrainNormalizedToTemplate.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/cortical_SubjectToTemplate1Warp.nii.gz"
+verify_mat_optional "${TOOL_OUT}/cortical_SubjectToTemplate0GenericAffine.mat"
+verify_nifti_optional "${TOOL_OUT}/cortical_TemplateToSubject0Warp.nii.gz"
+verify_mat_optional "${TOOL_OUT}/cortical_TemplateToSubject1GenericAffine.mat"
+
+# Segmentation posteriors array
+post_count=0
+for post in "${TOOL_OUT}"/cortical_BrainSegmentationPosteriors*.nii.gz; do
+  [[ -f "$post" ]] || continue
+  verify_nifti "$post" "FLOAT"
+  ((post_count++))
+done
+if [[ "$post_count" -gt 0 ]]; then
+  echo "  Segmentation posteriors found: ${post_count}"
+else
+  echo "  OPTIONAL-SKIP: segmentation_posteriors (not produced)"
+fi
+
+verify_log "$TOOL"

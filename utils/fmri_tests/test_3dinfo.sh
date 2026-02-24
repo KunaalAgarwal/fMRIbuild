@@ -23,3 +23,8 @@ short: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+# 3dinfo produces stdout only — verify log for errors
+verify_log "$TOOL"

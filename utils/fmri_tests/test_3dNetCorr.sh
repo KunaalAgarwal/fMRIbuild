@@ -29,3 +29,11 @@ mask:
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_file "${TOOL_OUT}/netcorr_000.netcc"
+verify_file_optional "${TOOL_OUT}/netcorr_000.netts"
+verify_log "$TOOL"

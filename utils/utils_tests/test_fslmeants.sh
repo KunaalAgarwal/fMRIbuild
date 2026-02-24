@@ -51,4 +51,5 @@ for t in whole masked; do
       echo "  WARN: ${t} output empty"
     fi
   done
+  verify_log "${TOOL}_${t}"
 done

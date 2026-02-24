@@ -75,6 +75,8 @@ if [[ -f "$OUTPUT_DIR/fa.mif" ]]; then
     check_mif_header "$OUTPUT_DIR/fa.mif" "fa_map" "$RESULTS_FILE" || PASS=false
 fi
 
+scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

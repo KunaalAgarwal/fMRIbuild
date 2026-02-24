@@ -27,3 +27,11 @@ acf: "fwhm_acf.1D"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_file "${TOOL_OUT}/fwhm_out.1D"
+verify_file_optional "${TOOL_OUT}/fwhm_acf.1D"
+verify_log "$TOOL"

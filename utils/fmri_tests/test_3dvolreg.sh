@@ -25,3 +25,11 @@ oned_file: "volreg.1D"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
+
+# ── Verify outputs ────────────────────────────────────────────────
+echo "── Verifying ${TOOL} outputs ──"
+TOOL_OUT="${OUT_DIR}/${TOOL}"
+
+verify_afni "${TOOL_OUT}/volreg+orig.HEAD"
+verify_file_optional "${TOOL_OUT}/volreg.1D"
+verify_log "$TOOL"

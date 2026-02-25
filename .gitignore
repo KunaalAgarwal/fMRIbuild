@@ -55,18 +55,15 @@ utils/fmri_tests/logs/
 utils/fmri_tests/data/
 utils/fmri_tests/derived/
 utils/fmri_tests/summary.tsv
-utils/dmri_tests/jobs/
-utils/dmri_tests/out/
-utils/dmri_tests/logs/
-utils/dmri_tests/data/
-utils/dmri_tests/derived/
-utils/dmri_tests/summary.tsv
 utils/utils_tests/jobs/
 utils/utils_tests/out/
 utils/utils_tests/logs/
 utils/utils_tests/data/
 utils/utils_tests/derived/
 utils/utils_tests/summary.tsv
+utils/workflow_tests/generated/
+utils/workflow_tests/logs/
+utils/workflow_tests/summary.tsv
 
 # Windows artifacts
 nul

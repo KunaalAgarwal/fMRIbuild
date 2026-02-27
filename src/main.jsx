@@ -98,15 +98,6 @@ function hasUnsavedChanges(workspace, savedWorkflow) {
            JSON.stringify(wsEdges) !== JSON.stringify(savedEdges);
 }
 
-/**
- * Validate internal edges of a workflow before saving.
- * Returns true if any validation warnings exist.
- */
-// Disabled — adjacency matrix has too many cross-modality false positives;
-// type/extension validation in EdgeMappingModal is sufficient.
-function validateWorkflowEdges(/* nodes, edges */) {
-    return false;
-}
 
 function App() {
     const {
@@ -185,12 +176,6 @@ function App() {
         const serializedNodes = serializeNodes(data.nodes);
         const serializedEdges = serializeEdges(data.edges);
 
-        // Validate
-        const hasWarnings = validateWorkflowEdges(serializedNodes, serializedEdges);
-        if (hasWarnings) {
-            showWarning('Workflow has connection warnings but will still be saved.');
-        }
-
         // Compute boundary nodes
         const boundaryNodes = computeBoundaryNodes(serializedNodes, serializedEdges);
 
@@ -198,7 +183,7 @@ function App() {
             name,
             nodes: serializedNodes,
             edges: serializedEdges,
-            hasValidationWarnings: hasWarnings,
+            hasValidationWarnings: false,
             boundaryNodes
         };
 

@@ -4,6 +4,8 @@ import '../styles/toast.css';
 
 const ToastContext = createContext(null);
 
+let nextToastId = 0;
+
 /**
  * Toast notification provider using React Bootstrap.
  * Replaces blocking alert() calls with non-blocking toasts.
@@ -35,7 +37,7 @@ export function ToastProvider({ children }) {
             return;
         }
 
-        const id = Date.now();
+        const id = ++nextToastId;
         const timerId = setTimeout(() => dismissToast(id, message), duration);
         activeRef.current.set(message, { id, timerId });
         setToasts(prev => [...prev, { id, message, variant, show: true }]);
@@ -57,18 +59,8 @@ export function ToastProvider({ children }) {
         addToast(message, 'info', 1500);
     }, [addToast]);
 
-    const dismissMessage = useCallback((message) => {
-        const entry = activeRef.current.get(message);
-        if (!entry) return;
-        clearTimeout(entry.timerId);
-        activeRef.current.delete(message);
-        setToasts(prev => prev.map(t =>
-            t.id === entry.id ? { ...t, show: false } : t
-        ));
-    }, []);
-
     return (
-        <ToastContext.Provider value={{ showError, showWarning, showSuccess, showInfo, dismissMessage }}>
+        <ToastContext.Provider value={{ showError, showWarning, showSuccess, showInfo }}>
             {children}
             <ToastContainer
                 position="top-end"
@@ -111,7 +103,6 @@ export function useToast() {
             showWarning: (msg) => alert(msg),
             showSuccess: (msg) => alert(msg),
             showInfo: (msg) => alert(msg),
-            dismissMessage: () => {}
         };
     }
     return context;

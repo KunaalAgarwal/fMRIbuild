@@ -763,6 +763,10 @@
   overflow: hidden;
 }
 
+.node-bottom-left .node-params-btn {
+  text-align: left;
+}
+
 /* Shared badge base */
 .node-scatter-badge,
 .node-gather-badge,
@@ -823,6 +827,12 @@
   max-width: 54px;
   display: flex;
   align-items: center;
+}
+
+.node-bottom-left .node-custom-badge {
+  width: auto;
+  min-width: auto;
+  max-width: none;
 }
 
 .node-custom-badge-text {

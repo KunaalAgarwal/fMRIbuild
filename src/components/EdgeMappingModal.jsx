@@ -198,7 +198,51 @@ const getToolIO = (nodeData) => {
                 });
         });
 
-        return { outputs, inputs, isGeneric: false, isCustomWorkflow: true };
+        // Compute per-tool scatter/gather status for group header indicators
+        const groupInfo = {};
+        const scatteredIds = new Set();
+
+        // Phase 1: explicit scatter (nodes with scatterInputs)
+        nonDummyNodes.forEach(node => {
+            if (node.scatterInputs?.length > 0) {
+                scatteredIds.add(node.id);
+                groupInfo[node.label] = { scattered: true };
+            }
+        });
+
+        // Phase 2: propagate scatter through internal edges
+        if (internalEdges && scatteredIds.size > 0) {
+            const queue = [...scatteredIds];
+            const visited = new Set(queue);
+            while (queue.length > 0) {
+                const srcId = queue.shift();
+                for (const edge of internalEdges) {
+                    if (edge.source !== srcId || visited.has(edge.target)) continue;
+                    const tgtNode = nonDummyNodes.find(n => n.id === edge.target);
+                    if (!tgtNode) continue;
+                    const tgtTool = getToolConfigSync(tgtNode.label);
+                    if (!tgtTool) continue;
+                    const mappings = edge.data?.mappings || [];
+                    if (mappings.length === 0) continue;
+                    // Check if ALL mapped inputs are array types (gather) vs any scalar (scatter inherit)
+                    const allArray = mappings.every(m => {
+                        const inputDef = tgtTool.requiredInputs?.[m.targetInput]
+                            || tgtTool.optionalInputs?.[m.targetInput];
+                        return inputDef?.type?.includes('[]');
+                    });
+                    if (allArray) {
+                        groupInfo[tgtNode.label] = { ...(groupInfo[tgtNode.label] || {}), gathered: true };
+                    } else {
+                        scatteredIds.add(tgtNode.id);
+                        visited.add(tgtNode.id);
+                        groupInfo[tgtNode.label] = { ...(groupInfo[tgtNode.label] || {}), scattered: true };
+                        queue.push(tgtNode.id);
+                    }
+                }
+            }
+        }
+
+        return { outputs, inputs, isGeneric: false, isCustomWorkflow: true, groupInfo };
     }
 
     const tool = getToolConfigSync(toolLabel);
@@ -570,7 +614,15 @@ const EdgeMappingModal = ({
                                 return (
                                     <React.Fragment key={output.name}>
                                         {showGroupHeader && (
-                                            <div className="io-group-header">{output.group}</div>
+                                            <div className="io-group-header">
+                                                {output.group}
+                                                {sourceIO.groupInfo?.[output.group]?.scattered && (
+                                                    <span className="group-scatter-badge">scattered</span>
+                                                )}
+                                                {sourceIO.groupInfo?.[output.group]?.gathered && (
+                                                    <span className="group-gather-badge">gathered</span>
+                                                )}
+                                            </div>
                                         )}
                                         <div
                                             ref={el => outputRefs.current[output.name] = el}
@@ -725,7 +777,15 @@ const EdgeMappingModal = ({
                                 return (
                                     <React.Fragment key={input.name}>
                                         {showGroupHeader && (
-                                            <div className="io-group-header">{input.group}</div>
+                                            <div className="io-group-header">
+                                                {input.group}
+                                                {targetIO.groupInfo?.[input.group]?.scattered && (
+                                                    <span className="group-scatter-badge">scattered</span>
+                                                )}
+                                                {targetIO.groupInfo?.[input.group]?.gathered && (
+                                                    <span className="group-gather-badge">gathered</span>
+                                                )}
+                                            </div>
                                         )}
                                         {showOptionalSeparator && (
                                             <div className="io-section-separator">optional</div>

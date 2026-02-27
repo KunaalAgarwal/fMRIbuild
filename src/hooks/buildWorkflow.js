@@ -619,16 +619,21 @@ export function buildCWLWorkflowObject(graph) {
         needsStepInputExpression: false,
     };
 
-    /* ---------- pre-compute effective scatter inputs per node ---------- */
-    for (const nodeId of order) {
-        const node = nodeById(nodeId);
-        const tool = getToolConfigSync(node.data.label);
-        const effectiveTool = tool || {
-            id: node.data.label.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+    /* ---------- helper: resolve tool config with generic fallback ---------- */
+    const getEffectiveTool = (label) => {
+        return getToolConfigSync(label) || {
+            id: label.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+            cwlPath: `cwl/generic/${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}.cwl`,
             requiredInputs: { input: { type: 'File', label: 'Input' } },
             optionalInputs: {},
             outputs: { output: { type: 'File', label: 'Output' } }
         };
+    };
+
+    /* ---------- pre-compute effective scatter inputs per node ---------- */
+    for (const nodeId of order) {
+        const node = nodeById(nodeId);
+        const effectiveTool = getEffectiveTool(node.data.label);
         const incoming = inEdgesOf(nodeId);
         ctx.effectiveScatterMap.set(nodeId, getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incoming));
     }
@@ -636,22 +641,7 @@ export function buildCWLWorkflowObject(graph) {
     /* ---------- walk nodes in topo order ---------- */
     order.forEach((nodeId) => {
         const node = nodeById(nodeId);
-        const { label } = node.data;
-
-        const tool = getToolConfigSync(label);
-
-        // Generic fallback for undefined tools
-        const genericTool = {
-            id: label.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-            cwlPath: `cwl/generic/${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}.cwl`,
-            requiredInputs: {
-                input: { type: 'File', label: 'Input' }
-            },
-            optionalInputs: {},
-            outputs: { output: { type: 'File', label: 'Output' } }
-        };
-
-        const effectiveTool = tool || genericTool;
+        const effectiveTool = getEffectiveTool(node.data.label);
 
         const stepId = getStepId(nodeId);
         const isSingleNode = nodes.length === 1;

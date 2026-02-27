@@ -54,7 +54,6 @@ const NodeComponent = ({ data, id }) => {
     const [expressionValues, setExpressionValues] = useState(data.expressions || {});
     const [expressionToggles, setExpressionToggles] = useState({});
     const [selectedTemplates, setSelectedTemplates] = useState({});
-    const [nodeNotes, setNodeNotes] = useState(data.notes || '');
 
     // Info tooltip state (hover to show, click to pin, click-outside to dismiss)
     const [showInfoTooltip, setShowInfoTooltip] = useState(false);
@@ -334,7 +333,6 @@ const NodeComponent = ({ data, id }) => {
             setParamValues({});
         }
 
-        setNodeNotes(data.notes || '');
         setShowModal(true);
     };
 
@@ -618,6 +616,10 @@ const NodeComponent = ({ data, id }) => {
         const hasAnyWhen = nonDummyInternalNodes.some(n => n.whenExpression);
         const hasAnyFx = nonDummyInternalNodes.some(n => n.expressions && Object.keys(n.expressions).length > 0);
         const hasAnyScatter = nonDummyInternalNodes.some(n => (n.scatterInputs?.length || 0) > 0);
+        const internalBIDSNode = (data.internalNodes || []).find(n => n.isBIDS);
+        const hasBIDSNode = !!internalBIDSNode;
+        const hasBIDSData = hasBIDSNode && internalBIDSNode.bidsStructure != null;
+        const hasBadges = isScatterInherited || hasAnyScatter || isGatherNode || hasAnyWhen || hasAnyFx || data.hasValidationWarnings;
 
         const handleOpenCustomModal = () => setShowCustomModal(true);
 
@@ -668,7 +670,18 @@ const NodeComponent = ({ data, id }) => {
             <>
                 <div className="node-wrapper node-custom-workflow" onDoubleClick={handleOpenCustomModal}>
                     <div className="node-top-row">
-                        <span className="node-custom-badge"><span className="node-custom-badge-text">{nonDummyCount} tools</span></span>
+                        {hasBIDSNode ? (
+                            <span className="node-bottom-left">
+                                <span className="node-custom-badge"><span className="node-custom-badge-text">{nonDummyCount}</span></span>
+                                {(isScatterInherited || hasAnyScatter) && <span className="node-scatter-badge">{'\u21BB'}</span>}
+                                {isGatherNode && <span className="node-gather-badge">G</span>}
+                                {hasAnyWhen && <span className="node-when-badge">?</span>}
+                                {hasAnyFx && <span className="node-fx-badge">fx</span>}
+                                {data.hasValidationWarnings && <span className="node-warning-badge">!</span>}
+                            </span>
+                        ) : (
+                            <span className="node-custom-badge"><span className="node-custom-badge-text">{nonDummyCount} tools</span></span>
+                        )}
                         <span className="node-params-btn" onClick={handleOpenCustomModal}>Params</span>
                     </div>
                     <div className="node-content">
@@ -680,11 +693,27 @@ const NodeComponent = ({ data, id }) => {
                     </div>
                     <div className="node-bottom-row">
                         <span className="node-bottom-left">
-                            {(isScatterInherited || hasAnyScatter) && <span className="node-scatter-badge">&#x21BB;</span>}
-                            {isGatherNode && <span className="node-gather-badge">G</span>}
-                            {hasAnyWhen && <span className="node-when-badge">?</span>}
-                            {hasAnyFx && <span className="node-fx-badge">fx</span>}
-                            {data.hasValidationWarnings && <span className="node-warning-badge">!</span>}
+                            {hasBIDSNode ? (
+                                <span
+                                    className="node-params-btn"
+                                    onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (hasBIDSData) {
+                                            data.onUpdateInternalBIDS?.({ _openModal: true });
+                                        } else {
+                                            data.onUpdateInternalBIDS?.({ _pickDirectory: true });
+                                        }
+                                    }}
+                                >Data</span>
+                            ) : (
+                                <>
+                                    {(isScatterInherited || hasAnyScatter) && <span className="node-scatter-badge">{'\u21BB'}</span>}
+                                    {isGatherNode && <span className="node-gather-badge">G</span>}
+                                    {hasAnyWhen && <span className="node-when-badge">?</span>}
+                                    {hasAnyFx && <span className="node-fx-badge">fx</span>}
+                                    {data.hasValidationWarnings && <span className="node-warning-badge">!</span>}
+                                </>
+                            )}
                         </span>
                         <span
                             ref={customInfoIconRef}

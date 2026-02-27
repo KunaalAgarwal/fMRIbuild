@@ -107,7 +107,7 @@ const generateRunSh = (safeWorkflowName, runtimeInputs, hasBIDS = false) => {
         ? `
 # BIDS mode: resolve dataset paths automatically
 if [ "\${1:-}" = "--bids" ]; then
-  BIDS_DIR="\$2"
+  BIDS_DIR="\${2:-}"
   if [ -z "\${BIDS_DIR:-}" ]; then
     echo "Error: --bids requires a path to a BIDS dataset directory"
     exit 1
@@ -127,7 +127,7 @@ fi
 `
         : '';
 
-    return `#!/bin/bash
+    return `#!/usr/bin/env bash
 set -euo pipefail
 
 # If --help is passed, show usage
@@ -155,10 +155,18 @@ cwltool --outdir /output "$@" \\
 };
 
 const generatePrefetchSh = (dockerImages) => {
-    const pullLines = dockerImages.map(img => `docker pull ${img}`).join('\n');
-    return `#!/bin/bash
+    const pullLines = dockerImages.map(img => `docker pull \$PLATFORM_FLAG ${img}`).join('\n');
+    return `#!/usr/bin/env bash
+set -euo pipefail
 # Pre-download all tool container images used by this workflow.
 # Run this before 'docker build' to speed up the first workflow execution.
+
+# Optional: set DOCKER_PLATFORM=linux/amd64 on Apple Silicon Macs
+PLATFORM_FLAG=""
+if [ -n "\${DOCKER_PLATFORM:-}" ]; then
+  PLATFORM_FLAG="--platform \${DOCKER_PLATFORM}"
+fi
+
 echo "Pulling neuroimaging tool images..."
 ${pullLines}
 echo "All images pulled successfully."
@@ -201,7 +209,7 @@ const generateRunSingularitySh = (safeWorkflowName, runtimeInputs) => {
         ].join('\n')
         : '  echo "All inputs are pre-configured. No file arguments needed."';
 
-    return `#!/bin/bash
+    return `#!/usr/bin/env bash
 set -euo pipefail
 
 # If --help is passed, show usage
@@ -232,7 +240,7 @@ const generatePrefetchSingularitySh = (dockerImages) => {
         const safeName = img.replace(/[/:]/g, '_') + '.sif';
         return `singularity pull --force ${safeName} docker://${img}`;
     }).join('\n');
-    return `#!/bin/bash
+    return `#!/usr/bin/env bash
 # Pre-download all tool container images as Singularity SIF files.
 # Run this before executing the workflow to avoid download delays.
 # Recommended on HPC compute nodes with limited internet access.
@@ -385,7 +393,7 @@ CWL requires a Unix-like environment. Use WSL (Windows Subsystem for Linux):
 \`\`\`bash
 unzip ${safeWorkflowName}.crate.zip -d my_workflow
 cd my_workflow
-chmod +x workflows/${safeWorkflowName}.cwl
+chmod +x workflows/${safeWorkflowName}.cwl run.sh run_singularity.sh prefetch_images.sh prefetch_images_singularity.sh
 \`\`\`
 
 ### 2. Edit the Job File
@@ -678,7 +686,7 @@ export function useGenerateWorkflow() {
         const failedPaths = results
             .map((r, i) => r.status === 'rejected' ? uniquePaths[i] : null)
             .filter(Boolean);
-        if (failedPaths.length === uniquePaths.length) {
+        if (uniquePaths.length > 0 && failedPaths.length === uniquePaths.length) {
             showError(`Unable to fetch any tool files. Check network connectivity.`);
             return;
         }

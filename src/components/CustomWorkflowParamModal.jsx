@@ -4,6 +4,7 @@ import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { DOCKER_TAGS } from '../utils/toolAnnotations.js';
 import { EXPRESSION_TEMPLATES } from '../utils/expressionTemplates.js';
 import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
+import { topoSort } from '../utils/topoSort.js';
 import TagDropdown from './TagDropdown.jsx';
 import '../styles/workflowItem.css';
 
@@ -23,24 +24,8 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             e => !dummyIds.has(e.source) && !dummyIds.has(e.target) && nodeIds.has(e.source) && nodeIds.has(e.target)
         );
 
-        // Kahn's topo sort
-        const incoming = Object.fromEntries(nonDummyNodes.map(n => [n.id, 0]));
-        const outgoing = new Map(nonDummyNodes.map(n => [n.id, []]));
-        realEdges.forEach(e => {
-            if (incoming[e.target] !== undefined) incoming[e.target]++;
-            outgoing.get(e.source)?.push(e.target);
-        });
-
-        const queue = nonDummyNodes.filter(n => incoming[n.id] === 0).map(n => n.id);
-        const order = [];
-        let head = 0;
-        while (head < queue.length) {
-            const id = queue[head++];
-            order.push(id);
-            for (const t of (outgoing.get(id) || [])) {
-                if (--incoming[t] === 0) queue.push(t);
-            }
-        }
+        let order;
+        try { order = topoSort(nonDummyNodes, realEdges); } catch { return { firstNodeIndex: 0, downstreamIndices: [] }; }
 
         // Map topo order IDs back to nonDummyNodes indices
         const idToIndex = new Map(nonDummyNodes.map((n, i) => [n.id, i]));
@@ -92,6 +77,17 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         const scatterInit = {};
         if (Array.isArray(node.scatterInputs) && node.scatterInputs.length > 0) {
             node.scatterInputs.forEach(name => { scatterInit[name] = true; });
+        }
+        // Force scatter on for inputs wired from internal BIDS nodes
+        const bidsIds = new Set((internalNodes || []).filter(n => n.isBIDS).map(n => n.id));
+        if (bidsIds.size > 0) {
+            for (const edge of (internalEdges || [])) {
+                if (bidsIds.has(edge.source) && edge.target === node.id) {
+                    for (const m of (edge.data?.mappings || [])) {
+                        scatterInit[m.targetInput] = true;
+                    }
+                }
+            }
         }
         setScatterToggles(scatterInit);
         setLinkMergeValues(node.linkMergeOverrides || {});
@@ -208,6 +204,22 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const tool = currentNode ? getToolConfigSync(currentNode.label) : null;
     const dockerImage = tool?.dockerImage || null;
 
+    // Compute which inputs of the current node are wired from internal BIDS nodes
+    const bidsWiredInputs = useMemo(() => {
+        if (!currentNode) return new Set();
+        const bidsIds = new Set((internalNodes || []).filter(n => n.isBIDS).map(n => n.id));
+        if (bidsIds.size === 0) return new Set();
+        const wired = new Set();
+        for (const edge of (internalEdges || [])) {
+            if (bidsIds.has(edge.source) && edge.target === currentNode.id) {
+                for (const m of (edge.data?.mappings || [])) {
+                    wired.add(m.targetInput);
+                }
+            }
+        }
+        return wired;
+    }, [currentNode?.id, internalNodes, internalEdges]);
+
     const allParams = useMemo(() => {
         if (!tool) return { required: [], optional: [] };
         const required = Object.entries(tool.requiredInputs || {})
@@ -303,8 +315,14 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         const isFileType = param.type === 'File' || param.type === 'Directory';
         const isFirstNode = currentIndex === firstNodeIndex;
         const isDownstreamScattered = !isFirstNode && (editedNodes[firstNodeIndex]?.scatterInputs?.length || 0) > 0;
+        const isBIDSWired = bidsWiredInputs.has(param.name);
 
-        const scatterBtn = isFirstNode ? (
+        const scatterBtn = isBIDSWired ? (
+            <span
+                className="scatter-toggle active locked"
+                title="Scatter forced by BIDS input"
+            >{'\u21BB'}</span>
+        ) : isFirstNode ? (
             <span
                 className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}`}
                 onClick={() => handleToggleScatter(param.name)}

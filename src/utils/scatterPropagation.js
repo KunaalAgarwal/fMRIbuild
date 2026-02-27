@@ -30,8 +30,10 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
     for (const node of nodes) outgoing.set(node.id, []);
     for (const edge of edges) outgoing.get(edge.source)?.push(edge);
 
-    // Phase 1: explicitly scattered nodes (non-empty scatterInputs)
-    // and custom workflow nodes with internal scatter
+    // Phase 1: identify scatter sources
+    // - Nodes with explicit scatterInputs
+    // - Custom workflow nodes with internal scatter
+    // - BIDS nodes with selections (they output File[] arrays)
     const scatteredNodeIds = new Set();
     for (const node of nodes) {
         if ((node.data?.scatterInputs?.length || 0) > 0) {
@@ -39,13 +41,15 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
         } else if (node.data?.isCustomWorkflow &&
             node.data?.internalNodes?.some(n => (n.scatterInputs?.length || 0) > 0)) {
             scatteredNodeIds.add(node.id);
+        } else if (node.data?.isBIDS && node.data?.bidsSelections) {
+            scatteredNodeIds.add(node.id);
         }
     }
 
-    // Phase 3: propagate scatter downstream with order-independent gather detection.
-    // Pass 3a: BFS from scattered sources, collecting per-target edge classification
+    // Phase 2: propagate scatter downstream with order-independent gather detection.
+    // Pass 2a: BFS from scattered sources, collecting per-target edge classification
     //          without committing nodes to scatter or gather yet.
-    // Pass 3b: Classify each target — ALL gather edges → gather; ANY scalar edge → scatter.
+    // Pass 2b: Classify each target — ALL gather edges → gather; ANY scalar edge → scatter.
     const gatherNodeIds = new Set();
 
     // targetEdgeInfo: Map<targetId, { hasGatherEdge, hasScatterEdge }>
@@ -76,7 +80,7 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
             }
         }
 
-        // Pass 3b: after processing all outgoing edges from this node,
+        // Pass 2b: after processing all outgoing edges from this node,
         // classify any targets that have ALL their incoming scattered edges resolved.
         // A target is resolved when no remaining queued scattered node feeds into it.
         for (const [targetId, info] of targetEdgeInfo) {

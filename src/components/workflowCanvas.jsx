@@ -260,6 +260,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 : (newParams) => handleNodeUpdate(node.id, newParams),
             // Reattach BIDS callback
             ...(node.data.isBIDS ? { onUpdateBIDS: (updates) => handleBIDSNodeUpdate(node.id, updates) } : {}),
+            // Reattach internal BIDS callback for custom workflow nodes
+            ...(node.data.isCustomWorkflow ? { onUpdateInternalBIDS: (updates) => handleInternalBIDSUpdate(node.id, updates) } : {}),
             // Reattach I/O edit callback for dummy nodes
             onSaveIO: node.data.isDummy ? (data) => handleIONodeUpdate(node.id, data) : null,
           };
@@ -416,6 +418,38 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     markForSync();
   };
 
+  // Update an internal BIDS node within a custom workflow node
+  const updateInternalBIDSNode = (cwNodeId, updates) => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) => {
+        if (node.id !== cwNodeId) return node;
+        const updatedInternalNodes = (node.data.internalNodes || []).map(n =>
+          n.isBIDS ? { ...n, ...updates } : n
+        );
+        return {
+          ...node,
+          data: { ...node.data, internalNodes: updatedInternalNodes }
+        };
+      })
+    );
+    markForSync();
+  };
+
+  // Handle BIDS actions for internal BIDS nodes within custom workflows
+  const handleInternalBIDSUpdate = (cwNodeId, updates) => {
+    if (updates._openModal) {
+      bidsPickerTargetRef.current = { cwNodeId };
+      setBidsModalNodeId(cwNodeId);
+      setShowBIDSModal(true);
+      return;
+    }
+    if (updates._pickDirectory) {
+      bidsPickerTargetRef.current = { cwNodeId };
+      bidsFileInputRef.current?.click();
+      return;
+    }
+  };
+
   const triggerBIDSDirectoryPicker = (nodeId) => {
     bidsPickerTargetRef.current = nodeId;
     bidsFileInputRef.current?.click();
@@ -425,8 +459,8 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     const files = event.target.files;
     if (!files || files.length === 0) return;
 
-    const nodeId = bidsPickerTargetRef.current;
-    if (!nodeId) return;
+    const target = bidsPickerTargetRef.current;
+    if (!target) return;
 
     const result = await parseBIDSDirectory(files);
 
@@ -445,9 +479,14 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       showInfo(result.info.join(' '));
     }
 
-    // Store structure on the node and open modal
-    handleBIDSNodeUpdate(nodeId, { bidsStructure: result.bidsStructure });
-    setBidsModalNodeId(nodeId);
+    // Store structure and open modal — route to internal or regular BIDS node
+    if (typeof target === 'object' && target.cwNodeId) {
+      updateInternalBIDSNode(target.cwNodeId, { bidsStructure: result.bidsStructure });
+      setBidsModalNodeId(target.cwNodeId);
+    } else {
+      handleBIDSNodeUpdate(target, { bidsStructure: result.bidsStructure });
+      setBidsModalNodeId(target);
+    }
     setShowBIDSModal(true);
 
     // Reset file input so same directory can be re-selected
@@ -456,10 +495,16 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
   const handleBIDSModalClose = (bidsSelections) => {
     if (bidsSelections && bidsModalNodeId) {
-      handleBIDSNodeUpdate(bidsModalNodeId, {
-        bidsSelections,
-        // BIDS scatter is propagated via edges in computeScatteredNodes
-      });
+      const target = bidsPickerTargetRef.current;
+      if (typeof target === 'object' && target.cwNodeId) {
+        // Internal BIDS node within a custom workflow
+        updateInternalBIDSNode(target.cwNodeId, { bidsSelections });
+      } else {
+        // Regular BIDS node
+        handleBIDSNodeUpdate(bidsModalNodeId, {
+          bidsSelections,
+        });
+      }
     }
     setShowBIDSModal(false);
     setBidsModalNodeId(null);
@@ -646,6 +691,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         hasValidationWarnings: savedWorkflow.hasValidationWarnings,
         parameters: {},
         onSaveParameters: (newData) => handleCustomNodeUpdate(id, newData),
+        onUpdateInternalBIDS: (updates) => handleInternalBIDSUpdate(id, updates),
       }));
     } else {
       createNode((id) => ({
@@ -802,7 +848,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         <BIDSDataModal
             show={showBIDSModal}
             onClose={handleBIDSModalClose}
-            bidsStructure={bidsModalNodeId ? nodeMap.get(bidsModalNodeId)?.data?.bidsStructure : null}
+            bidsStructure={(() => {
+                if (!bidsModalNodeId) return null;
+                const target = bidsPickerTargetRef.current;
+                if (typeof target === 'object' && target.cwNodeId) {
+                    const cwNode = nodeMap.get(target.cwNodeId);
+                    return cwNode?.data?.internalNodes?.find(n => n.isBIDS)?.bidsStructure || null;
+                }
+                return nodeMap.get(bidsModalNodeId)?.data?.bidsStructure || null;
+            })()}
         />
       </div>
   );

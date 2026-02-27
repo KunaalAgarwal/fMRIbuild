@@ -436,6 +436,19 @@ g:hover .connection-dot {
     margin-top: 0;
 }
 
+.group-scatter-badge {
+    margin-left: 6px;
+    color: #6fc2cf;
+    font-size: 0.85em;
+}
+
+.group-gather-badge {
+    margin-left: 6px;
+    color: #50c878;
+    font-size: 0.85em;
+    font-weight: 700;
+}
+
 /* Enum values below io-item-main */
 .io-enum-values {
     font-family: 'Roboto Mono', monospace;

@@ -149,3 +149,7 @@ outputs:
     type: File
     outputBinding:
       glob: oxford_asl.log
+  err_log:
+    type: File
+    outputBinding:
+      glob: oxford_asl.err.log

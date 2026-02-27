@@ -43,6 +43,9 @@ cifti_out: smoothed.dtseries.nii
 left_surface:
   class: File
   path: ${WB_SPHERE_L}
+right_surface:
+  class: File
+  path: ${WB_SPHERE_R}
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -53,3 +56,4 @@ dir="${OUT_DIR}/${TOOL}"
 
 verify_cifti "${dir}/smoothed.dtseries.nii"
 verify_log "$TOOL"
+verify_file_optional "${dir}/wb_cifti_smoothing.err.log"

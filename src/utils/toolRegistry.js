@@ -92,6 +92,7 @@ function mergeToolData(toolName, parsed, annotation) {
         // Add enum options: prefer CWL-derived, fall back to annotation hints
         if (inputDef.isEnum && inputDef.enumSymbols.length > 0) {
             enriched.options = inputDef.enumSymbols;
+            enriched.enumSymbols = inputDef.enumSymbols;
         } else if (enumHint) {
             enriched.options = enumHint;
         }
@@ -170,7 +171,7 @@ function annotationOnlyFallback(toolName, annotation) {
  */
 function mapBaseType(inputDef) {
     if (inputDef.isRecord) return 'record';
-    if (inputDef.isEnum) return 'string'; // Enums display as strings with options[]
+    if (inputDef.isEnum) return 'enum';
     if (inputDef.isArray) return `${inputDef.arrayItemType || inputDef.baseType}[]`;
     return inputDef.baseType;
 }

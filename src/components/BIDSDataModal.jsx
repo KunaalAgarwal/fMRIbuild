@@ -394,11 +394,31 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
           <div className="bids-subject-panel">
             <div className="bids-subject-header">
               <div className="bids-select-btns">
-                <button className="bids-select-all-btn" onClick={() => setSelectedSubjects(new Set(allSubjectIds))}>
-                  Select all
+                <button className="bids-select-all-btn" onClick={() => {
+                  if (subjectSearch.trim()) {
+                    setSelectedSubjects(prev => {
+                      const next = new Set(prev);
+                      filteredSubjects.forEach(id => next.add(id));
+                      return next;
+                    });
+                  } else {
+                    setSelectedSubjects(new Set(allSubjectIds));
+                  }
+                }}>
+                  {subjectSearch.trim() ? 'Select filtered' : 'Select all'}
                 </button>
-                <button className="bids-select-all-btn" onClick={() => setSelectedSubjects(new Set())}>
-                  Deselect all
+                <button className="bids-select-all-btn" onClick={() => {
+                  if (subjectSearch.trim()) {
+                    setSelectedSubjects(prev => {
+                      const next = new Set(prev);
+                      filteredSubjects.forEach(id => next.delete(id));
+                      return next;
+                    });
+                  } else {
+                    setSelectedSubjects(new Set());
+                  }
+                }}>
+                  {subjectSearch.trim() ? 'Deselect filtered' : 'Deselect all'}
                 </button>
               </div>
               <span className="bids-subject-count">

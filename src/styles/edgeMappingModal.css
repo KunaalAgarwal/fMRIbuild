@@ -1,3 +1,8 @@
+/* Larger modal override */
+.edge-mapping-modal .modal-dialog {
+    max-width: min(90vw, 1500px);
+}
+
 .edge-mapping-modal .modal-content {
     border-radius: 8px;
     background-color: var(--bg-secondary);
@@ -9,26 +14,26 @@
 
 .edge-mapping-modal .modal-header {
     border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 16px 20px;
+    padding: 18px 24px;
     background-color: var(--bg-header);
     border-radius: 8px 8px 0 0;
 }
 
 .edge-mapping-modal .modal-title {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.95rem;
+    font-size: clamp(0.85rem, 0.6rem + 0.7vw, 1.15rem);
     font-weight: 500;
     color: var(--text-light);
 }
 
 .edge-mapping-modal .modal-body {
-    padding: 20px;
+    padding: 28px;
     background-color: var(--bg-secondary);
 }
 
 .edge-mapping-modal .modal-footer {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-    padding: 14px 20px;
+    padding: 18px 24px;
     background-color: var(--bg-header);
     border-radius: 0 0 8px 8px;
     gap: 10px;
@@ -39,8 +44,8 @@
     justify-content: space-between;
     align-items: flex-start;
     position: relative;
-    min-height: 180px;
-    gap: 40px;
+    min-height: 220px;
+    gap: clamp(16px, 1rem + 2vw, 55px);
     padding: 10px 0;
 }
 
@@ -76,7 +81,7 @@
 .column-header {
     font-family: 'Roboto Mono', monospace;
     font-weight: 500;
-    font-size: 0.75rem;
+    font-size: clamp(0.68rem, 0.5rem + 0.5vw, 0.88rem);
     color: var(--text-muted);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -88,7 +93,7 @@
 }
 
 .generic-badge {
-    font-size: 0.6rem;
+    font-size: clamp(0.58rem, 0.4rem + 0.45vw, 0.74rem);
     background-color: var(--bg-interactive);
     color: var(--text-medium);
     padding: 2px 6px;
@@ -101,7 +106,7 @@
     display: flex;
     flex-direction: column;
     gap: 6px;
-    padding: 10px 14px;
+    padding: clamp(8px, 0.4rem + 0.4vw, 14px) clamp(10px, 0.5rem + 0.5vw, 18px);
     background-color: var(--bg-tertiary);
     border: 1px solid rgba(255, 255, 255, 0.08);
     border-radius: 6px;
@@ -150,36 +155,29 @@
 
 .io-name {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.8rem;
+    font-size: clamp(0.74rem, 0.55rem + 0.55vw, 0.95rem);
     font-weight: 500;
     color: var(--text-medium);
     flex: 1;
     min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .io-type {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.65rem;
+    font-size: clamp(0.62rem, 0.45rem + 0.5vw, 0.8rem);
     color: var(--text-secondary);
     background-color: rgba(255, 255, 255, 0.04);
-    padding: 3px 7px;
+    padding: 4px 8px;
     border-radius: 4px;
-    flex-shrink: 0;
-}
-
-/* File extension display */
-.io-extensions {
-    font-family: 'Roboto Mono', monospace;
-    font-size: 0.6rem;
-    color: var(--text-muted);
-    background-color: rgba(255, 255, 255, 0.05);
-    padding: 3px 8px;
-    border-radius: 3px;
-    max-width: 100%;
+    flex-shrink: 1;
+    min-width: 0;
+    max-width: 50%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    align-self: flex-start;
 }
 
 .connection-lines {
@@ -240,17 +238,39 @@ g:hover .connection-dot {
     stroke: var(--color-warning);
 }
 
-.connection-label-offscreen {
-    font-family: 'Roboto Mono', monospace;
-    font-size: clamp(0.45rem, 1.2vw, 0.55rem);
-    fill: var(--text-muted);
-    dominant-baseline: middle;
+/* Junction dot where line meets label */
+.connection-dot-junction {
+    fill: var(--color-success);
+    opacity: 0.6;
     pointer-events: none;
-    transition: fill 0.15s ease;
+    transition: fill 0.15s ease, opacity 0.15s ease;
 }
 
-.connection-label-offscreen.warning-label-offscreen {
+.connection-dot-junction.warning-dot {
     fill: var(--color-warning);
+}
+
+.offscreen-group:hover .connection-dot-junction {
+    fill: var(--color-danger);
+    opacity: 1;
+}
+
+/* Off-screen label (foreignObject div) */
+.offscreen-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.65rem, 1.5vw, 0.85rem);
+    color: var(--color-success);
+    opacity: 0.7;
+    line-height: 22px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: none;
+    transition: color 0.15s ease, opacity 0.15s ease;
+}
+
+.offscreen-label-warning {
+    color: var(--color-warning);
 }
 
 .offscreen-group {
@@ -266,8 +286,9 @@ g:hover .connection-dot {
     fill: var(--color-danger);
 }
 
-.offscreen-group:hover .connection-label-offscreen {
-    fill: var(--color-danger);
+.offscreen-group:hover .offscreen-label {
+    color: var(--color-danger);
+    opacity: 1;
 }
 
 @keyframes dash-flow {
@@ -278,7 +299,7 @@ g:hover .connection-dot {
 
 .mapping-instructions {
     text-align: center;
-    font-size: 0.75rem;
+    font-size: clamp(0.68rem, 0.5rem + 0.5vw, 0.88rem);
     color: var(--text-secondary);
     margin-top: 16px;
     padding-top: 14px;
@@ -288,7 +309,7 @@ g:hover .connection-dot {
 .edge-mapping-modal .btn-primary {
     background-color: var(--color-primary);
     border-color: var(--color-primary);
-    font-size: 0.85rem;
+    font-size: clamp(0.78rem, 0.55rem + 0.55vw, 0.95rem);
     padding: 8px 20px;
     border-radius: 5px;
     font-weight: 500;
@@ -303,7 +324,7 @@ g:hover .connection-dot {
     background-color: transparent;
     border-color: rgba(255, 255, 255, 0.15);
     color: var(--text-muted);
-    font-size: 0.85rem;
+    font-size: clamp(0.78rem, 0.55rem + 0.55vw, 0.95rem);
     padding: 8px 20px;
     border-radius: 5px;
     font-weight: 500;
@@ -325,7 +346,7 @@ g:hover .connection-dot {
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.8rem;
+    font-size: clamp(0.72rem, 0.5rem + 0.55vw, 0.9rem);
     color: var(--color-warning);
 }
 
@@ -361,10 +382,45 @@ g:hover .connection-dot {
     flex-shrink: 0;
 }
 
+/* Scatter note banner (shown at top like warning banners) */
+.scatter-note-banner {
+    background-color: rgba(111, 194, 207, 0.12);
+    border: 1px solid rgba(111, 194, 207, 0.3);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(0.72rem, 0.5rem + 0.55vw, 0.9rem);
+    color: #6fc2cf;
+}
+
+.scatter-note-banner .scatter-note-icon {
+    font-size: 1rem;
+}
+
+.scatter-gather-banner {
+    background-color: rgba(80, 200, 120, 0.12);
+    border: 1px solid rgba(80, 200, 120, 0.3);
+    border-radius: 6px;
+    padding: 10px 14px;
+    margin-bottom: 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(0.72rem, 0.5rem + 0.55vw, 0.9rem);
+    color: #50c878;
+}
+
+.scatter-gather-banner .scatter-gather-icon {
+    font-size: 1rem;
+}
+
 /* Group headers for custom workflow nodes */
 .io-group-header {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.65rem;
+    font-size: clamp(0.6rem, 0.42rem + 0.5vw, 0.78rem);
     font-weight: 600;
     color: var(--color-primary);
     text-transform: uppercase;
@@ -380,10 +436,21 @@ g:hover .connection-dot {
     margin-top: 0;
 }
 
+/* Enum values below io-item-main */
+.io-enum-values {
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.58rem, 0.4rem + 0.45vw, 0.72rem);
+    color: var(--text-secondary);
+    padding: 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 /* Separator between required and optional inputs */
 .io-section-separator {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.6rem;
+    font-size: clamp(0.58rem, 0.4rem + 0.45vw, 0.74rem);
     color: var(--text-secondary);
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -410,85 +477,29 @@ g:hover .connection-dot.warning-dot {
     fill: var(--color-danger);
 }
 
-/* Responsive: medium screens */
+/* Responsive: small screens — layout changes only */
 @media (max-width: 768px) {
-    .edge-mapping-modal .modal-header {
-        padding: 12px 16px;
-    }
-
-    .edge-mapping-modal .modal-body {
-        padding: 14px;
-    }
-
-    .edge-mapping-modal .modal-footer {
-        padding: 10px 16px;
-    }
-
-    .mapping-container {
-        gap: 20px;
-    }
-
-    .io-column {
-        max-width: 45%;
-    }
-
-    .io-item {
-        padding: 8px 10px;
+    .io-item-main {
+        flex-direction: column;
+        align-items: flex-start;
         gap: 4px;
     }
 
+    .io-type {
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
     .io-name {
-        font-size: 0.72rem;
-    }
-
-    .column-header {
-        font-size: 0.68rem;
-        padding-bottom: 8px;
-        margin-bottom: 4px;
-    }
-}
-
-/* Responsive: small screens */
-@media (max-width: 576px) {
-    .edge-mapping-modal .modal-body {
-        padding: 10px;
-    }
-
-    .mapping-container {
-        gap: 12px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        width: 100%;
     }
 
     .io-column {
         max-width: 48%;
-    }
-
-    .io-item {
-        padding: 6px 8px;
-        gap: 3px;
-    }
-
-    .io-name {
-        font-size: 0.68rem;
-    }
-
-    .io-type {
-        font-size: 0.58rem;
-        padding: 2px 5px;
-    }
-
-    .io-extensions {
-        display: none;
-    }
-
-    .column-header {
-        font-size: 0.62rem;
-        padding-bottom: 6px;
-        margin-bottom: 2px;
-    }
-
-    .mapping-instructions {
-        font-size: 0.65rem;
-        margin-top: 10px;
-        padding-top: 10px;
     }
 }

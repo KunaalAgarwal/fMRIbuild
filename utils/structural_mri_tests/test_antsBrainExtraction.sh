@@ -24,10 +24,10 @@ anatomical_image:
   path: "${T1_RES}"
 template:
   class: File
-  path: "${T1_RES}"
+  path: "${T1W_2MM}"
 brain_probability_mask:
   class: File
-  path: "${ANTS_MASK}"
+  path: "${T1W_2MM_MASK}"
 output_prefix: "brainextract_"
 use_floatingpoint: true
 EOF

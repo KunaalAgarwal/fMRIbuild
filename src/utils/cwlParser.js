@@ -138,6 +138,12 @@ function parseCWLDocument(doc, cwlPath) {
     };
 }
 
+/* Test-only: allow utils/workflow_tests to populate cache from disk */
+export { parseCWLDocument as _parseCWLDocumentForTest };
+export function _injectParsedForTest(cwlPath, parsed) {
+    resolvedCache.set(cwlPath, parsed);
+}
+
 // ── Input Parsing ────────────────────────────────────────────────────────
 
 function parseInput(name, def) {
@@ -380,24 +386,30 @@ function extractGlob(def) {
 }
 
 /**
- * Extract Docker image from hints or requirements.
+ * Extract Docker image name (without tag) from hints or requirements.
  */
 function extractDockerImage(doc) {
+    const stripTag = (pull) => {
+        if (!pull) return null;
+        const idx = pull.lastIndexOf(':');
+        return idx > 0 ? pull.substring(0, idx) : pull;
+    };
+
     const hints = doc.hints || {};
     const reqs = doc.requirements || {};
 
     // CWL spec: requirements override hints
     const dockerReq = reqs.DockerRequirement || hints.DockerRequirement;
-    if (dockerReq) return dockerReq.dockerPull || null;
+    if (dockerReq) return stripTag(dockerReq.dockerPull);
 
     // Array form: check requirements first, then hints
     if (Array.isArray(doc.requirements)) {
         const r = doc.requirements.find(r => r.class === 'DockerRequirement');
-        if (r) return r.dockerPull || null;
+        if (r) return stripTag(r.dockerPull);
     }
     if (Array.isArray(doc.hints)) {
         const h = doc.hints.find(h => h.class === 'DockerRequirement');
-        if (h) return h.dockerPull || null;
+        if (h) return stripTag(h.dockerPull);
     }
 
     return null;

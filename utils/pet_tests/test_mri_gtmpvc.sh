@@ -207,6 +207,7 @@ for t in setA setB setC setD setE; do
     esac
   done
   verify_log "${TOOL}_${t}"
+  verify_file_optional "${dir}/mri_gtmpvc.err.log"
 done
 
 # ── Summary ───────────────────────────────────────────────────────

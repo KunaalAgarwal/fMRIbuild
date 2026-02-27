@@ -20,7 +20,9 @@ export const DOCKER_IMAGES = {
     "fmriprep": "nipreps/fmriprep",
     "mriqc": "nipreps/mriqc",
     "connectome_workbench": "khanlab/connectome-workbench",
-    "amico": "cookpa/amico-noddi"
+    "amico": "cookpa/amico-noddi",
+    "dcm2niix": "xnat/dcm2niix",
+    "ica_aroma": "rtrhd/ica-aroma"
 };
 
 export const TOOL_ANNOTATIONS = {
@@ -3181,10 +3183,167 @@ export const TOOL_ANNOTATIONS = {
             "fiso_map": [".nii.gz"]
         },
                 "docUrl": "https://github.com/daducci/AMICO"
+    },
+    "fsl_regfilt": {
+        "cwlPath": "cwl/fsl/fsl_regfilt.cwl",
+        "fullName": "FSL Component Regression Filter (fsl_regfilt)",
+        "function": "Removes nuisance components from 4D fMRI data by regressing out specified columns from a design or mixing matrix.",
+        "modality": "4D fMRI NIfTI time series with associated ICA mixing matrix.",
+        "keyParameters": "-i (input 4D), -d (design/mixing matrix), -o (output), -f (component indices to remove)",
+        "keyPoints": "Typically used with MELODIC output. Removes ICA components classified as noise. Component indices are comma-separated or ranges.",
+        "typicalUse": "Removing ICA-identified noise components from fMRI data, often used with FIX or manual classification.",
+        "inputExtensions": {
+            "input": [".nii", ".nii.gz"],
+            "design": [".txt", ".mat"]
+        },
+        "outputExtensions": {
+            "output": [".nii", ".nii.gz"]
+        },
+        "docUrl": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/fsl_regfilt"
+    },
+    "fslchfiletype": {
+        "cwlPath": "cwl/fsl/fslchfiletype.cwl",
+        "fullName": "FSL Change File Type (fslchfiletype)",
+        "function": "Converts neuroimaging files between NIfTI and ANALYZE file formats.",
+        "modality": "Any NIfTI or ANALYZE image.",
+        "keyParameters": "<filetype> (NIFTI_GZ, NIFTI, NIFTI_PAIR, ANALYZE), <input_file>, [output_file]",
+        "keyPoints": "Supports NIFTI_GZ (.nii.gz), NIFTI (.nii), NIFTI_PAIR (.hdr/.img), and ANALYZE formats. Quick utility for format interoperability.",
+        "typicalUse": "Converting between compressed and uncompressed NIfTI formats, or to legacy ANALYZE format.",
+        "inputExtensions": {
+            "input_file": [".nii", ".nii.gz", ".hdr", ".img"]
+        },
+        "outputExtensions": {
+            "output": [".nii", ".nii.gz", ".hdr", ".img"]
+        },
+        "docUrl": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils"
+    },
+    "fslhd": {
+        "cwlPath": "cwl/fsl/fslhd.cwl",
+        "fullName": "FSL Header Display (fslhd)",
+        "function": "Displays NIfTI/ANALYZE image header information including dimensions, voxel sizes, data type, and orientation.",
+        "modality": "Any NIfTI or ANALYZE image.",
+        "keyParameters": "<input_file>, -x (XML output format)",
+        "keyPoints": "Reports full header including sform/qform matrices, intent codes, and auxiliary info. XML output useful for programmatic parsing.",
+        "typicalUse": "Inspecting image metadata for quality control and debugging preprocessing issues.",
+        "inputExtensions": {
+            "input_file": [".nii", ".nii.gz"]
+        },
+        "outputExtensions": {
+            "header_info": [".txt"]
+        },
+        "docUrl": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils"
+    },
+    "fslinfo": {
+        "cwlPath": "cwl/fsl/fslinfo.cwl",
+        "fullName": "FSL Image Info (fslinfo)",
+        "function": "Displays concise image dimension and voxel size information from a NIfTI header.",
+        "modality": "Any NIfTI image.",
+        "keyParameters": "<input_file>",
+        "keyPoints": "Compact output showing data type, dimensions (dim1-dim4), voxel sizes (pixdim1-pixdim4), and time step. Simpler than fslhd.",
+        "typicalUse": "Quick inspection of image dimensions and voxel sizes for pipeline verification.",
+        "inputExtensions": {
+            "input_file": [".nii", ".nii.gz"]
+        },
+        "outputExtensions": {
+            "info": [".txt"]
+        },
+        "docUrl": "https://fsl.fmrib.ox.ac.uk/fsl/fslwiki/Fslutils"
+    },
+    "3dDWItoDT": {
+        "cwlPath": "cwl/afni/3dDWItoDT.cwl",
+        "fullName": "AFNI Diffusion Tensor Fitting (3dDWItoDT)",
+        "function": "Fits a diffusion tensor model to DWI data using linear or nonlinear methods, outputting tensor components, eigenvalues, and eigenvectors.",
+        "modality": "4D diffusion-weighted dataset with gradient vector file.",
+        "keyParameters": "-prefix (output prefix), -mask (brain mask), -eigs (output eigenvalues/eigenvectors), -nonlinear, -automask",
+        "keyPoints": "Supports linear (default) and nonlinear fitting. Use -eigs for eigenvalue/eigenvector output required by 3dTrackID. Gradient file needs 3 columns per direction.",
+        "typicalUse": "Computing diffusion tensor and derived scalar maps (FA, MD) from DWI data in AFNI workflows.",
+        "inputExtensions": {
+            "input": [".nii", ".nii.gz", ".HEAD"],
+            "gradient_file": [".1D", ".txt"]
+        },
+        "outputExtensions": {
+            "tensor": [".HEAD", ".nii", ".nii.gz"]
+        },
+        "docUrl": "https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDWItoDT.html"
+    },
+    "3dDWUncert": {
+        "cwlPath": "cwl/afni/3dDWUncert.cwl",
+        "fullName": "AFNI DWI Uncertainty Estimation (3dDWUncert)",
+        "function": "Estimates uncertainty of diffusion tensor parameters via jackknife or bootstrap resampling of DWI data.",
+        "modality": "4D diffusion-weighted dataset with gradient vector file.",
+        "keyParameters": "-inset (input DWI), -prefix (output prefix), -grads (gradient file), -mask (brain mask), -iters (iterations, default 300)",
+        "keyPoints": "Provides confidence intervals for FA and eigenvector directions. Output used as input for probabilistic tractography with 3dTrackID. Computationally intensive.",
+        "typicalUse": "Generating uncertainty estimates for probabilistic tractography in AFNI diffusion pipelines.",
+        "inputExtensions": {
+            "inset": [".nii", ".nii.gz", ".HEAD"],
+            "grads": [".1D", ".txt"],
+            "mask": [".nii", ".nii.gz", ".HEAD"]
+        },
+        "outputExtensions": {
+            "uncertainty": [".HEAD", ".nii", ".nii.gz"]
+        },
+        "docUrl": "https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dDWUncert.html"
+    },
+    "3dTrackID": {
+        "cwlPath": "cwl/afni/3dTrackID.cwl",
+        "fullName": "AFNI Tractography (3dTrackID)",
+        "function": "Performs deterministic, mini-probabilistic, or full probabilistic white matter tractography using diffusion tensor data.",
+        "modality": "DTI parameter volumes (from 3dDWItoDT with -eigs) and integer-labeled ROI mask.",
+        "keyParameters": "-mode (DET/MINIP/PROB), -dti_in (DTI prefix), -netrois (ROI file), -prefix (output prefix), -mask (brain/WM mask)",
+        "keyPoints": "Three tracking modes with different speed/accuracy tradeoffs. Outputs tract files, connectivity matrices, and statistics. Requires 3dDWItoDT output with -eigs flag.",
+        "typicalUse": "White matter tractography and structural connectivity analysis in AFNI diffusion pipelines.",
+        "inputExtensions": {
+            "netrois": [".nii", ".nii.gz", ".HEAD"],
+            "mask": [".nii", ".nii.gz", ".HEAD"]
+        },
+        "outputExtensions": {
+            "tracts": [".trk", ".niml.tract"],
+            "connectivity_matrix": [".grid"],
+            "stats": [".stats"]
+        },
+        "docUrl": "https://afni.nimh.nih.gov/pub/dist/doc/program_help/3dTrackID.html"
+    },
+    "dcm2niix": {
+        "cwlPath": "cwl/dcm2niix/dcm2niix.cwl",
+        "fullName": "DICOM to NIfTI Converter (dcm2niix)",
+        "function": "Converts DICOM medical images to NIfTI format with BIDS-compatible JSON sidecar files, preserving acquisition metadata.",
+        "modality": "DICOM image directory from any MRI acquisition.",
+        "keyParameters": "-o (output directory), -f (filename format), -z (compression: y/n/o/i), -b (BIDS sidecar: y/n/o)",
+        "keyPoints": "Generates BIDS-compatible JSON sidecars. Handles multi-echo, diffusion (bval/bvec), and Philips/Siemens/GE formats. Default filename format is %f_%p_%t_%s.",
+        "typicalUse": "First step in any neuroimaging pipeline: converting raw DICOM acquisitions to analysis-ready NIfTI.",
+        "inputExtensions": {},
+        "outputExtensions": {
+            "nifti_files": [".nii", ".nii.gz"],
+            "json_sidecars": [".json"],
+            "bval_files": [".bval"],
+            "bvec_files": [".bvec"]
+        },
+        "docUrl": "https://github.com/rordenlab/dcm2niix"
+    },
+    "ICA_AROMA": {
+        "cwlPath": "cwl/ica_aroma/ICA_AROMA.cwl",
+        "fullName": "ICA-based Automatic Removal of Motion Artifacts (ICA-AROMA)",
+        "function": "Automatically identifies and removes motion-related ICA components from fMRI data using a classifier trained on temporal and spatial features.",
+        "modality": "Preprocessed 4D fMRI NIfTI in standard (MNI) space with motion parameters.",
+        "keyParameters": "-i (input 4D), -mc (motion parameters), -o (output directory), -a (affine matrix), -w (warp field), -den (denoising type)",
+        "keyPoints": "Requires data in MNI space. Classifier uses four features: max RP correlation, edge fraction, HFC spatial fraction, and CSF fraction. Non-aggressive denoising recommended.",
+        "typicalUse": "Removing motion artifacts from resting-state or task fMRI data after standard preprocessing.",
+        "inputExtensions": {
+            "input": [".nii", ".nii.gz"],
+            "mc": [".txt", ".par", ".1D"],
+            "affmat": [".mat"],
+            "warp": [".nii", ".nii.gz"],
+            "mask": [".nii", ".nii.gz"]
+        },
+        "outputExtensions": {
+            "denoised_func": [".nii", ".nii.gz"],
+            "classified_motion": [".txt"]
+        },
+        "docUrl": "https://github.com/maartenmennes/ICA-AROMA"
     }
 };
 
-export const libraryOrder = ["FSL","AFNI","SPM","FreeSurfer","ANTs","MRtrix3","fMRIPrep","MRIQC","Connectome Workbench","AMICO"];
+export const libraryOrder = ["FSL","AFNI","SPM","FreeSurfer","ANTs","MRtrix3","fMRIPrep","MRIQC","Connectome Workbench","AMICO","dcm2niix","ICA-AROMA"];
 
 export const dummyNodes = {
     "I/O": [
@@ -3308,6 +3467,13 @@ export const DOCKER_TAGS = {
         "0.1.2",
         "0.1.1",
         "0.0.4"
+    ],
+    "dcm2niix": [
+        "latest",
+        "1.0.20240202"
+    ],
+    "ICA-AROMA": [
+        "latest"
     ]
 };
 
@@ -3359,7 +3525,7 @@ export const MODALITY_ASSIGNMENTS = {
       'Distortion Correction': ['fugue', 'topup', 'applytopup', 'fsl_prepare_fieldmap', 'prelude'],
       'Smoothing': ['susan'],
       'Statistical Analysis': ['film_gls', 'flameo', 'randomise'],
-      'ICA/Denoising': ['melodic', 'dual_regression'],
+      'ICA/Denoising': ['melodic', 'dual_regression', 'fsl_regfilt'],
       'Pipelines': ['feat']
     },
     AFNI: {
@@ -3386,6 +3552,9 @@ export const MODALITY_ASSIGNMENTS = {
     MRIQC: {
       'Pipeline': ['mriqc']
     },
+    'ICA-AROMA': {
+      'Denoising': ['ICA_AROMA']
+    },
     'Connectome Workbench': {
       'CIFTI Operations': ['wb_command_cifti_create_dense_timeseries', 'wb_command_cifti_separate'],
       'Surface Smoothing': ['wb_command_cifti_smoothing', 'wb_command_metric_smoothing']
@@ -3408,6 +3577,11 @@ export const MODALITY_ASSIGNMENTS = {
     },
     AMICO: {
       'Microstructure Modeling': ['amico_noddi']
+    },
+    AFNI: {
+      'Tensor Fitting': ['3dDWItoDT'],
+      'Uncertainty': ['3dDWUncert'],
+      'Tractography': ['3dTrackID']
     }
   },
   'Arterial Spin Labeling': {
@@ -3428,9 +3602,10 @@ export const MODALITY_ASSIGNMENTS = {
   'Utilities': {
     FSL: {
       'Image Math': ['fslmaths', 'fslstats', 'fslroi', 'fslmeants'],
-      'Volume Operations': ['fslsplit', 'fslmerge', 'fslreorient2std', 'robustfov'],
+      'Volume Operations': ['fslsplit', 'fslmerge', 'fslreorient2std', 'robustfov', 'fslchfiletype'],
       'Warp Utilities': ['applywarp', 'invwarp', 'convertwarp'],
-      'Clustering': ['cluster']
+      'Clustering': ['cluster'],
+      'Image Info': ['fslhd', 'fslinfo']
     },
     AFNI: {
       'Image Math': ['3dcalc', '3dTstat'],
@@ -3446,6 +3621,9 @@ export const MODALITY_ASSIGNMENTS = {
     },
     FreeSurfer: {
       'Format Conversion': ['mri_convert']
+    },
+    dcm2niix: {
+      'Format Conversion': ['dcm2niix']
     }
   }
 };

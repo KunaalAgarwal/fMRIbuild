@@ -1,6 +1,7 @@
 import YAML from 'js-yaml';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
+import { topoSort } from '../utils/topoSort.js';
 
 /**
  * Expand custom workflow nodes into their internal nodes/edges.
@@ -29,10 +30,13 @@ function expandCustomWorkflowNodes(graph) {
                 data: {
                     label: iNode.label,
                     isDummy: iNode.isDummy || false,
+                    isBIDS: iNode.isBIDS || false,
+                    bidsStructure: iNode.bidsStructure || null,
+                    bidsSelections: iNode.bidsSelections || null,
+                    notes: iNode.notes || '',
                     parameters: iNode.parameters || {},
                     dockerVersion: iNode.dockerVersion || 'latest',
-                    scatterEnabled: iNode.scatterEnabled || false,
-                    gatherEnabled: iNode.gatherEnabled || false,
+                    scatterInputs: iNode.scatterInputs,
                     linkMergeOverrides: iNode.linkMergeOverrides || {},
                     whenExpression: iNode.whenExpression || '',
                     expressions: iNode.expressions || {},
@@ -125,9 +129,13 @@ function expandCustomWorkflowNodes(graph) {
 /* ========== Pure utility helpers ========== */
 
 /** Convert a type string to its CWL representation. */
-function toCWLType(typeStr, makeNullable = false) {
+function toCWLType(typeStr, makeNullable = false, enumSymbols = null) {
     if (!typeStr) return makeNullable ? ['null', 'File'] : 'File';
     if (typeStr === 'record') return null;
+    if (typeStr === 'enum' && enumSymbols) {
+        const enumType = { type: 'enum', symbols: enumSymbols };
+        return makeNullable ? ['null', enumType] : enumType;
+    }
     if (typeStr.endsWith('[]')) {
         const itemType = typeStr.slice(0, -2);
         const arrayType = { type: 'array', items: itemType };
@@ -141,7 +149,7 @@ function toCWLType(typeStr, makeNullable = false) {
 
 /** Wrap a type string in a CWL array type. */
 function toArrayType(typeStr) {
-    const base = (typeStr || 'File').replace(/\?$/, '');
+    const base = (typeStr || 'File').replace(/\?$/, '').replace(/\[\]$/, '');
     return { type: 'array', items: base };
 }
 
@@ -171,6 +179,7 @@ function defaultForType(type, inputDef) {
         case 'int':     return inputDef?.bounds ? inputDef.bounds[0] : 0;
         case 'double':  return inputDef?.bounds ? inputDef.bounds[0] : 0.0;
         case 'string':  return '';
+        case 'enum':    return inputDef?.enumSymbols?.[0] || null;
         default:        return null;
     }
 }
@@ -181,6 +190,49 @@ function makeWfInputName(stepId, inputName, isSingleNode) {
 }
 
 /* ========== Extracted sub-functions for buildCWLWorkflowObject ========== */
+
+/**
+ * Compute the effective set of scatter input names for a given node.
+ * Uses explicit scatterInputs if set; falls back to auto-detect for downstream nodes
+ * by scattering on inputs wired from scattered upstream.
+ */
+function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
+    const node = ctx.nodeMap.get(nodeId);
+    const explicitScatter = node?.data?.scatterInputs;
+
+    // Explicit configuration takes precedence (filter to valid input names)
+    if (Array.isArray(explicitScatter)) {
+        const allInputNames = new Set([
+            ...Object.keys(effectiveTool.requiredInputs || {}),
+            ...Object.keys(effectiveTool.optionalInputs || {}),
+        ]);
+        return new Set(explicitScatter.filter(name => allInputNames.has(name)));
+    }
+
+    // Auto-detect only if node is in the scattered set
+    if (!ctx.scatteredSteps.has(nodeId)) return new Set();
+
+    // Auto-detect: scatter on inputs wired from scattered upstream,
+    // but NOT on array-typed inputs (those are gather inputs)
+    const inputs = [];
+    const nodeArrayInputs = ctx.arrayTypedInputs?.get(nodeId) || new Set();
+    (incomingEdges || []).forEach(edge => {
+        if (!ctx.scatteredSteps.has(edge.source)) return;
+        (edge.data?.mappings || []).forEach(m => {
+            if (!inputs.includes(m.targetInput) && !nodeArrayInputs.has(m.targetInput)) {
+                inputs.push(m.targetInput);
+            }
+        });
+    });
+    ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
+        (edge.data?.mappings || []).forEach(m => {
+            if (!inputs.includes(m.targetInput) && !nodeArrayInputs.has(m.targetInput)) {
+                inputs.push(m.targetInput);
+            }
+        });
+    });
+    return new Set(inputs);
+}
 
 /**
  * Populate step.in entries and corresponding workflow-level inputs/jobDefaults
@@ -204,7 +256,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             ctx.needsInlineJavascript = true;
             if (wiredSources.length === 0) {
                 const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                ctx.wf.inputs[wfInputName] = { type: toCWLType(type) };
+                ctx.wf.inputs[wfInputName] = { type: toCWLType(type, false, inputDef.enumSymbols) };
                 step.in[inputName] = { source: wfInputName, valueFrom: expr };
             } else if (wiredSources.length === 1) {
                 step.in[inputName] = {
@@ -232,10 +284,11 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         } else {
             // Not wired - expose as workflow input
             const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-            const inputType = ctx.scatteredSteps.has(nodeId) && !ctx.gatherNodeIds.has(nodeId)
-                && (type === 'File' || type === 'Directory')
+            const effectiveScatter = ctx.effectiveScatterMap.get(nodeId) || new Set();
+            // record types have no direct CWL representation; default to string for workflow inputs
+            const inputType = effectiveScatter.has(inputName)
                 ? toArrayType(type)
-                : toCWLType(type);
+                : (toCWLType(type, false, inputDef.enumSymbols) || 'string');
             ctx.wf.inputs[wfInputName] = { type: inputType };
             step.in[inputName] = wfInputName;
 
@@ -277,7 +330,11 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
                 ctx.needsMultipleInputFeature = true;
             } else {
                 const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-                ctx.wf.inputs[wfInputName] = { type: toCWLType(type, true) };
+                const effectiveScatter = ctx.effectiveScatterMap.get(nodeId) || new Set();
+                const inputType = effectiveScatter.has(inputName)
+                    ? ['null', toArrayType(type)]
+                    : toCWLType(type, true, inputDef.enumSymbols);
+                ctx.wf.inputs[wfInputName] = { type: inputType };
                 step.in[inputName] = { source: wfInputName, valueFrom: optExpr };
             }
             return;
@@ -312,7 +369,11 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         } else {
             // Not wired — expose as nullable workflow input with job default
             const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
-            const inputEntry = { type: toCWLType(type, true) };
+            const effectiveScatter = ctx.effectiveScatterMap.get(nodeId) || new Set();
+            const inputType = effectiveScatter.has(inputName)
+                ? ['null', toArrayType(type)]
+                : toCWLType(type, true, inputDef.enumSymbols);
+            const inputEntry = { type: inputType };
             const params = getUserParams(node.data);
             const userValue = params?.[inputName];
             let value;
@@ -333,47 +394,12 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
 
 /**
  * Compute scatter configuration for a single step.
+ * Uses the pre-computed effectiveScatterMap from getEffectiveScatterInputs.
  *
  * @returns {{ scatter, scatterMethod? }} or null if step is not scattered.
  */
-function computeStepScatter(ctx, nodeId, effectiveTool, incomingEdges) {
-    if (!ctx.scatteredSteps.has(nodeId)) return null;
-    // Gather nodes receive scattered input but do NOT scatter themselves
-    if (ctx.gatherNodeIds.has(nodeId)) return null;
-
-    const scatterInputs = [];
-
-    if (ctx.sourceNodeIds.has(nodeId)) {
-        // Source node: scatter on File/Directory required inputs that are workflow-level inputs
-        Object.entries(effectiveTool.requiredInputs).forEach(([inputName, inputDef]) => {
-            const isFileOrDir = inputDef.type === 'File' || inputDef.type === 'Directory';
-            const isWired = (ctx.wiredInputsMap.get(nodeId)?.get(inputName)?.length || 0) > 0;
-            if (isFileOrDir && !isWired) {
-                scatterInputs.push(inputName);
-            }
-        });
-    } else {
-        // Downstream node: scatter on inputs wired from scattered upstream
-        incomingEdges.forEach(edge => {
-            if (!ctx.scatteredSteps.has(edge.source)) return;
-            const mappings = edge.data?.mappings || [];
-            mappings.forEach(m => {
-                if (!scatterInputs.includes(m.targetInput)) {
-                    scatterInputs.push(m.targetInput);
-                }
-            });
-        });
-        // Also check BIDS edges targeting this node (BIDS nodes are scatter sources)
-        ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
-            const mappings = edge.data?.mappings || [];
-            mappings.forEach(m => {
-                if (!scatterInputs.includes(m.targetInput)) {
-                    scatterInputs.push(m.targetInput);
-                }
-            });
-        });
-    }
-
+function computeStepScatter(ctx, nodeId) {
+    const scatterInputs = [...(ctx.effectiveScatterMap.get(nodeId) || [])];
     if (scatterInputs.length === 0) return null;
 
     const result = {
@@ -396,7 +422,9 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
         const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
         const stepId = ctx.getStepId(node.id);
         const isSingleTerminal = terminalNodes.length === 1;
-        const isScattered = ctx.scatteredSteps.has(node.id) && !ctx.gatherNodeIds.has(node.id);
+        // A terminal node is scattered if it has effective scatter inputs
+        const scatterConfig = computeStepScatter(ctx, node.id);
+        const isScattered = scatterConfig !== null;
 
         Object.entries(outputs).forEach(([outputName, outputDef]) => {
             const wfOutputName = isSingleTerminal
@@ -414,7 +442,8 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
 
             // Conditional terminal nodes: output may be null when step is skipped
             if (conditionalStepIds.has(node.id)) {
-                outputEntry.type = ['null', outputType];
+                const alreadyNullable = Array.isArray(outputType) && outputType[0] === 'null';
+                if (!alreadyNullable) outputEntry.type = ['null', outputType];
                 outputEntry.pickValue = 'first_non_null';
             }
 
@@ -467,23 +496,7 @@ export function buildCWLWorkflowObject(graph) {
     const outEdgesOf = id => outEdgeMap.get(id) || [];
 
     /* ---------- topo-sort (Kahn's algorithm) ---------- */
-    const incoming = Object.fromEntries(nodes.map(n => [n.id, 0]));
-    edges.forEach(e => incoming[e.target]++);
-    const queue = nodes.filter(n => incoming[n.id] === 0).map(n => n.id);
-    const order = [];
-    let head = 0;
-
-    while (head < queue.length) {
-        const id = queue[head++];
-        order.push(id);
-        outEdgesOf(id).forEach(e => {
-            if (--incoming[e.target] === 0) queue.push(e.target);
-        });
-    }
-
-    if (order.length !== nodes.length) {
-        throw new Error('Workflow graph has cycles.');
-    }
+    const order = topoSort(nodes, edges);
 
     /* ---------- generate readable step IDs ---------- */
     const toolCounts = {};
@@ -517,7 +530,23 @@ export function buildCWLWorkflowObject(graph) {
     /* ---------- compute scatter propagation ---------- */
     const scatterNodes = [...nodes, ...bidsNodes];
     const scatterEdges = [...edges, ...bidsEdges];
-    const { scatteredNodeIds: scatteredSteps, sourceNodeIds, gatherNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges);
+
+    // Build array-typed inputs map for gather detection
+    const arrayTypedInputs = new Map();
+    for (const node of nodes) {
+        const tool = getToolConfigSync(node.data.label);
+        if (!tool) continue;
+        const arrayInputs = new Set();
+        const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
+        for (const [name, def] of Object.entries(allInputs)) {
+            if (def.type && def.type.endsWith('[]')) {
+                arrayInputs.add(name);
+            }
+        }
+        if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
+    }
+
+    const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges, arrayTypedInputs);
 
     /* ---------- build CWL skeleton ---------- */
     const wf = {
@@ -582,12 +611,27 @@ export function buildCWLWorkflowObject(graph) {
 
     /* ---------- shared context for extracted helpers ---------- */
     const ctx = {
-        wf, jobDefaults, cwlDefaultKeys, wiredInputsMap, scatteredSteps, sourceNodeIds, gatherNodeIds,
-        bidsEdges, resolveWiredSource, getStepId,
+        wf, jobDefaults, cwlDefaultKeys, wiredInputsMap, scatteredSteps, sourceNodeIds, nodeMap,
+        bidsEdges, resolveWiredSource, getStepId, arrayTypedInputs,
+        effectiveScatterMap: new Map(), // populated below
         needsMultipleInputFeature: false,
         needsInlineJavascript: false,
         needsStepInputExpression: false,
     };
+
+    /* ---------- pre-compute effective scatter inputs per node ---------- */
+    for (const nodeId of order) {
+        const node = nodeById(nodeId);
+        const tool = getToolConfigSync(node.data.label);
+        const effectiveTool = tool || {
+            id: node.data.label.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+            requiredInputs: { input: { type: 'File', label: 'Input' } },
+            optionalInputs: {},
+            outputs: { output: { type: 'File', label: 'Output' } }
+        };
+        const incoming = inEdgesOf(nodeId);
+        ctx.effectiveScatterMap.set(nodeId, getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incoming));
+    }
 
     /* ---------- walk nodes in topo order ---------- */
     order.forEach((nodeId) => {
@@ -635,7 +679,7 @@ export function buildCWLWorkflowObject(graph) {
         }
 
         // Compute scatter for this step
-        const scatterConfig = computeStepScatter(ctx, nodeId, effectiveTool, inEdgesOf(nodeId));
+        const scatterConfig = computeStepScatter(ctx, nodeId);
 
         // Build final step with CWL-conventional property order: run, scatter, in, out, hints
         const finalStep = { run: step.run };
@@ -660,7 +704,8 @@ export function buildCWLWorkflowObject(graph) {
     /* ---------- assemble requirements ---------- */
     const requirements = {};
     if (ctx.needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
-    if (scatteredSteps.size > 0) requirements.ScatterFeatureRequirement = {};
+    const hasAnyScatter = [...ctx.effectiveScatterMap.values()].some(s => s.size > 0);
+    if (hasAnyScatter) requirements.ScatterFeatureRequirement = {};
     if (ctx.needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
     if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
     if (Object.keys(requirements).length > 0) wf.requirements = requirements;
@@ -691,6 +736,11 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
         // Array: { type: 'array', items: T } → [placeholder(T)]
         if (typeof cwlType === 'object' && cwlType.type === 'array') {
             return [placeholderForType(cwlType.items)];
+        }
+
+        // Enum: { type: 'enum', symbols: [...] } → first symbol
+        if (typeof cwlType === 'object' && cwlType.type === 'enum') {
+            return cwlType.symbols?.[0] || null;
         }
 
         // Primitive types

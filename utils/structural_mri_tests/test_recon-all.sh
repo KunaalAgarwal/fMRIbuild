@@ -81,3 +81,4 @@ else
 fi
 
 verify_log "$TOOL"
+verify_file_optional "${dir}/recon-all.err.log"

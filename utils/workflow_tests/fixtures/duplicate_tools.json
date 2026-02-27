@@ -1,0 +1,60 @@
+{
+  "name": "duplicate_tools",
+  "description": "Two bet nodes + two flirt nodes to test step ID disambiguation (bet_1, bet_2, flirt_1, flirt_2)",
+  "nodes": [
+    {
+      "id": "node_1", "type": "default",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "bet", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_2", "type": "default",
+      "position": { "x": 100, "y": 300 },
+      "data": {
+        "label": "bet", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_3", "type": "default",
+      "position": { "x": 400, "y": 100 },
+      "data": {
+        "label": "flirt", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_4", "type": "default",
+      "position": { "x": 400, "y": 300 },
+      "data": {
+        "label": "flirt", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1_3", "source": "node_1", "target": "node_3",
+      "data": {
+        "mappings": [{ "sourceOutput": "brain_extraction", "targetInput": "input" }]
+      }
+    },
+    {
+      "id": "edge_2_4", "source": "node_2", "target": "node_4",
+      "data": {
+        "mappings": [{ "sourceOutput": "brain_extraction", "targetInput": "input" }]
+      }
+    }
+  ]
+}

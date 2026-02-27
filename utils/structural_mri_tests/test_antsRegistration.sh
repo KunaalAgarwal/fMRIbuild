@@ -16,7 +16,7 @@ prepare_ants_data
 # Generate template for reference
 make_template "$CWL" "$TOOL"
 
-# Create job YAML — self-registration with rigid transform for speed
+# Create job YAML — register brain-extracted MNI 2mm to downsampled T1
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 dimensionality: 3
 output_prefix: "antsreg_"
@@ -25,7 +25,7 @@ fixed_image:
   path: "${T1_RES}"
 moving_image:
   class: File
-  path: "${T1_RES}"
+  path: "${T1W_2MM_BRAIN}"
 metric: "MI[{fixed},{moving},1,16,Regular,0.1]"
 transform: "Rigid[0.1]"
 convergence: "[20x10x0,1e-6,5]"

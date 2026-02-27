@@ -3,7 +3,7 @@
    ============================================ */
 
 .bids-modal .modal-dialog {
-  max-width: 900px;
+  max-width: min(90vw, 1200px);
 }
 
 .bids-modal .modal-content {
@@ -24,12 +24,12 @@
 .bids-modal .modal-title {
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: clamp(0.9rem, 0.7rem + 0.7vw, 1.05rem);
   color: var(--text-primary);
 }
 
 .bids-modal .modal-subtitle {
-  font-size: 0.72rem;
+  font-size: clamp(0.72rem, 0.55rem + 0.55vw, 0.82rem);
   color: var(--text-muted);
   margin-top: 2px;
 }
@@ -43,12 +43,12 @@
   padding: 8px 16px;
 }
 
-/* ---- Layout: 3-panel grid ---- */
+/* ---- Layout: 2-panel grid ---- */
 .bids-panels {
   display: grid;
-  grid-template-columns: 260px 1fr;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
   gap: 12px;
-  min-height: 360px;
+  min-height: clamp(240px, 40vh, 360px);
 }
 
 /* ---- Subject Panel (left) ---- */
@@ -58,7 +58,8 @@
   padding: 8px;
   display: flex;
   flex-direction: column;
-  max-height: 420px;
+  max-height: clamp(280px, 50vh, 420px);
+  overflow-x: auto;
 }
 
 .bids-subject-header {
@@ -71,19 +72,23 @@
 
 .bids-subject-count {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: clamp(0.65rem, 0.5rem + 0.5vw, 0.75rem);
   color: var(--text-muted);
   white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .bids-select-btns {
   display: flex;
   gap: 4px;
+  min-width: 0;
+  flex: 1;
+  overflow: hidden;
 }
 
 .bids-select-all-btn {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.62rem;
+  font-size: clamp(0.62rem, 0.48rem + 0.5vw, 0.72rem);
   color: var(--color-primary);
   background: none;
   border: 1px solid rgba(74, 144, 226, 0.3);
@@ -91,6 +96,9 @@
   padding: 1px 6px;
   cursor: pointer;
   white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
 }
 
 .bids-select-all-btn:hover {
@@ -103,7 +111,7 @@
   border-radius: 3px;
   color: var(--text-light);
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.68rem;
+  font-size: clamp(0.68rem, 0.52rem + 0.55vw, 0.78rem);
   padding: 3px 6px;
   margin-bottom: 6px;
   width: 100%;
@@ -125,7 +133,7 @@
   padding: 2px 4px;
   border-radius: 3px;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.68rem;
+  font-size: clamp(0.68rem, 0.52rem + 0.55vw, 0.78rem);
   cursor: pointer;
 }
 
@@ -145,9 +153,7 @@
 
 .bids-subject-demo {
   color: var(--text-muted);
-  font-size: 0.6rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  font-size: clamp(0.6rem, 0.46rem + 0.5vw, 0.7rem);
   white-space: nowrap;
 }
 
@@ -168,7 +174,7 @@
 .bids-section-label {
   font-family: 'Roboto Mono', monospace;
   font-weight: 500;
-  font-size: 0.7rem;
+  font-size: clamp(0.7rem, 0.54rem + 0.55vw, 0.8rem);
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -190,7 +196,7 @@
   border-radius: 4px;
   padding: 3px 8px;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.68rem;
+  font-size: clamp(0.68rem, 0.52rem + 0.55vw, 0.78rem);
   cursor: pointer;
   user-select: none;
 }
@@ -202,13 +208,9 @@
 }
 
 .bids-datatype-desc {
-  font-size: 0.55rem;
+  font-size: clamp(0.55rem, 0.42rem + 0.5vw, 0.65rem);
   color: var(--text-secondary);
   line-height: 1.2;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 180px;
 }
 
 .bids-datatype-chip.selected {
@@ -227,14 +229,14 @@
 }
 
 .bids-availability-badge {
-  font-size: 0.58rem;
+  font-size: clamp(0.58rem, 0.44rem + 0.5vw, 0.68rem);
   color: var(--text-muted);
   margin-left: 2px;
 }
 
 .bids-outputs-subtitle {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.6rem;
+  font-size: clamp(0.6rem, 0.46rem + 0.5vw, 0.7rem);
   color: var(--text-secondary);
   margin-bottom: 8px;
   font-style: italic;
@@ -247,7 +249,7 @@
   padding: 8px;
   flex: 1;
   overflow-y: auto;
-  max-height: 280px;
+  max-height: clamp(180px, 35vh, 280px);
   scrollbar-width: thin;
   scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
@@ -277,7 +279,7 @@
   border-radius: 3px;
   color: var(--text-light);
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.68rem;
+  font-size: clamp(0.76rem, 0.58rem + 0.55vw, 0.88rem);
   padding: 2px 6px;
   flex: 1;
   max-width: 180px;
@@ -290,7 +292,7 @@
 
 .bids-output-type-badge {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.6rem;
+  font-size: clamp(0.68rem, 0.52rem + 0.55vw, 0.8rem);
   color: var(--color-cyan);
   background-color: rgba(74, 198, 226, 0.08);
   border: 1px solid rgba(74, 198, 226, 0.2);
@@ -300,7 +302,7 @@
 
 .bids-output-count-badge {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.58rem;
+  font-size: clamp(0.66rem, 0.5rem + 0.55vw, 0.78rem);
   color: var(--text-muted);
   background-color: rgba(255, 255, 255, 0.04);
   border: 1px solid var(--border-subtle);
@@ -309,7 +311,7 @@
 }
 
 .bids-remove-group-btn {
-  font-size: 0.62rem;
+  font-size: clamp(0.7rem, 0.54rem + 0.55vw, 0.82rem);
   color: var(--color-danger);
   background: none;
   border: 1px solid rgba(231, 76, 60, 0.3);
@@ -331,7 +333,7 @@
 
 .bids-filter-label {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.62rem;
+  font-size: clamp(0.7rem, 0.54rem + 0.55vw, 0.82rem);
   color: var(--text-muted);
 }
 
@@ -341,7 +343,7 @@
   border-radius: 3px;
   color: var(--text-light);
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: clamp(0.73rem, 0.56rem + 0.55vw, 0.85rem);
   padding: 2px 4px;
 }
 
@@ -350,7 +352,7 @@
   align-items: center;
   gap: 3px;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.62rem;
+  font-size: clamp(0.7rem, 0.54rem + 0.55vw, 0.82rem);
   color: var(--text-muted);
 }
 
@@ -359,7 +361,7 @@
 }
 
 .bids-suffix-desc {
-  font-size: 0.58rem;
+  font-size: clamp(0.66rem, 0.5rem + 0.55vw, 0.78rem);
   color: var(--text-secondary);
   font-style: italic;
   margin-left: 4px;
@@ -367,7 +369,7 @@
 
 .bids-add-group-btn {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.64rem;
+  font-size: clamp(0.72rem, 0.56rem + 0.55vw, 0.84rem);
   color: var(--color-success);
   background: none;
   border: 1px solid rgba(76, 175, 80, 0.3);
@@ -391,13 +393,13 @@
 .bids-preview-header {
   padding: 4px 8px;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: clamp(0.65rem, 0.5rem + 0.5vw, 0.75rem);
   color: var(--text-muted);
   border-bottom: 1px solid var(--border-subtle);
 }
 
 .bids-preview-list {
-  max-height: 120px;
+  max-height: clamp(80px, 15vh, 120px);
   overflow-y: auto;
   padding: 4px 8px 8px;
   scrollbar-width: thin;
@@ -406,7 +408,7 @@
 
 .bids-preview-path {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.6rem;
+  font-size: clamp(0.6rem, 0.46rem + 0.5vw, 0.7rem);
   color: var(--text-muted);
   line-height: 1.5;
   word-break: break-all;
@@ -414,7 +416,7 @@
 
 .bids-preview-more {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.6rem;
+  font-size: clamp(0.6rem, 0.46rem + 0.5vw, 0.7rem);
   color: var(--text-secondary);
   font-style: italic;
 }
@@ -424,7 +426,7 @@
   background-color: var(--color-primary);
   border-color: var(--color-primary);
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.72rem;
+  font-size: clamp(0.72rem, 0.55rem + 0.55vw, 0.82rem);
   padding: 4px 14px;
 }
 
@@ -437,7 +439,7 @@
   border: 1px solid var(--border-medium);
   color: var(--text-muted);
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.72rem;
+  font-size: clamp(0.72rem, 0.55rem + 0.55vw, 0.82rem);
   padding: 4px 14px;
 }
 
@@ -454,6 +456,16 @@
   min-height: 160px;
   color: var(--text-secondary);
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.72rem;
+  font-size: clamp(0.72rem, 0.55rem + 0.55vw, 0.82rem);
   font-style: italic;
+}
+
+/* ---- Responsive: stack on small screens ---- */
+@media (max-width: 600px) {
+  .bids-panels {
+    grid-template-columns: 1fr;
+  }
+  .bids-subject-panel {
+    max-height: clamp(150px, 30vh, 250px);
+  }
 }

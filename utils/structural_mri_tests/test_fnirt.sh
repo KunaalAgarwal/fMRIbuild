@@ -10,14 +10,14 @@ CWL="${CWL_DIR}/${LIB}/${TOOL}.cwl"
 
 prepare_fsl_data
 
-# Generate a 2mm→2mm affine first (fnirt with 1mm input causes OOM
+# Generate a 2mm affine first (fnirt with 1mm input causes OOM
 # on systems with limited RAM). We create a quick flirt alignment
-# between the 2mm T1 and itself to produce an identity-like matrix.
+# between brain-extracted 2mm and whole-head 2mm.
 FNIRT_AFFINE="${DERIVED_DIR}/fnirt_flirt_2mm.mat"
 if [[ ! -f "$FNIRT_AFFINE" ]]; then
   echo "Creating 2mm affine matrix for fnirt..."
   docker_fsl flirt \
-    -in "$T1W_2MM" -ref "$T1W_2MM" \
+    -in "$T1W_2MM_BRAIN" -ref "$T1W_2MM" \
     -omat "$FNIRT_AFFINE" -dof 12
 fi
 [[ -f "$FNIRT_AFFINE" ]] || die "Failed to create affine matrix"
@@ -25,11 +25,11 @@ fi
 # Generate template for reference
 make_template "$CWL" "$TOOL"
 
-# Use 2mm→2mm non-linear registration to keep memory manageable.
+# Use brain-extracted 2mm→2mm non-linear registration to keep memory manageable.
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 input:
   class: File
-  path: "${T1W_2MM}"
+  path: "${T1W_2MM_BRAIN}"
 reference:
   class: File
   path: "${T1W_2MM}"

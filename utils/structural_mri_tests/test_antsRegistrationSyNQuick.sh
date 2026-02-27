@@ -16,7 +16,7 @@ prepare_ants_data
 # Generate template for reference
 make_template "$CWL" "$TOOL"
 
-# Create job YAML — rigid-only for speed (self-registration)
+# Create job YAML — rigid-only for speed
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 dimensionality: 3
 fixed_image:
@@ -24,7 +24,7 @@ fixed_image:
   path: "${T1_RES}"
 moving_image:
   class: File
-  path: "${T1_RES}"
+  path: "${T1W_2MM_BRAIN}"
 output_prefix: "synquick_"
 transform_type: "r"
 num_threads: 1

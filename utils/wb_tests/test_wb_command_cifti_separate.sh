@@ -32,13 +32,14 @@ fi
 
 make_template "$CWL" "$TOOL"
 
-# CIFTI was created with left-hemisphere surface data only, extract as metric
+# CIFTI was created with bilateral surface data, extract both hemispheres
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 cifti_in:
   class: File
   path: ${CIFTI_PATH}
 direction: COLUMN
 metric_left: separated_left.func.gii
+metric_right: separated_right.func.gii
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -48,4 +49,6 @@ echo "── Verifying ${TOOL} outputs ──"
 dir="${OUT_DIR}/${TOOL}"
 
 verify_gifti "${dir}/separated_left.func.gii"
+verify_gifti "${dir}/separated_right.func.gii"
 verify_log "$TOOL"
+verify_file_optional "${dir}/wb_cifti_separate.err.log"

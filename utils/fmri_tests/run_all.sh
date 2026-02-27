@@ -153,9 +153,11 @@ echo ""
 
 run_test "${SCRIPT_DIR}/test_convertwarp.sh" "$@"
 run_test "${SCRIPT_DIR}/test_dual_regression.sh" "$@"
+run_test "${SCRIPT_DIR}/test_fsl_regfilt.sh" "$@"
 run_test "${SCRIPT_DIR}/test_invwarp.sh" "$@"
 run_test "${SCRIPT_DIR}/test_randomise.sh" "$@"
 run_test "${SCRIPT_DIR}/test_flameo.sh" "$@"
+run_test "${SCRIPT_DIR}/test_ICA_AROMA.sh" "$@"
 
 # ── Phase 4: Depends on Phase 3 ─────────────────────────────────
 

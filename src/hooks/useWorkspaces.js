@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
-const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', viewport: null }];
+const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null }];
 
 export function useWorkspaces() {
   // Initialize state from localStorage or use defaults if nothing is stored.
@@ -17,6 +17,7 @@ export function useWorkspaces() {
           edges: ws.edges || [],
           name: ws.name || '',
           workflowName: ws.workflowName || '',
+          savedWorkflowId: ws.savedWorkflowId || null,
           viewport: ws.viewport || null
         }));
       }
@@ -28,7 +29,13 @@ export function useWorkspaces() {
 
   const [currentWorkspace, setCurrentWorkspace] = useState(() => {
     const savedIndex = parseInt(localStorage.getItem('currentWorkspace'), 10);
-    return !isNaN(savedIndex) ? savedIndex : 0; // Default to the first workspace
+    if (isNaN(savedIndex) || savedIndex < 0) return 0;
+    // Bounds-check against stored workspace count to handle corrupted localStorage
+    try {
+      const stored = JSON.parse(localStorage.getItem('workspaces'));
+      if (Array.isArray(stored) && savedIndex >= stored.length) return 0;
+    } catch { /* fall through */ }
+    return savedIndex;
   });
 
   // Debounced localStorage writes (300ms delay prevents main thread blocking)
@@ -37,7 +44,7 @@ export function useWorkspaces() {
 
   const addNewWorkspace = () => {
     setWorkspaces((prev) => {
-      const updated = [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', viewport: null }];
+      const updated = [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null }];
       setCurrentWorkspace(updated.length - 1);
       return updated;
     });
@@ -51,6 +58,7 @@ export function useWorkspaces() {
         edges: data.edges || [],
         name: data.name || '',
         workflowName: data.workflowName || '',
+        savedWorkflowId: data.savedWorkflowId || null,
         viewport: null
       };
       const updated = [...prev, newWs];
@@ -62,9 +70,9 @@ export function useWorkspaces() {
   const clearCurrentWorkspace = () => {
     setWorkspaces((prevWorkspaces) => {
       const updatedWorkspaces = [...prevWorkspaces];
-      // Preserve only the id; clear everything else including names
+      // Preserve id and names; clear nodes, edges, and viewport
       const ws = updatedWorkspaces[currentWorkspace];
-      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', viewport: null };
+      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: ws?.name || '', workflowName: ws?.workflowName || '', savedWorkflowId: ws?.savedWorkflowId || null, viewport: null };
       return updatedWorkspaces;
     });
   };
@@ -80,6 +88,7 @@ export function useWorkspaces() {
         id: ws?.id || crypto.randomUUID(),
         name: ws?.name || '',
         workflowName: ws?.workflowName || '',
+        savedWorkflowId: ws?.savedWorkflowId || null,
         viewport: newItems.viewport !== undefined ? newItems.viewport : (ws?.viewport || null)
       };
       return updatedWorkspaces;
@@ -111,6 +120,17 @@ export function useWorkspaces() {
       updatedWorkspaces[currentWorkspace] = {
         ...updatedWorkspaces[currentWorkspace],
         workflowName: newName
+      };
+      return updatedWorkspaces;
+    });
+  };
+
+  const updateSavedWorkflowId = (id) => {
+    setWorkspaces((prevWorkspaces) => {
+      const updatedWorkspaces = [...prevWorkspaces];
+      updatedWorkspaces[currentWorkspace] = {
+        ...updatedWorkspaces[currentWorkspace],
+        savedWorkflowId: id
       };
       return updatedWorkspaces;
     });
@@ -159,6 +179,7 @@ export function useWorkspaces() {
     removeCurrentWorkspace,
     updateWorkspaceName,
     updateWorkflowName,
+    updateSavedWorkflowId,
     removeWorkflowNodesFromAll,
     saveViewportForWorkspace
   };

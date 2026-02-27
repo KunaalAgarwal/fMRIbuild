@@ -27,19 +27,19 @@ inputs:
   nclass:
     type: ['null', int]
     label: Number of tissue classes
-    inputBinding: {prefix: -n, separate: false}
+    inputBinding: {prefix: -n}
   iterations:
     type: ['null', int]
     label: Number of iterations during bias-field removal
-    inputBinding: {prefix: -I, separate: false}
+    inputBinding: {prefix: -I}
   lowpass:
     type: ['null', double]
     label: bias field smoothing extent (FWHM) in mm
-    inputBinding: {prefix: -l, separate: false}
+    inputBinding: {prefix: -l}
   image_type:
     type: ['null', int]
     label: Image type (e.g. 1="T1", 2="T2", 3="PD")
-    inputBinding: {prefix: -t, separate: false}
+    inputBinding: {prefix: -t}
   fhard:
     type: ['null', double]
     label: initial segmentation spatial smoothness (during bias field estimation)
@@ -63,27 +63,27 @@ inputs:
   channels:
     type: ['null', int]
     label: Number of channels to use
-    inputBinding: {prefix: -S, separate: false}
+    inputBinding: {prefix: -S}
   initialization_iterations:
     type: ['null', int]
     label: initial number of segmentation-initialisation iterations
-    inputBinding: {prefix: -W, separate: false}
+    inputBinding: {prefix: -W}
   mixel:
     type: ['null', double]
     label: spatial smoothness for mixeltype
-    inputBinding: {prefix: -R, separate: false}
+    inputBinding: {prefix: -R}
   fixed:
     type: ['null', int]
     label: number of main-loop iterations after bias-field removal
-    inputBinding: {prefix: -O, separate: false}
+    inputBinding: {prefix: -O}
   hyper:
     type: ['null', double]
     label: segmentation spatial smoothness
-    inputBinding: {prefix: -H, separate: false}
+    inputBinding: {prefix: -H}
   manualseg:
     type: ['null', File]
     label: Manual segmentation file
-    inputBinding: {prefix: -s, separate: false}
+    inputBinding: {prefix: -s}
   probability_maps:
     type: ['null', boolean]
     label: outputs individual probability maps

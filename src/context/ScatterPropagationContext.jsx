@@ -1,9 +1,14 @@
 import { createContext } from 'react';
 
-// Context for scatter propagation - lets NodeComponent show inherited scatter badges
+// Stable defaults — frozen to prevent accidental mutation and ensure referential equality
+const EMPTY_SET = Object.freeze(new Set());
+const EMPTY_MAP = Object.freeze(new Map());
+
+// Context for scatter propagation - lets NodeComponent show per-input scatter state
 // and know which nodes are source nodes (no incoming edges).
 export const ScatterPropagationContext = createContext({
-    propagatedIds: new Set(),
-    sourceNodeIds: new Set(),
-    gatherNodeIds: new Set()
+    propagatedIds: EMPTY_SET,
+    sourceNodeIds: EMPTY_SET,
+    scatteredUpstreamInputs: EMPTY_MAP, // nodeId → Set<inputName> (inputs from scattered upstream)
+    gatherNodeIds: EMPTY_SET,
 });

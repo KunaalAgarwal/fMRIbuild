@@ -44,3 +44,4 @@ if [[ "$found_tlrc" -eq 0 ]]; then
   echo "  WARN: no +tlrc output found"
 fi
 verify_log "$TOOL"
+verify_file_optional "${TOOL_OUT}/auto_tlrc_stderr.log"

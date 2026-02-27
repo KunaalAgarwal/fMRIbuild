@@ -125,5 +125,13 @@ for variant in pcasl spatial pasl; do
         echo "  Log (${variant}): no errors detected"
       fi
     fi
+
+    # Check stderr log (CWL err_log output)
+    ERR_LOG="${tool_out}/basil.err.log"
+    if [[ -f "$ERR_LOG" ]]; then
+      echo "  FOUND: basil.err.log ($(wc -c < "$ERR_LOG") bytes)"
+    else
+      echo "  OPTIONAL-SKIP: basil.err.log (not captured)"
+    fi
   fi
 done

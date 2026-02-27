@@ -20,7 +20,7 @@ sphere_in:
   path: ${WB_SPHERE_L}
 sphere_project_to:
   class: File
-  path: ${WB_SPHERE_L}
+  path: ${WB_SPHERE_R}
 sphere_unproject_from:
   class: File
   path: ${WB_SPHERE_L}
@@ -35,3 +35,4 @@ dir="${OUT_DIR}/${TOOL}"
 
 verify_gifti "${dir}/output_sphere.surf.gii"
 verify_log "$TOOL"
+verify_file_optional "${dir}/wb_surface_sphere_project_unproject.err.log"

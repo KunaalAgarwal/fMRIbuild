@@ -1,0 +1,17 @@
+{
+  "name": "scatter_multi_input",
+  "description": "Multiple scatter inputs on flirt (tests dotproduct scatterMethod)",
+  "nodes": [
+    {
+      "id": "node_1", "type": "default",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "flirt", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+        "scatterInputs": ["input", "reference"],
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    }
+  ],
+  "edges": []
+}

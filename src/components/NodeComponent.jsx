@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useContext, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Handle, Position } from 'reactflow';
+import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
@@ -13,15 +13,29 @@ import CustomWorkflowParamModal from './CustomWorkflowParamModal.jsx';
 import IONodeModal from './IONodeModal.jsx';
 import '../styles/workflowItem.css';
 
+// Compute a font size that scales down for longer node labels
+function labelFontSize(text) {
+    const len = (text || '').length;
+    if (len <= 6) return undefined;        // use CSS default (0.95rem)
+    if (len <= 10) return '0.82rem';
+    if (len <= 16) return '0.72rem';
+    return '0.62rem';
+}
+
 const NodeComponent = ({ data, id }) => {
+    // Force ReactFlow to recompute handle bounds so edges route to left/right handles
+    const updateNodeInternals = useUpdateNodeInternals();
+    useEffect(() => { updateNodeInternals(id); }, []);
+
     // Check if this is a dummy node early
     const isDummy = data.isDummy === true;
 
     // Check scatter propagation and source-node status
-    const { propagatedIds, sourceNodeIds, gatherNodeIds } = useContext(ScatterPropagationContext);
+    const { propagatedIds, sourceNodeIds, scatteredUpstreamInputs, gatherNodeIds } = useContext(ScatterPropagationContext);
     const isScatterInherited = propagatedIds.has(id);
+    const isGatherNode = gatherNodeIds?.has(id) || false;
     const isSourceNode = sourceNodeIds.has(id);
-    const isGatherNode = gatherNodeIds.has(id);
+    const upstreamScatterInputs = scatteredUpstreamInputs.get(id) || new Set();
 
     // Get wired input state from context
     const wiredContext = useContext(WiredInputsContext);
@@ -32,14 +46,14 @@ const NodeComponent = ({ data, id }) => {
     const [dockerVersion, setDockerVersion] = useState(data.dockerVersion || 'latest');
     const [versionValid, setVersionValid] = useState(true);
     const [versionWarning, setVersionWarning] = useState('');
-    const [scatterEnabled, setScatterEnabled] = useState(data.scatterEnabled || false);
-    const [gatherEnabled, setGatherEnabled] = useState(data.gatherEnabled || false);
+    const [scatterToggles, setScatterToggles] = useState({});
     const [linkMergeValues, setLinkMergeValues] = useState(data.linkMergeOverrides || {});
     const [whenParam, setWhenParam] = useState('');
     const [whenCondition, setWhenCondition] = useState('');
     const [whenTouched, setWhenTouched] = useState(false);
     const [expressionValues, setExpressionValues] = useState(data.expressions || {});
     const [expressionToggles, setExpressionToggles] = useState({});
+    const [selectedTemplates, setSelectedTemplates] = useState({});
     const [nodeNotes, setNodeNotes] = useState(data.notes || '');
 
     // Info tooltip state (hover to show, click to pin, click-outside to dismiss)
@@ -150,6 +164,11 @@ const NodeComponent = ({ data, id }) => {
         setLinkMergeValues(prev => ({ ...prev, [inputName]: value }));
     };
 
+    // Scatter toggle handler: toggles a parameter for scatter
+    const handleToggleScatter = (paramName) => {
+        setScatterToggles(prev => ({ ...prev, [paramName]: !prev[paramName] }));
+    };
+
     // Shared fx toggle handler: clears expression value when turning off
     const handleToggleFx = (paramName) => {
         setExpressionToggles(prev => {
@@ -167,12 +186,24 @@ const NodeComponent = ({ data, id }) => {
 
     // Shared renderer for param inline controls (used by both required and optional sections)
     const renderParamControl = (param) => {
-        const isFileType = param.type === 'File' || param.type === 'Directory';
+        const isFileType = /^(File|Directory)(\[\])?$/.test(param.type);
+        const isScatterLocked = upstreamScatterInputs.has(param.name);
+        const isGatherLocked = isGatherNode && param.type?.endsWith('[]') && (wiredInputs.get(param.name) || []).length > 0;
+        const isLocked = isScatterLocked || isGatherLocked;
+
+        const scatterBtn = (
+            <span
+                className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}${isLocked ? ' locked' : ''}`}
+                onClick={isLocked ? undefined : () => handleToggleScatter(param.name)}
+                title={isGatherLocked ? 'This input gathers scattered outputs into an array' : isScatterLocked ? 'Inherited from upstream scatter' : scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
+            >{'\u21BB'}</span>
+        );
 
         if (isFileType) {
-            // File/Directory: only fx toggle in the header; source info renders in card body
+            // File/Directory: scatter + fx toggles in the header; source info renders in card body
             return (
                 <div className="param-control">
+                    {scatterBtn}
                     <span
                         className={`expression-toggle${expressionToggles[param.name] ? ' active' : ''}`}
                         onClick={() => handleToggleFx(param.name)}
@@ -186,9 +217,10 @@ const NodeComponent = ({ data, id }) => {
         const isExpressionMode = expressionToggles[param.name] || false;
 
         if (isExpressionMode) {
-            // Expression mode: only fx toggle in the header; input + template render in card body
+            // Expression mode: scatter + fx toggles in the header; input + template render in card body
             return (
                 <div className="param-control">
+                    {scatterBtn}
                     <span className="expression-toggle active" onClick={() => handleToggleFx(param.name)} title="Switch to value mode">fx</span>
                 </div>
             );
@@ -248,6 +280,7 @@ const NodeComponent = ({ data, id }) => {
         return (
             <div className="param-control">
                 <div className="expression-row">
+                    {scatterBtn}
                     <span className="expression-toggle" onClick={() => handleToggleFx(param.name)} title="Switch to expression mode">fx</span>
                     {control}
                 </div>
@@ -256,13 +289,14 @@ const NodeComponent = ({ data, id }) => {
     };
 
     const handleOpenModal = () => {
-        // Auto-enable scatter toggle if inherited from upstream (non-source node)
-        if (!isSourceNode && isScatterInherited && !scatterEnabled) {
-            setScatterEnabled(true);
+        // Initialize scatter toggles from saved scatterInputs or auto-suggest from upstream
+        const scatterInit = {};
+        const savedScatter = data.scatterInputs || [];
+        savedScatter.forEach(name => { scatterInit[name] = true; });
+        if (data.scatterInputs === undefined && upstreamScatterInputs.size > 0) {
+            upstreamScatterInputs.forEach(name => { scatterInit[name] = true; });
         }
-
-        // Initialize gather state from saved data
-        setGatherEnabled(data.gatherEnabled || false);
+        setScatterToggles(scatterInit);
 
         // Initialize linkMergeOverrides, whenExpression, and expressions from saved data
         setLinkMergeValues(data.linkMergeOverrides || {});
@@ -321,11 +355,18 @@ const NodeComponent = ({ data, id }) => {
                 }
             });
 
+            const validInputNames = new Set([
+                ...Object.keys(tool?.requiredInputs || {}),
+                ...Object.keys(tool?.optionalInputs || {}),
+            ]);
+            const activeScatterInputs = Object.entries(scatterToggles)
+                .filter(([name, active]) => active && validInputNames.has(name))
+                .map(([name]) => name);
+
             data.onSaveParameters({
                 params: paramValues,
                 dockerVersion: finalDockerVersion,
-                scatterEnabled: scatterEnabled,
-                gatherEnabled: gatherEnabled,
+                scatterInputs: activeScatterInputs,
                 linkMergeOverrides: linkMergeValues,
                 whenExpression: whenParam && whenCondition.trim() && !whenWarning
                     ? `$(inputs.${whenParam} ${whenCondition.trim()})`
@@ -406,20 +447,24 @@ const NodeComponent = ({ data, id }) => {
             <>
                 <div className="node-wrapper node-io" onDoubleClick={() => setShowIOModal(true)}>
                     <div className="node-top-row">
-                        <span className="node-io-badge"><span className="node-io-badge-text">I/O</span></span>
-                        <span className="handle-label">IN</span>
-                        <span className="node-info-spacer">
-                            {data.notes && <span className="node-notes-badge">N</span>}
-                        </span>
+                        <span className="node-version-spacer"></span>
+                        <span className="node-info-spacer"></span>
                     </div>
                     <div className="node-content">
-                        <Handle type="target" position={Position.Top} />
-                        <span className="node-label">{data.displayLabel || data.label}</span>
-                        <Handle type="source" position={Position.Bottom} />
+                        <Handle type="target" position={Position.Left} />
+                        <span className="handle-label">IN</span>
+                        <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>{data.displayLabel || data.label}</span>
+                        <span className="handle-label">OUT</span>
+                        <Handle type="source" position={Position.Right} />
                     </div>
                     <div className="node-bottom-row">
-                        <span className="node-bottom-left"></span>
-                        <span className="handle-label">OUT</span>
+                        <span className="node-bottom-left">
+                            {isScatterInherited && <span className="node-scatter-badge">&#x21BB;</span>}
+                            {isGatherNode && <span className="node-gather-badge">G</span>}
+                            {data.whenExpression && <span className="node-when-badge">?</span>}
+                            {data.expressions && Object.keys(data.expressions).length > 0 && <span className="node-fx-badge">fx</span>}
+                            {data.notes && <span className="node-notes-badge">N</span>}
+                        </span>
                         <span className="node-info-spacer"></span>
                     </div>
                 </div>
@@ -450,7 +495,6 @@ const NodeComponent = ({ data, id }) => {
                                 ? <span className="node-io-badge-text">{selectionCount} output{selectionCount !== 1 ? 's' : ''}</span>
                                 : <span className="node-io-badge-text">BIDS</span>}
                         </span>
-                        <span className="handle-label">IN</span>
                         <span
                             className="node-params-btn"
                             onClick={(e) => {
@@ -466,18 +510,19 @@ const NodeComponent = ({ data, id }) => {
                         </span>
                     </div>
                     <div className="node-content">
-                        <Handle type="target" position={Position.Top} />
-                        <span className="node-label">{data.displayLabel || data.label}</span>
-                        <Handle type="source" position={Position.Bottom} />
+                        <Handle type="target" position={Position.Left} />
+                        <span className="handle-label">IN</span>
+                        <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>{data.displayLabel || data.label}</span>
+                        <span className="handle-label">OUT</span>
+                        <Handle type="source" position={Position.Right} />
                     </div>
                     <div className="node-bottom-row">
                         <span className="node-bottom-left">
                             {!hasData && <span className="node-warning-badge">!</span>}
+                            {isScatterInherited && <span className="node-scatter-badge">{'\u21BB'}</span>}
                             {isGatherNode && <span className="node-gather-badge">G</span>}
-                            {isScatterInherited && !isGatherNode && <span className="node-scatter-badge">{'\u21BB'}</span>}
                             {data.notes && <span className="node-notes-badge">N</span>}
                         </span>
-                        <span className="handle-label">OUT</span>
                         <span
                             ref={infoIconRef}
                             className="node-info-btn"
@@ -572,7 +617,7 @@ const NodeComponent = ({ data, id }) => {
         const nonDummyCount = nonDummyInternalNodes.length;
         const hasAnyWhen = nonDummyInternalNodes.some(n => n.whenExpression);
         const hasAnyFx = nonDummyInternalNodes.some(n => n.expressions && Object.keys(n.expressions).length > 0);
-        const hasAnyScatter = nonDummyInternalNodes.some(n => n.scatterEnabled);
+        const hasAnyScatter = nonDummyInternalNodes.some(n => (n.scatterInputs?.length || 0) > 0);
 
         const handleOpenCustomModal = () => setShowCustomModal(true);
 
@@ -624,22 +669,23 @@ const NodeComponent = ({ data, id }) => {
                 <div className="node-wrapper node-custom-workflow" onDoubleClick={handleOpenCustomModal}>
                     <div className="node-top-row">
                         <span className="node-custom-badge"><span className="node-custom-badge-text">{nonDummyCount} tools</span></span>
-                        <span className="handle-label">IN</span>
                         <span className="node-params-btn" onClick={handleOpenCustomModal}>Params</span>
                     </div>
                     <div className="node-content">
-                        <Handle type="target" position={Position.Top} />
-                        <span className="node-label">{data.displayLabel || data.label}</span>
-                        <Handle type="source" position={Position.Bottom} />
+                        <Handle type="target" position={Position.Left} />
+                        <span className="handle-label">IN</span>
+                        <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>{data.displayLabel || data.label}</span>
+                        <span className="handle-label">OUT</span>
+                        <Handle type="source" position={Position.Right} />
                     </div>
                     <div className="node-bottom-row">
                         <span className="node-bottom-left">
                             {(isScatterInherited || hasAnyScatter) && <span className="node-scatter-badge">&#x21BB;</span>}
+                            {isGatherNode && <span className="node-gather-badge">G</span>}
                             {hasAnyWhen && <span className="node-when-badge">?</span>}
                             {hasAnyFx && <span className="node-fx-badge">fx</span>}
                             {data.hasValidationWarnings && <span className="node-warning-badge">!</span>}
                         </span>
-                        <span className="handle-label">OUT</span>
                         <span
                             ref={customInfoIconRef}
                             className="node-info-btn"
@@ -714,24 +760,24 @@ const NodeComponent = ({ data, id }) => {
                     ) : (
                         <span className="node-version-spacer"></span>
                     )}
-                    <span className="handle-label">IN</span>
                     <span className="node-params-btn" onClick={handleOpenModal}>Params</span>
                 </div>
 
                 <div onDoubleClick={handleOpenModal} className="node-content">
-                    <Handle type="target" position={Position.Top} />
-                    <span className="node-label">{data.displayLabel || data.label}</span>
-                    <Handle type="source" position={Position.Bottom} />
+                    <Handle type="target" position={Position.Left} />
+                    <span className="handle-label">IN</span>
+                    <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>{data.displayLabel || data.label}</span>
+                    <span className="handle-label">OUT</span>
+                    <Handle type="source" position={Position.Right} />
                 </div>
 
                 <div className="node-bottom-row">
                     <span className="node-bottom-left">
+                        {isScatterInherited && <span className="node-scatter-badge">&#x21BB;</span>}
                         {isGatherNode && <span className="node-gather-badge">G</span>}
-                        {isScatterInherited && !isGatherNode && <span className="node-scatter-badge">&#x21BB;</span>}
                         {data.whenExpression && <span className="node-when-badge">?</span>}
                         {data.expressions && Object.keys(data.expressions).length > 0 && <span className="node-fx-badge">fx</span>}
                     </span>
-                    <span className="handle-label">OUT</span>
                     {toolInfo ? (
                         <span
                             ref={infoIconRef}
@@ -830,52 +876,6 @@ const NodeComponent = ({ data, id }) => {
                             </Form.Group>
                         )}
 
-                        {/* Scatter Toggle */}
-                        <Form.Group className="scatter-toggle-group">
-                            <div className="scatter-toggle-row">
-                                <Form.Label className="modal-label" style={{ marginBottom: 0 }}>
-                                    Scatter (Batch Processing)
-                                </Form.Label>
-                                <Form.Check
-                                    type="switch"
-                                    id={`scatter-toggle-${id}`}
-                                    checked={scatterEnabled}
-                                    onChange={(e) => setScatterEnabled(e.target.checked)}
-                                    disabled={!isSourceNode}
-                                    className="scatter-switch"
-                                />
-                            </div>
-                            <div className="scatter-help-text">
-                                {!isSourceNode
-                                    ? 'Scatter can only be enabled on source nodes (nodes with no incoming connections). Downstream nodes inherit scatter automatically from upstream.'
-                                    : 'Run this step once per input file instead of once total. Enable on the first node to batch-process multiple subjects \u2014 the exported CWL will loop over every file in the input array. Downstream nodes inherit scatter automatically.'}
-                            </div>
-                        </Form.Group>
-
-                        {/* Gather Toggle */}
-                        <Form.Group className="scatter-toggle-group">
-                            <div className="scatter-toggle-row">
-                                <Form.Label className="modal-label" style={{ marginBottom: 0 }}>
-                                    Gather (Collect Scattered Outputs)
-                                </Form.Label>
-                                <Form.Check
-                                    type="switch"
-                                    id={`gather-toggle-${id}`}
-                                    checked={gatherEnabled}
-                                    onChange={(e) => setGatherEnabled(e.target.checked)}
-                                    disabled={isSourceNode || !isScatterInherited}
-                                    className="scatter-switch"
-                                />
-                            </div>
-                            <div className="scatter-help-text">
-                                {isSourceNode
-                                    ? 'Gather is not available on source nodes.'
-                                    : !isScatterInherited
-                                        ? 'Gather is only available on nodes that receive scattered input from upstream.'
-                                        : 'Collect all scattered outputs into a single array and run this step once instead of per-element. Stops scatter propagation to downstream nodes.'}
-                            </div>
-                        </Form.Group>
-
                         {/* Conditional Expression Builder */}
                         <Form.Group className="when-expression-group">
                             <Form.Label className="modal-label" style={{ marginBottom: 6 }}>
@@ -931,18 +931,18 @@ const NodeComponent = ({ data, id }) => {
                                         <div className="param-section-header">{sectionLabel}</div>
                                         {sectionParams.map((param) => {
                                             const wiredSources = wiredInputs.get(param.name) || [];
-                                            const isFileType = param.type === 'File' || param.type === 'Directory';
+                                            const isFileType = /^(File|Directory)(\[\])?$/.test(param.type);
                                             return (
-                                                <div key={param.name} className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''}`}>
+                                                <div key={param.name} className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''} ${scatterToggles[param.name] ? 'has-scatter' : ''}`}>
                                                     <div className="param-card-header">
                                                         <span className="param-name">{param.name}</span>
-                                                        <span className="param-type-badge">{param.type}</span>
+                                                        <span className="param-type-badge" title={param.enumSymbols?.length ? param.enumSymbols.join(', ') : param.options?.length ? param.options.join(', ') : param.type}>{param.type}</span>
                                                         {renderParamControl(param)}
                                                     </div>
                                                     {isFileType && wiredSources.length === 1 && (
                                                         <div className="input-source-single">
                                                             <span className="input-source">
-                                                                from {wiredSources[0].sourceNodeLabel} / {wiredSources[0].sourceOutput}
+                                                                from {wiredSources[0].sourceNodeLabel} / {wiredSources[0].sourceOutput}{propagatedIds.has(wiredSources[0].sourceNodeId) ? ' (scattered)' : ''}
                                                             </span>
                                                         </div>
                                                     )}
@@ -953,7 +953,7 @@ const NodeComponent = ({ data, id }) => {
                                                                 <div className="input-source-multi-sources">
                                                                     {wiredSources.map((src, i) => (
                                                                         <span key={i} className="input-source input-source-detail">
-                                                                            {src.sourceNodeLabel} / {src.sourceOutput}
+                                                                            {src.sourceNodeLabel} / {src.sourceOutput}{propagatedIds.has(src.sourceNodeId) ? ' (scattered)' : ''}
                                                                         </span>
                                                                     ))}
                                                                 </div>
@@ -987,8 +987,12 @@ const NodeComponent = ({ data, id }) => {
                                                                     />
                                                                     {fileTemplates.length > 0 && (
                                                                         <Form.Select size="sm" className="expression-template-select"
-                                                                            value={fileTemplates.find(t => t.expression === exprVal)?.expression || ''}
-                                                                            onChange={(e) => { if (e.target.value) setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value })); }}>
+                                                                            value={selectedTemplates[param.name] || ''}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                setSelectedTemplates(prev => ({ ...prev, [param.name]: val }));
+                                                                                if (val) setExpressionValues(prev => ({ ...prev, [param.name]: val }));
+                                                                            }}>
                                                                             <option value="">Templates</option>
                                                                             {fileTemplates.map(t => (
                                                                                 <option key={t.label} value={t.expression} title={t.description}>{t.label}</option>
@@ -1019,14 +1023,18 @@ const NodeComponent = ({ data, id }) => {
                                                                 <div className="expression-input-row">
                                                                     <Form.Control type="text" size="sm"
                                                                         className={`expression-input${exprVal ? ' filled' : ''}${exprWarning ? ' invalid' : ''}`}
-                                                                        placeholder={param.type === 'string' ? 'self.toUpperCase()' : 'self + 1'}
+                                                                        placeholder={param.type === 'string' || param.type === 'enum' ? 'self.toUpperCase()' : 'self + 1'}
                                                                         value={exprVal}
                                                                         onChange={(e) => setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value }))}
                                                                     />
                                                                     {applicableTemplates.length > 0 && (
                                                                         <Form.Select size="sm" className="expression-template-select"
-                                                                            value={applicableTemplates.find(t => t.expression === exprVal)?.expression || ''}
-                                                                            onChange={(e) => { if (e.target.value) setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value })); }}>
+                                                                            value={selectedTemplates[param.name] || ''}
+                                                                            onChange={(e) => {
+                                                                                const val = e.target.value;
+                                                                                setSelectedTemplates(prev => ({ ...prev, [param.name]: val }));
+                                                                                if (val) setExpressionValues(prev => ({ ...prev, [param.name]: val }));
+                                                                            }}>
                                                                             <option value="">Templates</option>
                                                                             {applicableTemplates.map(t => (
                                                                                 <option key={t.label} value={t.expression} title={t.description}>{t.label}</option>

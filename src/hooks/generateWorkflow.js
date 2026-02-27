@@ -117,6 +117,7 @@ if [ "\${1:-}" = "--bids" ]; then
   python3 resolve_bids.py \\
     --bids-dir "\$BIDS_DIR" \\
     --query bids_query.json \\
+    --job job.yml \\
     --output job.yml
   cwltool --outdir /output "\$@" \\
     workflows/${safeWorkflowName}.cwl \\
@@ -140,7 +141,8 @@ ${inputSection}
   echo "All scalar parameters are pre-configured in job.yml."
   echo "Edit job.yml to set file paths before running."${hasBIDS ? `
   echo ""
-  echo "BIDS mode: ./run.sh --bids /path/to/bids/dataset"` : ''}
+  echo "BIDS mode: ./run.sh --bids /absolute/path/to/bids/dataset"
+  echo "  (the BIDS path must be absolute)"` : ''}
   echo ""
   echo "Extra arguments are passed to cwltool (e.g. --verbose, --cachedir /cache)."
   exit 0
@@ -508,6 +510,9 @@ in JSON-LD format, enabling discovery and reuse through platforms like [Workflow
 ${hasBIDS ? `## Running with a BIDS Dataset
 
 This workflow supports automatic input resolution from BIDS-formatted datasets.
+The resolver script reads your existing \`job.yml\` (which contains pre-configured scalar
+parameters like thresholds and flags) and merges in the resolved BIDS file paths,
+so no parameters are lost.
 
 ### Prerequisites
 - A BIDS-valid dataset (validated with https://bids-validator.readthedocs.io)
@@ -515,14 +520,24 @@ This workflow supports automatic input resolution from BIDS-formatted datasets.
 
 ### Usage
 
+**Important:** The \`--bids-dir\` / \`--bids\` argument must be an **absolute path** to your
+BIDS dataset root directory (e.g. \`/home/user/data/my_bids_dataset\`, not a relative path).
+
 \`\`\`bash
 # Docker-based execution:
-./run.sh --bids /path/to/your/bids/dataset
+./run.sh --bids /absolute/path/to/your/bids/dataset
 
 # Direct cwltool execution:
-python3 resolve_bids.py --bids-dir /path/to/bids --query bids_query.json --output job.yml
+python3 resolve_bids.py \\
+  --bids-dir /absolute/path/to/your/bids/dataset \\
+  --query bids_query.json \\
+  --job workflows/${safeWorkflowName}_job.yml \\
+  --output job.yml
 cwltool workflows/${safeWorkflowName}.cwl job.yml
 \`\`\`
+
+The \`--job\` flag tells the resolver to read the existing job file first, preserving all
+scalar parameters. The \`--output\` flag specifies where to write the merged result.
 
 ### Manual Override
 You can edit \`workflows/${safeWorkflowName}_job.yml\` directly to specify custom file paths
@@ -654,38 +669,46 @@ export function useGenerateWorkflow() {
             ...new Set(realNodes.map(n => getToolConfigSync(n.data.label)?.cwlPath).filter(Boolean))
         ];
 
-        try {
-            const fetched = await Promise.all(uniquePaths.map(async (p) => {
-                const res = await fetch(`${base}${p}`);
-                if (!res.ok) throw new Error(`${p}: ${res.status} ${res.statusText}`);
-                return { path: p, text: await res.text() };
-            }));
+        const results = await Promise.allSettled(uniquePaths.map(async (p) => {
+            const res = await fetch(`${base}${p}`);
+            if (!res.ok) throw new Error(`${p}: ${res.status} ${res.statusText}`);
+            return { path: p, text: await res.text() };
+        }));
 
-            for (const { path: p, text } of fetched) {
-                let cwlContent = text;
-
-                // Inject Docker version if we have one for this tool
-                const dockerInfo = dockerVersionMap[p];
-                if (dockerInfo) {
-                    try {
-                        const cwlDoc = YAML.load(cwlContent);
-                        if (!cwlDoc.hints) cwlDoc.hints = {};
-                        cwlDoc.hints.DockerRequirement = {
-                            dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`
-                        };
-                        const hasShebang = cwlContent.startsWith('#!/');
-                        const shebangLine = hasShebang ? cwlContent.split('\n')[0] + '\n\n' : '';
-                        cwlContent = shebangLine + YAML.dump(cwlDoc, { noRefs: true, lineWidth: -1 });
-                    } catch (parseErr) {
-                        console.warn(`Could not parse CWL file ${p} for Docker injection:`, parseErr.message);
-                    }
-                }
-
-                zip.file(p, cwlContent);
-            }
-        } catch (err) {
-            showError(`Unable to fetch tool file: ${err.message}`);
+        const failedPaths = results
+            .map((r, i) => r.status === 'rejected' ? uniquePaths[i] : null)
+            .filter(Boolean);
+        if (failedPaths.length === uniquePaths.length) {
+            showError(`Unable to fetch any tool files. Check network connectivity.`);
             return;
+        }
+        if (failedPaths.length > 0) {
+            showWarning(`Could not fetch ${failedPaths.length} tool file(s): ${failedPaths.join(', ')}`);
+        }
+
+        for (const result of results) {
+            if (result.status !== 'fulfilled') continue;
+            const { path: p, text } = result.value;
+            let cwlContent = text;
+
+            // Inject Docker version if we have one for this tool
+            const dockerInfo = dockerVersionMap[p];
+            if (dockerInfo) {
+                try {
+                    const cwlDoc = YAML.load(cwlContent);
+                    if (!cwlDoc.hints) cwlDoc.hints = {};
+                    cwlDoc.hints.DockerRequirement = {
+                        dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`
+                    };
+                    const hasShebang = cwlContent.startsWith('#!/');
+                    const shebangLine = hasShebang ? cwlContent.split('\n')[0] + '\n\n' : '';
+                    cwlContent = shebangLine + YAML.dump(cwlDoc, { noRefs: true, lineWidth: -1 });
+                } catch (parseErr) {
+                    showWarning(`Could not inject Docker version into ${p}: ${parseErr.message}`);
+                }
+            }
+
+            zip.file(p, cwlContent);
         }
 
         /* ---------- detect BIDS nodes ---------- */
@@ -753,6 +776,8 @@ export function useGenerateWorkflow() {
                 'prefetch_images_singularity.sh',
             ],
         }));
+
+        zip.folder('additional_inputs');
 
         /* ---------- download ---------- */
         const blob = await zip.generateAsync({ type: 'blob' });

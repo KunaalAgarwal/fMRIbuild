@@ -20,6 +20,8 @@ input_files:
   path: "${BOLD}"
 output_dir: "melodic_out"
 dim: 5
+out_mean: true
+out_all: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -65,14 +67,10 @@ else
       echo "  WARN: image appears to be all zeros: ${bn}"
     fi
   done
+
+  # Optional outputs enabled by out_mean/out_all
+  verify_nifti_optional "${MELODIC_DIR}/mean.nii.gz"
+  verify_file_optional  "${MELODIC_DIR}/melodic_Tmodes"
 fi
 
-LOG_FILE="${LOG_DIR}/${TOOL}.log"
-if [[ -f "$LOG_FILE" ]]; then
-  if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
-    echo "  WARN: potential errors in log:"
-    grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
-  else
-    echo "  Log: no errors detected"
-  fi
-fi
+verify_log "$TOOL"

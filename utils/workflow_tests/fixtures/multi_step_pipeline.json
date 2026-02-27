@@ -1,0 +1,50 @@
+{
+  "name": "multi_step_pipeline",
+  "description": "3-node chain: bet -> flirt -> applywarp",
+  "nodes": [
+    {
+      "id": "node_1", "type": "default",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "bet", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_2", "type": "default",
+      "position": { "x": 400, "y": 100 },
+      "data": {
+        "label": "flirt", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_3", "type": "default",
+      "position": { "x": 700, "y": 100 },
+      "data": {
+        "label": "applywarp", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1_2", "source": "node_1", "target": "node_2",
+      "data": {
+        "mappings": [{ "sourceOutput": "brain_extraction", "targetInput": "input" }]
+      }
+    },
+    {
+      "id": "edge_2_3", "source": "node_2", "target": "node_3",
+      "data": {
+        "mappings": [{ "sourceOutput": "registered_image", "targetInput": "input" }]
+      }
+    }
+  ]
+}

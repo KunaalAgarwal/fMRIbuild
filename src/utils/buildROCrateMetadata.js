@@ -127,6 +127,13 @@ function buildSupportEntities(singularityFiles) {
         },
     ];
 
+    entities.push({
+        '@id': 'additional_inputs/',
+        '@type': 'Dataset',
+        name: 'Additional inputs',
+        description: 'Directory for supplementary files needed by the workflow at runtime. Provided at the convenience for the user to organize their supplementary files',
+    });
+
     if (singularityFiles.length > 0) {
         entities.push(
             {
@@ -212,6 +219,7 @@ export function buildROCrateMetadata({
         { '@id': 'prefetch_images.sh' },
         ...singularityFiles.map(f => ({ '@id': f })),
         ...toolCWLPaths.map(p => ({ '@id': p })),
+        { '@id': 'additional_inputs/' },
         ...(hasBIDS ? [{ '@id': 'bids_query.json' }, { '@id': 'resolve_bids.py' }] : []),
     ];
 

@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useRef, useEffect } from 'react';
+import React, { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react';
 import { Modal, Button } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { checkExtensionCompatibility } from '../utils/extensionValidation.js';
@@ -15,15 +15,19 @@ const getBaseType = (type) => {
 
 const isArrayType = (type) => type?.includes('[]') || false;
 
-/** When the source node is scattered, scalar File/Directory outputs are effectively arrays. */
-const getEffectiveOutputType = (type, sourceIsScattered) => {
-    if (!sourceIsScattered) return type;
-    const base = getBaseType(type);
-    if (!isArrayType(type) && (base === 'File' || base === 'Directory')) return `${base}[]`;
-    return type;
+const formatTypeHint = (type, extensions, enumSymbols = null) => {
+    const baseType = getBaseType(type);
+    const isArray = isArrayType(type);
+    const suffix = isArray ? '[]' : '';
+
+    if (baseType === 'File' && extensions && extensions.length > 0) {
+        return extensions.map(ext => ext + suffix).join(', ');
+    }
+
+    return type || 'File';
 };
 
-const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, inputAcceptedExtensions = null) => {
+const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, inputAcceptedExtensions = null, sourceIsScattered = false) => {
     if (!outputType || !inputType) return { compatible: true, warning: true, reason: 'Type information unavailable' };
 
     const outBase = getBaseType(outputType);
@@ -32,19 +36,12 @@ const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, 
     // 'any' type (used by dummy I/O nodes) is always compatible
     if (outBase === 'any' || inBase === 'any') return { compatible: true };
 
-    const outArray = isArrayType(outputType);
-    const inArray = isArrayType(inputType);
-
-    // Array → scalar: valid when scatter is involved (scatter unwraps the array)
-    if (outArray && !inArray) {
-        return { compatible: true, warning: true, reason: `${outputType} will be scattered across ${inputType} inputs` };
-    }
-    // Scalar → array: incompatible (single value can't fill an array requirement)
-    if (!outArray && inArray) {
-        return { compatible: false, reason: `Type mismatch: ${outputType} cannot satisfy ${inputType}` };
+    // Enum ↔ string: enums are constrained strings, treat as compatible
+    if ((outBase === 'enum' && inBase === 'string') || (outBase === 'string' && inBase === 'enum')) {
+        return { compatible: true };
     }
 
-    // Base type check (File vs non-File)
+    // Base type check — must match before considering array/scatter dimensions
     if (outBase !== inBase) {
         return { compatible: false, reason: `Type mismatch: ${outputType} → ${inputType}` };
     }
@@ -67,6 +64,26 @@ const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, 
                 isExtensionWarning: true
             };
         }
+    }
+
+    const outArray = isArrayType(outputType);
+    const inArray = isArrayType(inputType);
+
+    // Array → scalar: scatter unwraps the array across downstream inputs
+    if (outArray && !inArray) {
+        return { compatible: true, scatterNote: true, reason: `Array output (${outputType}) will scatter across ${inputType} inputs` };
+    }
+    // Scalar → array: normally incompatible, but valid when source is scattered (gather)
+    if (!outArray && inArray) {
+        if (sourceIsScattered) {
+            return { compatible: true, gatherNote: true, reason: 'Scatter outputs will be gathered into a single array input' };
+        }
+        return { compatible: false, reason: `Type mismatch: ${outputType} cannot satisfy ${inputType}` };
+    }
+
+    // Scatter inheritance note: scalar → scalar when source is scattered
+    if (sourceIsScattered && !outArray && !inArray) {
+        return { compatible: true, scatterNote: true, reason: 'Scatter will be inherited by this step' };
     }
 
     return { compatible: true };
@@ -144,6 +161,7 @@ const getToolIO = (nodeData) => {
                     type: def.type,
                     label: def.label || name,
                     extensions: def.extensions || [],
+                    enumSymbols: def.enumSymbols || null,
                     group: node.label,
                     groupIndex: index,
                 });
@@ -157,6 +175,7 @@ const getToolIO = (nodeData) => {
                     label: def.label || name,
                     acceptedExtensions: def.acceptedExtensions || null,
                     required: true,
+                    enumSymbols: def.enumSymbols || def.options || null,
                     group: node.label,
                     groupIndex: index,
                 });
@@ -172,6 +191,7 @@ const getToolIO = (nodeData) => {
                         label: def.label || name,
                         acceptedExtensions: null,
                         required: false,
+                        enumSymbols: def.enumSymbols || def.options || null,
                         group: node.label,
                         groupIndex: index,
                     });
@@ -188,7 +208,8 @@ const getToolIO = (nodeData) => {
                 name,
                 type: def.type,
                 label: def.label || name,
-                extensions: def.extensions || []
+                extensions: def.extensions || [],
+                enumSymbols: def.enumSymbols || null
             })),
             inputs: [
                 // Required inputs first
@@ -197,7 +218,8 @@ const getToolIO = (nodeData) => {
                     type: def.type,
                     label: def.label || name,
                     acceptedExtensions: def.acceptedExtensions || null,
-                    required: true
+                    required: true,
+                    enumSymbols: def.enumSymbols || def.options || null
                 })),
                 // Optional inputs second (exclude record types)
                 ...Object.entries(tool.optionalInputs || {})
@@ -207,7 +229,8 @@ const getToolIO = (nodeData) => {
                         type: def.type,
                         label: def.label || name,
                         acceptedExtensions: null,
-                        required: false
+                        required: false,
+                        enumSymbols: def.enumSymbols || def.options || null
                     }))
             ],
             isGeneric: false
@@ -275,8 +298,8 @@ const EdgeMappingModal = ({
         }
     }, [show, sourceNode?.label, targetNode?.label]);
 
-    // Calculate line positions after render + recalculate on resize/scroll
-    useEffect(() => {
+    // Calculate line positions synchronously after DOM mutations + recalculate on resize/scroll
+    useLayoutEffect(() => {
         if (!show || !containerRef.current) return;
 
         const timer = setTimeout(calculateLinePositions, 50);
@@ -338,6 +361,14 @@ const EdgeMappingModal = ({
             const outputLabel = sourceIO.outputs.find(o => o.name === mapping.sourceOutput)?.label || mapping.sourceOutput;
             const inputLabel = targetIO.inputs.find(i => i.name === mapping.targetInput)?.label || mapping.targetInput;
 
+            // Gap boundaries (column edges relative to container)
+            const gapLeftX = outputsScrollRect
+                ? outputsScrollRect.right - containerRect.left
+                : x1;
+            const gapRightX = inputsScrollRect
+                ? inputsScrollRect.left - containerRect.left
+                : x2;
+
             return {
                 x1, y1, x2, y2,
                 key: `${mapping.sourceOutput}-${mapping.targetInput}`,
@@ -346,6 +377,8 @@ const EdgeMappingModal = ({
                 outputLabel,
                 inputLabel,
                 gapMidX,
+                gapLeftX,
+                gapRightX,
                 outputClampY: !outputVisible
                     ? (outputRect.top < outputsScrollRect.top
                         ? outputsScrollRect.top - containerRect.top + 20
@@ -386,7 +419,7 @@ const EdgeMappingModal = ({
     };
 
     const handleOutputClick = (outputName) => {
-        setSelectedOutput(outputName);
+        setSelectedOutput(prev => prev === outputName ? null : outputName);
     };
 
     const handleInputClick = (inputName) => {
@@ -446,12 +479,12 @@ const EdgeMappingModal = ({
     const getMappingCompatibility = (outputName, inputName) => {
         const output = sourceIO.outputs.find(o => o.name === outputName);
         const input = targetIO.inputs.find(i => i.name === inputName);
-        const effectiveOutputType = getEffectiveOutputType(output?.type, sourceIsScattered);
         return checkTypeCompatibility(
-            effectiveOutputType,
+            output?.type,
             input?.type,
             output?.extensions,
-            input?.acceptedExtensions
+            input?.acceptedExtensions,
+            sourceIsScattered
         );
     };
 
@@ -461,6 +494,18 @@ const EdgeMappingModal = ({
         return !compatible;
     });
 
+    // Collect unique scatter/gather notes from current mappings for banner display
+    const { inheritNotes, gatherNotes } = useMemo(() => {
+        const inherit = new Set();
+        const gather = new Set();
+        for (const m of mappings) {
+            const compat = getMappingCompatibility(m.sourceOutput, m.targetInput);
+            if (compat.scatterNote) inherit.add(compat.reason);
+            if (compat.gatherNote) gather.add(compat.reason);
+        }
+        return { inheritNotes: [...inherit], gatherNotes: [...gather] };
+    }, [mappings, sourceIsScattered]);
+
     if (!sourceNode || !targetNode) return null;
 
     return (
@@ -468,7 +513,7 @@ const EdgeMappingModal = ({
             show={show}
             onHide={handleCancel}
             centered
-            size="lg"
+            size="xl"
             className="edge-mapping-modal"
         >
             <Modal.Header>
@@ -490,12 +535,24 @@ const EdgeMappingModal = ({
                         <span>Type mismatch detected. The output and input types may not be compatible.</span>
                     </div>
                 )}
+                {inheritNotes.map((note, i) => (
+                    <div key={`inherit-${i}`} className="scatter-note-banner">
+                        <span className="scatter-note-icon">{'\u21BB'}</span>
+                        <span>{note}</span>
+                    </div>
+                ))}
+                {gatherNotes.map((note, i) => (
+                    <div key={`gather-${i}`} className="scatter-gather-banner">
+                        <span className="scatter-gather-icon">{'\u2193'}</span>
+                        <span>{note}</span>
+                    </div>
+                ))}
 
                 <div className="mapping-container" ref={containerRef}>
                     {/* Outputs Column */}
                     <div className="io-column outputs-column">
                         <div className="column-header">
-                            {sourceIO.isDummy ? 'Provides' : 'Outputs'} ({sourceNode.label})
+                            {sourceIO.isDummy ? 'Provides' : 'Outputs'} ({sourceNode.label}{sourceIsScattered ? ' - scattered' : ''})
                             {sourceIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
                         <div className="io-items-scroll scrollbar-thin" ref={outputsScrollRef}>
@@ -526,13 +583,13 @@ const EdgeMappingModal = ({
                                         >
                                             <div className="io-item-main">
                                                 <span className="io-name">{output.label}</span>
-                                                <span className="io-type">{getEffectiveOutputType(output.type, sourceIsScattered)}</span>
+                                                <span className="io-type" title={output.type + (output.extensions?.length ? ' (' + output.extensions.join(', ') + ')' : '') + (output.enumSymbols?.length ? ' (' + output.enumSymbols.join(', ') + ')' : '')}>
+                                                    {formatTypeHint(output.type, output.extensions, output.enumSymbols)}
+                                                </span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
-                                            {output.extensions?.length > 0 && (
-                                                <span className="io-extensions" title={output.extensions.join(', ')}>
-                                                    {output.extensions.join(', ')}
-                                                </span>
+                                            {output.enumSymbols?.length > 0 && (
+                                                <div className="io-enum-values">{output.enumSymbols.map(s => `'${s}'`).join(', ')}</div>
                                             )}
                                         </div>
                                     </React.Fragment>
@@ -557,10 +614,24 @@ const EdgeMappingModal = ({
                                 const visibleY = pos.outputOffScreen ? pos.y2 : pos.y1;
                                 const clampY = pos.outputOffScreen ? pos.outputClampY : pos.inputClampY;
                                 const rawLabel = pos.outputOffScreen ? pos.outputLabel : pos.inputLabel;
-                                const truncated = rawLabel.length > 12 ? rawLabel.slice(0, 12) + '\u2026' : rawLabel;
-                                const labelText = `\u2192 ${truncated}`;
-                                const textAnchor = pos.outputOffScreen ? 'end' : 'start';
                                 const isWarning = !compatibility.compatible;
+
+                                // Shorten line, leave remaining gap for label flush against line end
+                                const gapWidth = pos.gapRightX - pos.gapLeftX;
+                                let lineEndX, foX, foWidth, textAlign;
+                                const labelPad = 10;
+                                if (pos.outputOffScreen) {
+                                    lineEndX = pos.gapLeftX + gapWidth * 0.65;
+                                    foX = pos.gapLeftX;
+                                    foWidth = lineEndX - pos.gapLeftX - labelPad;
+                                    textAlign = 'right';
+                                } else {
+                                    lineEndX = pos.gapRightX - gapWidth * 0.65;
+                                    foX = lineEndX + labelPad;
+                                    foWidth = pos.gapRightX - lineEndX - labelPad;
+                                    textAlign = 'left';
+                                }
+                                const foHeight = 22;
 
                                 return (
                                     <g key={pos.key} className="offscreen-group" onClick={() => {
@@ -568,24 +639,31 @@ const EdgeMappingModal = ({
                                     }}>
                                         <line
                                             x1={visibleX} y1={visibleY}
-                                            x2={pos.gapMidX} y2={clampY}
+                                            x2={lineEndX} y2={clampY}
                                             className={`connection-line-offscreen ${isWarning ? 'warning-line-offscreen' : ''}`}
                                         />
                                         <line
                                             x1={visibleX} y1={visibleY}
-                                            x2={pos.gapMidX} y2={clampY}
+                                            x2={lineEndX} y2={clampY}
                                             className="connection-line-hitarea"
                                         />
                                         <circle cx={visibleX} cy={visibleY} r="3.5"
                                             className={`connection-dot ${isWarning ? 'warning-dot' : ''}`}
                                         />
-                                        <text
-                                            x={pos.gapMidX} y={clampY}
-                                            textAnchor={textAnchor}
-                                            className={`connection-label-offscreen ${isWarning ? 'warning-label-offscreen' : ''}`}
-                                        >
-                                            {labelText}
-                                        </text>
+                                        <circle cx={lineEndX} cy={clampY} r="2.5"
+                                            className={`connection-dot-junction ${isWarning ? 'warning-dot' : ''}`}
+                                        />
+                                        {foWidth > 0 && (
+                                            <foreignObject x={foX} y={clampY - foHeight / 2} width={foWidth} height={foHeight}>
+                                                <div
+                                                    className={`offscreen-label ${isWarning ? 'offscreen-label-warning' : ''}`}
+                                                    style={{ textAlign }}
+                                                    title={rawLabel}
+                                                >
+                                                    {rawLabel}
+                                                </div>
+                                            </foreignObject>
+                                        )}
                                     </g>
                                 );
                             }
@@ -664,13 +742,13 @@ const EdgeMappingModal = ({
                                         >
                                             <div className="io-item-main">
                                                 <span className="io-name">{input.label}</span>
-                                                <span className="io-type">{input.type}</span>
+                                                <span className="io-type" title={input.type + (input.acceptedExtensions?.length ? ' (' + input.acceptedExtensions.join(', ') + ')' : '') + (input.enumSymbols?.length ? ' (' + input.enumSymbols.join(', ') + ')' : '')}>
+                                                    {formatTypeHint(input.type, input.acceptedExtensions, input.enumSymbols)}
+                                                </span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
-                                            {input.acceptedExtensions?.length > 0 && (
-                                                <span className="io-extensions" title={input.acceptedExtensions.join(', ')}>
-                                                    {input.acceptedExtensions.join(', ')}
-                                                </span>
+                                            {input.enumSymbols?.length > 0 && (
+                                                <div className="io-enum-values">{input.enumSymbols.map(s => `'${s}'`).join(', ')}</div>
                                             )}
                                         </div>
                                     </React.Fragment>

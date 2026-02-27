@@ -30,6 +30,10 @@ input:
   class: File
   path: "${FAST_INPUT}"
 output: "fast_out"
+bias_field: true
+bias_corrected_image: true
+probability_maps: true
+segments: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -38,8 +42,34 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 echo "── Verifying ${TOOL} outputs ──"
 TOOL_OUT="${OUT_DIR}/${TOOL}"
 
+# Main segmentation outputs
 verify_nifti "${TOOL_OUT}/fast_out_seg.nii.gz"
 verify_nifti_optional "${TOOL_OUT}/fast_out_pve_0.nii.gz"
 verify_nifti_optional "${TOOL_OUT}/fast_out_pve_1.nii.gz"
 verify_nifti_optional "${TOOL_OUT}/fast_out_pve_2.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fast_out_mixeltype.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fast_out_pveseg.nii.gz"
+
+# Optional outputs enabled by flags
+verify_nifti_optional "${TOOL_OUT}/fast_out_bias.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/fast_out_restore.nii.gz"
+
+# Probability maps (one per class)
+prob_count=0
+for prob in "${TOOL_OUT}"/fast_out_prob_*.nii.gz; do
+  [[ -f "$prob" ]] || continue
+  verify_nifti "$prob" "FLOAT"
+  prob_count=$((prob_count + 1))
+done
+echo "  Probability maps found: ${prob_count}"
+
+# Binary segments (one per class)
+seg_count=0
+for seg in "${TOOL_OUT}"/fast_out_seg_*.nii.gz; do
+  [[ -f "$seg" ]] || continue
+  verify_nifti "$seg"
+  seg_count=$((seg_count + 1))
+done
+echo "  Binary segments found: ${seg_count}"
+
 verify_log "$TOOL"

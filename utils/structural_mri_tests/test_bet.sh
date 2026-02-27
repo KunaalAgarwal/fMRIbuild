@@ -20,6 +20,8 @@ input:
   path: "${T1W}"
 output: "bet_out"
 mask: true
+skull: true
+mesh: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -30,4 +32,6 @@ TOOL_OUT="${OUT_DIR}/${TOOL}"
 
 verify_nifti "${TOOL_OUT}/bet_out.nii.gz"
 verify_nifti_optional "${TOOL_OUT}/bet_out_mask.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/bet_out_skull.nii.gz"
+verify_file_optional  "${TOOL_OUT}/bet_out_mesh.vtk"
 verify_log "$TOOL"

@@ -140,6 +140,13 @@ fi
 
 scan_log_for_errors "$RESULTS_FILE" "$TOOL_NAME"
 
+# Check err_log
+if [[ -f "$OUTPUT_DIR/tbss_non_FA.err.log" ]]; then
+    echo "  FOUND: tbss_non_FA.err.log" | tee -a "$RESULTS_FILE"
+else
+    echo "  OPTIONAL-SKIP: tbss_non_FA.err.log (not produced)" | tee -a "$RESULTS_FILE"
+fi
+
 # Summary
 echo "" | tee -a "$RESULTS_FILE"
 if $PASS; then

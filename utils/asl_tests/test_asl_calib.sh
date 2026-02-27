@@ -113,5 +113,13 @@ for variant in longtr struct; do
         echo "  Log (${variant}): no errors detected"
       fi
     fi
+
+    # Check stderr log (CWL err_log output)
+    ERR_LOG="${tool_out}/asl_calib.err.log"
+    if [[ -f "$ERR_LOG" ]]; then
+      echo "  FOUND: asl_calib.err.log ($(wc -c < "$ERR_LOG") bytes)"
+    else
+      echo "  OPTIONAL-SKIP: asl_calib.err.log (not captured)"
+    fi
   fi
 done

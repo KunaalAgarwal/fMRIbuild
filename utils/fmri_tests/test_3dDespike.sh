@@ -20,6 +20,7 @@ input:
   class: File
   path: "${BOLD_CLIP_RES}"
 prefix: "despike"
+ssave: "despike_spikiness"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -29,4 +30,5 @@ echo "── Verifying ${TOOL} outputs ──"
 TOOL_OUT="${OUT_DIR}/${TOOL}"
 
 verify_afni "${TOOL_OUT}/despike+orig.HEAD"
+verify_afni_optional "${TOOL_OUT}/despike_spikiness+orig.HEAD"
 verify_log "$TOOL"

@@ -128,12 +128,5 @@ for nii in "$dir"/applytopup_out*.nii*; do
   fi
 done
 
-LOG_FILE="${LOG_DIR}/${TOOL}.log"
-if [[ -f "$LOG_FILE" ]]; then
-  if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
-    echo "  WARN: potential errors in log:"
-    grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
-  else
-    echo "  Log: no errors detected"
-  fi
-fi
+verify_log "$TOOL"
+verify_file_optional "${dir}/applytopup.err.log"

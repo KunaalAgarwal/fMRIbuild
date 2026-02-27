@@ -493,6 +493,21 @@ verify_directory() {
   return 0
 }
 
+verify_directory_optional() {
+  local d="$1"
+  local bn
+  bn="$(basename "$d")"
+
+  if [[ ! -d "$d" ]]; then
+    echo "  OPTIONAL-SKIP: ${bn}/ (not produced)"
+    return 0
+  fi
+  local count
+  count="$(find "$d" -maxdepth 1 -type f | wc -l)"
+  echo "  FOUND: ${bn}/ (${count} files)"
+  return 0
+}
+
 # ── Verification & run ─────────────────────────────────────────────
 
 verify_outputs() {

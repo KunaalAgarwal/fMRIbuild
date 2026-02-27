@@ -1,0 +1,50 @@
+{
+  "name": "converging_pipeline",
+  "description": "Two sources (bet + susan) feed into flirt's input and reference",
+  "nodes": [
+    {
+      "id": "node_1", "type": "default",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "bet", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_2", "type": "default",
+      "position": { "x": 100, "y": 300 },
+      "data": {
+        "label": "susan", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_3", "type": "default",
+      "position": { "x": 400, "y": 200 },
+      "data": {
+        "label": "flirt", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1_3", "source": "node_1", "target": "node_3",
+      "data": {
+        "mappings": [{ "sourceOutput": "brain_extraction", "targetInput": "input" }]
+      }
+    },
+    {
+      "id": "edge_2_3", "source": "node_2", "target": "node_3",
+      "data": {
+        "mappings": [{ "sourceOutput": "smoothed_image", "targetInput": "reference" }]
+      }
+    }
+  ]
+}

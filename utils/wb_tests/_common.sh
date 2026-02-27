@@ -126,11 +126,63 @@ except ImportError:
 PY
   fi
 
+  # Create right-hemisphere metric file (different random data)
+  local metric_r="${wb_data}/random_metric.R.func.gii"
+  if [[ ! -f "$metric_r" ]]; then
+    echo "Creating right-hemisphere metric file..."
+    python3 - "$metric_r" <<'PY'
+import sys
+import numpy as np
+try:
+    import nibabel as nib
+    rng = np.random.default_rng(seed=99)
+    data = rng.random(642).astype(np.float32)
+    darray = nib.gifti.GiftiDataArray(data, intent='NIFTI_INTENT_SHAPE',
+                                       datatype='NIFTI_TYPE_FLOAT32')
+    gii = nib.gifti.GiftiImage(darrays=[darray])
+    nib.save(gii, sys.argv[1])
+    print("  Created right-hemisphere metric file with 642 vertices")
+except ImportError:
+    print("  nibabel not available")
+    sys.exit(1)
+PY
+    if [[ $? -ne 0 ]]; then
+      docker_wb wb_command -surface-coordinates-to-metric "$sphere_r" "$metric_r"
+    fi
+  fi
+
+  # Create right-hemisphere timeseries metric (3 columns, different random data)
+  local ts_metric_r="${wb_data}/timeseries.R.func.gii"
+  if [[ ! -f "$ts_metric_r" ]]; then
+    echo "Creating right-hemisphere timeseries metric file..."
+    python3 - "$ts_metric_r" <<'PY'
+import sys
+import numpy as np
+try:
+    import nibabel as nib
+    rng = np.random.default_rng(seed=77)
+    darrays = []
+    for i in range(3):
+        data = rng.random(642).astype(np.float32)
+        da = nib.gifti.GiftiDataArray(data, intent='NIFTI_INTENT_TIME_SERIES',
+                                       datatype='NIFTI_TYPE_FLOAT32')
+        darrays.append(da)
+    gii = nib.gifti.GiftiImage(darrays=darrays)
+    nib.save(gii, sys.argv[1])
+    print("  Created right-hemisphere timeseries metric with 642 vertices x 3 timepoints")
+except ImportError:
+    print("  nibabel not available")
+    sys.exit(1)
+PY
+  fi
+
   # Export paths
   WB_SPHERE_L="$sphere_l"
   WB_SPHERE_R="$sphere_r"
   WB_METRIC_L="$metric_l"
+  WB_METRIC_R="$metric_r"
   WB_TS_METRIC_L="$ts_metric"
+  WB_TS_METRIC_R="$ts_metric_r"
   WB_TINY_VOL="$tiny_vol"
   WB_LABEL_VOL="$label_vol"
 }

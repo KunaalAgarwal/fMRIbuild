@@ -27,6 +27,7 @@ export function useCustomWorkflows() {
     // Check if a workflow with the same name already exists (update it)
     const existingIndex = customWorkflows.findIndex(w => w.name === workflowData.name);
     if (existingIndex >= 0) {
+      const existingId = customWorkflows[existingIndex].id;
       setCustomWorkflows(prev => {
         const updated = [...prev];
         updated[existingIndex] = {
@@ -37,17 +38,18 @@ export function useCustomWorkflows() {
         };
         return updated;
       });
-      return 'updated';
+      return { result: 'updated', id: existingId };
     }
 
     // New workflow
+    const newId = crypto.randomUUID();
     setCustomWorkflows(prev => [...prev, {
       ...workflowData,
-      id: crypto.randomUUID(),
+      id: newId,
       createdAt: Date.now(),
       updatedAt: Date.now()
     }]);
-    return 'created';
+    return { result: 'created', id: newId };
   };
 
   const updateWorkflow = (id, updates) => {

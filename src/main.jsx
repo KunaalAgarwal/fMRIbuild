@@ -16,6 +16,7 @@ import { CustomWorkflowsProvider, useCustomWorkflowsContext } from './context/Cu
 import { TOOL_ANNOTATIONS } from './utils/toolAnnotations.js';
 import { preloadAllCWL } from './utils/cwlParser.js';
 import { invalidateMergeCache } from './utils/toolRegistry.js';
+import { topoSort } from './utils/topoSort.js';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
@@ -32,29 +33,11 @@ function computeBoundaryNodes(nodes, edges) {
     const nonDummyNodes = nodes.filter(n => !n.isDummy && !n.data?.isDummy);
     if (nonDummyNodes.length === 0) return { firstNonDummy: null, lastNonDummy: null };
 
-    // Build ID-based lookup
-    const nodeIds = new Set(nonDummyNodes.map(n => n.id));
     const dummyIds = getDummyIds(nodes);
     const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
 
-    // Kahn's topo sort
-    const incoming = Object.fromEntries(nonDummyNodes.map(n => [n.id, 0]));
-    const outgoing = new Map(nonDummyNodes.map(n => [n.id, []]));
-    realEdges.forEach(e => {
-        if (incoming[e.target] !== undefined) incoming[e.target]++;
-        outgoing.get(e.source)?.push(e.target);
-    });
-
-    const queue = nonDummyNodes.filter(n => incoming[n.id] === 0).map(n => n.id);
-    const order = [];
-    let head = 0;
-    while (head < queue.length) {
-        const id = queue[head++];
-        order.push(id);
-        for (const t of (outgoing.get(id) || [])) {
-            if (--incoming[t] === 0) queue.push(t);
-        }
-    }
+    let order;
+    try { order = topoSort(nonDummyNodes, realEdges); } catch { return { firstNonDummy: null, lastNonDummy: null }; }
 
     const nodeById = new Map(nonDummyNodes.map(n => [n.id, n]));
     const firstNode = nodeById.get(order[0]);
@@ -75,9 +58,13 @@ function serializeNodes(nodes) {
         id: n.id,
         label: n.data?.label || n.label || '',
         isDummy: n.data?.isDummy || n.isDummy || false,
+        isBIDS: n.data?.isBIDS || false,
+        bidsStructure: n.data?.bidsStructure || null,
+        bidsSelections: n.data?.bidsSelections || null,
+        notes: n.data?.notes || '',
         parameters: n.data?.parameters || {},
         dockerVersion: n.data?.dockerVersion || 'latest',
-        scatterEnabled: n.data?.scatterEnabled || false,
+        scatterInputs: n.data?.scatterInputs,
         linkMergeOverrides: n.data?.linkMergeOverrides || {},
         whenExpression: n.data?.whenExpression || '',
         expressions: n.data?.expressions || {},
@@ -133,19 +120,22 @@ function App() {
         removeCurrentWorkspace,
         updateWorkspaceName,
         updateWorkflowName,
+        updateSavedWorkflowId,
         removeWorkflowNodesFromAll,
         saveViewportForWorkspace
     } = useWorkspaces();
 
     const currentOutputName = workspaces[currentWorkspace]?.name || '';
     const currentWorkflowName = workspaces[currentWorkspace]?.workflowName || '';
+    const savedWorkflowId = workspaces[currentWorkspace]?.savedWorkflowId || null;
 
     // This state will eventually hold a function returned by WorkflowCanvas
     const [getWorkflowData, setGetWorkflowData] = useState(null);
+    const [cwlReady, setCwlReady] = useState(false);
 
     const { generateWorkflow } = useGenerateWorkflow();
     const { showError, showSuccess, showWarning, showInfo } = useToast();
-    const { saveWorkflow, deleteWorkflow, getNextDefaultName, customWorkflows } = useCustomWorkflowsContext();
+    const { saveWorkflow, updateWorkflow, deleteWorkflow, getNextDefaultName, customWorkflows } = useCustomWorkflowsContext();
 
     // Preload all CWL files on mount so getToolConfigSync() works synchronously
     useEffect(() => {
@@ -153,10 +143,14 @@ function App() {
             .map(ann => ann.cwlPath)
             .filter(Boolean);
         preloadAllCWL(cwlPaths)
-            .then(() => invalidateMergeCache())
+            .then(() => {
+                invalidateMergeCache();
+                setCwlReady(true);
+            })
             .catch(err => {
                 console.error('[App] CWL preload failed:', err);
                 showError('Failed to load tool definitions. Some tools may not work correctly.');
+                setCwlReady(true); // still allow rendering so the app isn't stuck
             });
     }, []);
 
@@ -200,25 +194,42 @@ function App() {
         // Compute boundary nodes
         const boundaryNodes = computeBoundaryNodes(serializedNodes, serializedEdges);
 
-        const result = saveWorkflow({
+        const workflowData = {
             name,
             nodes: serializedNodes,
             edges: serializedEdges,
             hasValidationWarnings: hasWarnings,
             boundaryNodes
-        });
+        };
 
-        if (result === 'updated') {
+        if (savedWorkflowId) {
+            // Workspace is bound — update existing workflow by ID
+            updateWorkflow(savedWorkflowId, workflowData);
             showSuccess(`Updated custom node "${name}"`);
         } else {
-            showSuccess(`Saved as custom node "${name}"`);
+            // New save — create and bind
+            const { result, id } = saveWorkflow(workflowData);
+            updateSavedWorkflowId(id);
+            if (result === 'updated') {
+                showSuccess(`Updated custom node "${name}"`);
+            } else {
+                showSuccess(`Saved as custom node "${name}"`);
+            }
         }
 
         // If the workflow name input was empty, auto-fill it with the generated name
         if (!currentWorkflowName.trim()) {
             updateWorkflowName(name);
         }
-    }, [getWorkflowData, currentWorkflowName, saveWorkflow, getNextDefaultName, showError, showSuccess, showWarning, updateWorkflowName]);
+    }, [getWorkflowData, currentWorkflowName, savedWorkflowId, saveWorkflow, updateWorkflow, updateSavedWorkflowId, getNextDefaultName, showError, showSuccess, showWarning, updateWorkflowName]);
+
+    const handleWorkflowNameChange = useCallback((newName) => {
+        updateWorkflowName(newName);
+        // If workspace is bound to a saved workflow, rename it in-place
+        if (savedWorkflowId) {
+            updateWorkflow(savedWorkflowId, { name: newName });
+        }
+    }, [savedWorkflowId, updateWorkflowName, updateWorkflow]);
 
     const handleWorkspaceSwitch = useCallback((newIndex) => {
         // Warn if leaving a workspace with unsaved custom workflow changes
@@ -246,7 +257,7 @@ function App() {
 
     const handleEditWorkflow = useCallback((workflow) => {
         // Check if this workflow is already open in an existing workspace
-        const existingIndex = workspaces.findIndex(ws => ws.workflowName === workflow.name);
+        const existingIndex = workspaces.findIndex(ws => ws.savedWorkflowId === workflow.id);
         if (existingIndex !== -1) {
             handleWorkspaceSwitch(existingIndex);
             return;
@@ -259,9 +270,13 @@ function App() {
             data: {
                 label: n.label,
                 isDummy: n.isDummy,
+                isBIDS: n.isBIDS || false,
+                bidsStructure: n.bidsStructure || null,
+                bidsSelections: n.bidsSelections || null,
+                notes: n.notes || '',
                 parameters: n.parameters || {},
                 dockerVersion: n.dockerVersion || 'latest',
-                scatterEnabled: n.scatterEnabled || false,
+                scatterInputs: n.scatterInputs,
                 linkMergeOverrides: n.linkMergeOverrides || {},
                 whenExpression: n.whenExpression || '',
                 expressions: n.expressions || {},
@@ -279,13 +294,13 @@ function App() {
         addNewWorkspaceWithData({
             nodes,
             edges,
-            workflowName: workflow.name
+            workflowName: workflow.name,
+            savedWorkflowId: workflow.id
         });
         showInfo(`Editing "${workflow.name}" in new workspace`);
     }, [addNewWorkspaceWithData, showInfo, workspaces, handleWorkspaceSwitch]);
 
-    const isExistingWorkflow = currentWorkflowName.trim() && customWorkflows.some(w => w.name === currentWorkflowName.trim());
-    const saveButtonLabel = isExistingWorkflow ? 'Update Workflow' : 'Save Workflow';
+    const saveButtonLabel = savedWorkflowId ? 'Update Workflow' : 'Save Workflow';
 
     return (
             <div className="app-layout">
@@ -307,7 +322,7 @@ function App() {
                         />
                         <WorkflowNameInput
                             name={currentWorkflowName}
-                            onNameChange={updateWorkflowName}
+                            onNameChange={handleWorkflowNameChange}
                             placeholder={getNextDefaultName()}
                         />
                     </div>
@@ -315,13 +330,19 @@ function App() {
                 <div className="workflow-content">
                     <div className="workflow-content-main">
                         <WorkflowMenu onEditWorkflow={handleEditWorkflow} onDeleteWorkflow={handleDeleteWorkflow} />
-                        <WorkflowCanvas
-                            workflowItems={workspaces[currentWorkspace]}
-                            updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
-                            onSetWorkflowData={setGetWorkflowData}
-                            currentWorkspaceIndex={currentWorkspace}
-                            saveViewportForWorkspace={saveViewportForWorkspace}
-                        />
+                        {cwlReady ? (
+                            <WorkflowCanvas
+                                workflowItems={workspaces[currentWorkspace]}
+                                updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
+                                onSetWorkflowData={setGetWorkflowData}
+                                currentWorkspaceIndex={currentWorkspace}
+                                saveViewportForWorkspace={saveViewportForWorkspace}
+                            />
+                        ) : (
+                            <div className="workflow-canvas-loading" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
+                                Loading tool definitions…
+                            </div>
+                        )}
                         <CWLPreviewPanel
                             getWorkflowData={getWorkflowData}
                         />

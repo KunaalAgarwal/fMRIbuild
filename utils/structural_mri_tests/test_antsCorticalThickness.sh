@@ -16,7 +16,7 @@ prepare_ants_data
 # Generate template for reference
 make_template "$CWL" "$TOOL"
 
-# Create job YAML — quick mode, stage 1 only for speed
+# Create job YAML — quick mode, all stages
 cat > "${JOB_DIR}/${TOOL}.yml" <<EOF
 dimensionality: 3
 anatomical_image:
@@ -24,10 +24,10 @@ anatomical_image:
   path: "${T1_RES}"
 template:
   class: File
-  path: "${T1_RES}"
+  path: "${T1W_2MM}"
 brain_probability_mask:
   class: File
-  path: "${ANTS_MASK}"
+  path: "${T1W_2MM_MASK}"
 segmentation_priors: "priors%d.nii.gz"
 segmentation_priors_dir:
   class: Directory
@@ -36,7 +36,7 @@ segmentation_priors_dir:
   listing: []
 output_prefix: "cortical_"
 quick_registration: true
-run_stage: "1"
+run_stage: "0"
 keep_temporary: true
 EOF
 
@@ -46,29 +46,33 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 echo "── Verifying ${TOOL} outputs ──"
 TOOL_OUT="${OUT_DIR}/${TOOL}"
 
-# Required output
+# Stage 1: Brain extraction
 verify_nifti "${TOOL_OUT}/cortical_BrainExtractionMask.nii.gz" "INT"
 
-# Optional outputs (may not all be produced with quick/stage1)
-verify_nifti_optional "${TOOL_OUT}/cortical_BrainSegmentation.nii.gz" "INT"
-verify_nifti_optional "${TOOL_OUT}/cortical_CorticalThickness.nii.gz" "FLOAT"
+# Stage 2: Template normalization outputs (version-dependent; fnndsc/ants
+#   does not produce SubjectToTemplate / TemplateToSubject named files)
 verify_nifti_optional "${TOOL_OUT}/cortical_BrainNormalizedToTemplate.nii.gz"
 verify_nifti_optional "${TOOL_OUT}/cortical_SubjectToTemplate1Warp.nii.gz"
-verify_mat_optional "${TOOL_OUT}/cortical_SubjectToTemplate0GenericAffine.mat"
+verify_mat_optional  "${TOOL_OUT}/cortical_SubjectToTemplate0GenericAffine.mat"
 verify_nifti_optional "${TOOL_OUT}/cortical_TemplateToSubject0Warp.nii.gz"
-verify_mat_optional "${TOOL_OUT}/cortical_TemplateToSubject1GenericAffine.mat"
+verify_mat_optional  "${TOOL_OUT}/cortical_TemplateToSubject1GenericAffine.mat"
 
-# Segmentation posteriors array
+# Stage 3: Segmentation & cortical thickness (required with run_stage 0)
+verify_nifti "${TOOL_OUT}/cortical_BrainSegmentation.nii.gz" "INT"
+verify_nifti "${TOOL_OUT}/cortical_CorticalThickness.nii.gz" "FLOAT"
+
+# Segmentation posteriors array (required with run_stage 0)
 post_count=0
 for post in "${TOOL_OUT}"/cortical_BrainSegmentationPosteriors*.nii.gz; do
   [[ -f "$post" ]] || continue
   verify_nifti "$post" "FLOAT"
-  ((post_count++))
+  post_count=$((post_count + 1))
 done
 if [[ "$post_count" -gt 0 ]]; then
   echo "  Segmentation posteriors found: ${post_count}"
 else
-  echo "  OPTIONAL-SKIP: segmentation_posteriors (not produced)"
+  echo "  FAIL: segmentation_posteriors not produced"
+  exit 1
 fi
 
 verify_log "$TOOL"

@@ -19,6 +19,10 @@ input:
   class: File
   path: "${BOLD}"
 output: "mcflirt_out"
+save_mats: true
+save_plots: true
+save_rms: true
+stats: true
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -27,45 +31,24 @@ run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
 echo "── Verifying ${TOOL} outputs ──"
 TOOL_OUT="${OUT_DIR}/${TOOL}"
 
-for expected in "mcflirt_out.nii.gz" "mcflirt_out.par"; do
-  f="${TOOL_OUT}/${expected}"
-  if [[ ! -f "$f" ]]; then
-    echo "  MISSING: ${expected}"
-  elif [[ ! -s "$f" ]]; then
-    echo "  FAIL: zero-byte: ${expected}"
-  else
-    echo "  FOUND: ${expected}"
-  fi
-done
+# Required outputs
+verify_nifti "${TOOL_OUT}/mcflirt_out.nii.gz"
+verify_file_optional "${TOOL_OUT}/mcflirt_out.par"
 
-for nii in "${TOOL_OUT}/mcflirt_out.nii.gz"; do
-  [[ -f "$nii" ]] || continue
-  bn="$(basename "$nii")"
-  if [[ ! -s "$nii" ]]; then
-    echo "  FAIL: zero-byte: ${bn}"
-    continue
-  fi
-  dims="$(docker_fsl fslhd "$nii" 2>&1 | grep -E '^dim[1-4]' || true)"
-  range="$(docker_fsl fslstats "$nii" -R 2>/dev/null || true)"
-  echo "  Header (${bn}): ${dims}"
-  echo "  Range  (${bn}): ${range}"
-  if [[ "$range" == "0.000000 0.000000" ]]; then
-    echo "  WARN: image appears to be all zeros: ${bn}"
-  fi
-done
-
-# Verify motion parameters are numeric
+# Motion parameters
 PAR_FILE="${TOOL_OUT}/mcflirt_out.par"
 if [[ -f "$PAR_FILE" && -s "$PAR_FILE" ]]; then
   echo "  Motion parameters: $(wc -l < "$PAR_FILE") timepoints"
 fi
 
-LOG_FILE="${LOG_DIR}/${TOOL}.log"
-if [[ -f "$LOG_FILE" ]]; then
-  if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
-    echo "  WARN: potential errors in log:"
-    grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
-  else
-    echo "  Log: no errors detected"
-  fi
-fi
+# Optional outputs (enabled by flags)
+verify_nifti_optional "${TOOL_OUT}/mcflirt_out_mean_reg.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/mcflirt_out_variance.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/mcflirt_out_sigma.nii.gz"
+verify_file_optional  "${TOOL_OUT}/mcflirt_out_abs.rms"
+verify_file_optional  "${TOOL_OUT}/mcflirt_out_rel.rms"
+verify_file_optional  "${TOOL_OUT}/mcflirt_out_abs_mean.rms"
+verify_file_optional  "${TOOL_OUT}/mcflirt_out_rel_mean.rms"
+verify_directory_optional "${TOOL_OUT}/mcflirt_out.mat"
+
+verify_log "$TOOL"

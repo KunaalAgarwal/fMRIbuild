@@ -92,5 +92,13 @@ for variant in pcasl calib pasl; do
         echo "  Log (${variant}): no errors detected"
       fi
     fi
+
+    # Check stderr log (CWL err_log output)
+    ERR_LOG="${tool_out}/oxford_asl.err.log"
+    if [[ -f "$ERR_LOG" ]]; then
+      echo "  FOUND: oxford_asl.err.log ($(wc -c < "$ERR_LOG") bytes)"
+    else
+      echo "  OPTIONAL-SKIP: oxford_asl.err.log (not captured)"
+    fi
   fi
 done

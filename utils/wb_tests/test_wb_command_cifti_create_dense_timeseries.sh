@@ -18,6 +18,9 @@ cifti_out: test.dtseries.nii
 left_metric:
   class: File
   path: ${WB_TS_METRIC_L}
+right_metric:
+  class: File
+  path: ${WB_TS_METRIC_R}
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -34,3 +37,4 @@ if [[ -f "$CIFTI_OUT" ]]; then
   echo "$CIFTI_OUT" > "${DERIVED_DIR}/cifti_dtseries_path.txt"
 fi
 verify_log "$TOOL"
+verify_file_optional "${dir}/wb_cifti_create_dense_timeseries.err.log"

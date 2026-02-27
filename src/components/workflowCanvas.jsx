@@ -19,9 +19,11 @@ import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
+import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
 import { parseBIDSDirectory } from '../utils/bidsParser.js';
 import { useToast } from '../context/ToastContext.jsx';
+import { layoutGraph } from '../utils/layoutGraph.js';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
@@ -36,6 +38,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const { customWorkflows } = useCustomWorkflowsContext();
   const reactFlowWrapper = useRef(null);
   const prevWorkspaceRef = useRef(currentWorkspaceIndex);
+  const prevWorkspaceIdRef = useRef(workflowItems?.id);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -75,8 +78,26 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     const dummyIds = new Set(nodes.filter(n => n.data?.isDummy && !n.data?.isBIDS).map(n => n.id));
     const realNodes = nodes.filter(n => !n.data?.isDummy || n.data?.isBIDS);
     const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
-    const { scatteredNodeIds, sourceNodeIds, gatherNodeIds } = computeScatteredNodes(realNodes, realEdges);
-    return { propagatedIds: scatteredNodeIds, sourceNodeIds, gatherNodeIds };
+
+    // Build map of array-typed inputs per node for gather detection
+    const arrayTypedInputs = new Map();
+    for (const node of realNodes) {
+      if (node.data?.isDummy) continue;
+      const tool = getToolConfigSync(node.data?.label);
+      if (!tool) continue;
+      const arrayInputs = new Set();
+      const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
+      for (const [name, def] of Object.entries(allInputs)) {
+        if (def.type && def.type.endsWith('[]')) {
+          arrayInputs.add(name);
+        }
+      }
+      if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
+    }
+
+    const { scatteredNodeIds, sourceNodeIds, scatteredUpstreamInputs, gatherNodeIds } =
+      computeScatteredNodes(realNodes, realEdges, arrayTypedInputs);
+    return { propagatedIds: scatteredNodeIds, sourceNodeIds, scatteredUpstreamInputs, gatherNodeIds };
   }, [nodes, edges]);
 
   // Compute which inputs on each node are wired from upstream edge mappings.
@@ -122,10 +143,12 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         return null;
       }
 
-      // Compare serialized internal data to detect changes
-      const currentInternal = JSON.stringify(node.data.internalNodes);
-      const savedInternal = JSON.stringify(saved.nodes);
-      if (currentInternal === savedInternal &&
+      // Shallow check: compare node count, IDs, and labels to detect changes
+      const cur = node.data.internalNodes || [];
+      const sav = saved.nodes || [];
+      const nodesMatch = cur.length === sav.length &&
+          cur.every((n, i) => n.id === sav[i]?.id && (n.label ?? n.data?.label) === (sav[i]?.label ?? sav[i]?.data?.label));
+      if (nodesMatch &&
           node.data.label === saved.name &&
           node.data.hasValidationWarnings === saved.hasValidationWarnings) {
         return node;
@@ -214,12 +237,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   // Also triggers when workspace index changes (switching workspaces).
   useEffect(() => {
     if (workflowItems && typeof workflowItems.nodes !== 'undefined') {
-      const workspaceSwitched = prevWorkspaceRef.current !== currentWorkspaceIndex;
+      const indexChanged = prevWorkspaceRef.current !== currentWorkspaceIndex;
+      const idChanged = prevWorkspaceIdRef.current !== workflowItems.id;
+      const workspaceSwitched = indexChanged || idChanged;
       // Save outgoing workspace's viewport before switching
       if (workspaceSwitched && reactFlowInstance && saveViewportForWorkspace) {
         saveViewportForWorkspace(prevWorkspaceRef.current, reactFlowInstance.getViewport());
       }
       prevWorkspaceRef.current = currentWorkspaceIndex;
+      prevWorkspaceIdRef.current = workflowItems.id;
 
       if (workspaceSwitched || workflowItems.nodes.length !== nodes.length) {
         let anyCustomSynced = false;
@@ -273,17 +299,12 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
         setNodes(initialNodes);
         setEdges(initialEdges);
 
-        // Restore saved viewport or fitView for new/empty workspaces
+        // Auto-center on all nodes when switching workspaces
         if (workspaceSwitched && reactFlowInstance) {
-          const savedViewport = workflowItems.viewport;
-          // Defer to next frame so nodes render before viewport is set
+          // Small delay so React commits new nodes and ReactFlow measures DOM before fitView
           setTimeout(() => {
-            if (savedViewport) {
-              reactFlowInstance.setViewport(savedViewport);
-            } else {
-              reactFlowInstance.setViewport(DEFAULT_VIEWPORT);
-            }
-          }, 0);
+            reactFlowInstance.fitView({ padding: 0.2 });
+          }, 50);
         }
 
         // Persist synced custom workflow data back to workspace state
@@ -293,6 +314,19 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       }
     }
   }, [workflowItems, nodes.length, currentWorkspaceIndex]);
+
+  // Auto-center when canvas container resizes (e.g. panel open/close)
+  useEffect(() => {
+    const el = reactFlowWrapper.current;
+    if (!el || !reactFlowInstance) return;
+
+    const observer = new ResizeObserver(() => {
+      reactFlowInstance.fitView();
+    });
+
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [reactFlowInstance]);
 
   // Update a node's parameters and dockerVersion.
   const handleNodeUpdate = (nodeId, updatedData) => {
@@ -305,12 +339,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                     ...node.data,
                     parameters: updatedData.params || updatedData,
                     dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest',
-                    scatterEnabled: updatedData.scatterEnabled !== undefined
-                        ? updatedData.scatterEnabled
-                        : (node.data.scatterEnabled || false),
-                    gatherEnabled: updatedData.gatherEnabled !== undefined
-                        ? updatedData.gatherEnabled
-                        : (node.data.gatherEnabled || false),
+                    scatterInputs: updatedData.scatterInputs || node.data.scatterInputs || [],
                     linkMergeOverrides: updatedData.linkMergeOverrides || node.data.linkMergeOverrides || {},
                     whenExpression: updatedData.whenExpression !== undefined
                         ? updatedData.whenExpression
@@ -429,7 +458,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     if (bidsSelections && bidsModalNodeId) {
       handleBIDSNodeUpdate(bidsModalNodeId, {
         bidsSelections,
-        scatterEnabled: true, // BIDS outputs are always arrays
+        // BIDS scatter is propagated via edges in computeScatteredNodes
       });
     }
     setShowBIDSModal(false);
@@ -582,8 +611,6 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           isDummy: false,
           parameters: '',
           dockerVersion: 'latest',
-          scatterEnabled: false,
-          gatherEnabled: false,
           linkMergeOverrides: {},
           whenExpression: '',
           expressions: {},
@@ -647,7 +674,18 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       [markForSync]
   );
 
-  // --- Global Key Listener for "Delete" Key ---
+  // --- Auto-layout: arrange nodes as a layered DAG ---
+  const handleAutoLayout = useCallback(() => {
+    if (nodes.length < 2) return;
+    const layoutedNodes = layoutGraph(nodes, edges);
+    setNodes(layoutedNodes);
+    markForSync();
+    requestAnimationFrame(() => {
+      reactFlowInstance?.fitView({ padding: 0.05, duration: 300 });
+    });
+  }, [nodes, edges, reactFlowInstance, markForSync]);
+
+  // --- Global Key Listener for "Delete" Key + Auto-Layout Shortcut ---
   useEffect(() => {
     const handleKeyDown = (e) => {
       if (e.key === 'Delete') {
@@ -658,11 +696,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           }
         }
       }
+      if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+        e.preventDefault();
+        handleAutoLayout();
+      }
     };
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [reactFlowInstance, onNodesDelete]);
+  }, [reactFlowInstance, onNodesDelete, handleAutoLayout]);
 
   // Provide complete workflow data for exporting.
   const getWorkflowData = () => ({
@@ -722,6 +764,14 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
               />
               <Background variant="dots" gap={12} size={1} />
               <Controls />
+              <button
+                className="auto-layout-button"
+                onClick={handleAutoLayout}
+                disabled={nodes.length < 2}
+                title="Auto Layout (Ctrl+Shift+L)"
+              >
+                Auto Layout
+              </button>
             </ReactFlow>
           </WiredInputsContext.Provider>
           </ScatterPropagationContext.Provider>

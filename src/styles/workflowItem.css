@@ -1,3 +1,7 @@
+.custom-modal .modal-dialog {
+    max-width: min(90vw, 1200px);
+}
+
 .custom-modal .modal-content {
   border-radius: 6px;
   background-color: var(--bg-tertiary);
@@ -12,7 +16,7 @@
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
   color: var(--text-light);
-  font-size: 0.9rem;
+  font-size: 1.0rem;
   display: block;
   margin-bottom: 6px;
 }
@@ -40,7 +44,7 @@
 .param-section-header {
   font-family: 'Roboto Mono', monospace;
   font-weight: 500;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
@@ -69,7 +73,7 @@
   flex-wrap: wrap;
   gap: 6px 8px;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
 }
 
 .param-name {
@@ -79,7 +83,7 @@
 }
 
 .param-type-badge {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   padding: 1px 6px;
   border-radius: 3px;
   background-color: rgba(255, 255, 255, 0.08);
@@ -92,10 +96,11 @@
   flex-shrink: 0;
   display: flex;
   align-items: center;
+  gap: 4px;
 }
 
 .param-description {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--text-muted);
   margin-top: 4px;
   line-height: 1.3;
@@ -103,14 +108,14 @@
 
 .param-bounds {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   margin-top: 3px;
 }
 
 .param-default-hint {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--color-primary);
   margin-top: 3px;
   font-style: italic;
@@ -164,7 +169,7 @@
   border: 1px solid var(--border-subtle);
   border-left: 2px solid var(--border-subtle);
   border-radius: 5px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   padding: 5px 10px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
   transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
@@ -226,7 +231,7 @@
   border: 1px solid var(--border-subtle);
   border-left: 2px solid var(--border-subtle);
   border-radius: 5px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   width: 150px;
   padding: 5px 28px 5px 10px;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -271,13 +276,13 @@
 }
 
 .docker-help-text {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin-top: 6px;
 }
 
 .docker-warning-text {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--color-danger);
   margin-top: 4px;
 }
@@ -305,7 +310,7 @@
   border: 1px solid var(--border-subtle);
   border-left: 2px solid var(--border-subtle);
   border-radius: 5px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   flex: 1;
   max-width: 180px;
   padding: 5px 28px 5px 10px;
@@ -338,7 +343,7 @@
   border: 1px solid var(--border-subtle);
   border-left: 2px solid var(--border-subtle);
   border-radius: 5px;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   flex: 1;
   max-width: 140px;
   padding: 5px 10px;
@@ -371,7 +376,7 @@
 
 .when-preview {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 4px;
   padding: 3px 8px;
@@ -390,7 +395,7 @@
 
 .when-warning-text {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--color-danger, #e74c3c);
   margin-top: 4px;
   padding: 3px 8px;
@@ -399,7 +404,7 @@
 }
 
 .when-help-text {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin-top: 6px;
 }
@@ -419,7 +424,7 @@
 /* scatter-switch is styled alongside param-switch above */
 
 .scatter-help-text {
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   color: var(--text-secondary);
   margin-top: 6px;
 }
@@ -432,7 +437,7 @@
 
 .input-source {
   color: var(--color-primary);
-  font-size: 0.7rem;
+  font-size: 0.8rem;
 }
 
 .input-source-single {
@@ -471,14 +476,14 @@
 }
 
 .input-source-detail {
-  font-size: 0.62rem;
+  font-size: 0.72rem;
   opacity: 0.8;
 }
 
 /* .custom-modal prefix needed to override Bootstrap .form-select */
 .custom-modal .link-merge-select {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.7rem;
+  font-size: 0.8rem;
   background-color: var(--bg-primary);
   color: var(--text-medium);
   border: 1px solid var(--border-subtle);
@@ -509,7 +514,7 @@
 }
 
 .merge-help-text {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   margin-top: 3px;
   font-style: italic;
@@ -528,11 +533,11 @@
   }
 
   .modal-label {
-    font-size: 0.82rem;
+    font-size: 0.92rem;
   }
 
   .param-section-header {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
 
   .param-card {
@@ -540,7 +545,7 @@
   }
 
   .param-card-header {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     gap: 5px 6px;
   }
 
@@ -568,7 +573,7 @@
   }
 
   .param-description {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
 
   .scatter-toggle-row {
@@ -577,7 +582,7 @@
 
   .scatter-help-text,
   .docker-help-text {
-    font-size: 0.65rem;
+    font-size: 0.75rem;
   }
 }
 
@@ -587,12 +592,12 @@
   }
 
   .modal-label {
-    font-size: 0.75rem;
+    font-size: 0.85rem;
     margin-bottom: 4px;
   }
 
   .param-card-header {
-    font-size: 0.7rem;
+    font-size: 0.8rem;
   }
 
   .param-control {
@@ -605,36 +610,36 @@
     width: 70px;
     min-width: 70px;
     max-width: 70px;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
   }
 
   .custom-modal .param-text {
     width: 100%;
     max-width: 100%;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
   }
 
   .custom-modal .param-select {
     width: 100%;
     max-width: 100%;
-    font-size: 0.75rem;
+    font-size: 0.85rem;
   }
 
   .param-type-badge {
-    font-size: 0.55rem;
+    font-size: 0.65rem;
     padding: 1px 4px;
   }
 
   .param-bounds {
-    font-size: 0.55rem;
+    font-size: 0.65rem;
   }
 
   .param-default-hint {
-    font-size: 0.55rem;
+    font-size: 0.65rem;
   }
 
   .input-source {
-    font-size: 0.62rem;
+    font-size: 0.72rem;
   }
 
   .params-scroll {
@@ -650,44 +655,49 @@
   flex-direction: column;
   align-items: stretch;
   max-width: 140px;
+  gap: 2px;
 }
 
 .node-top-row,
 .node-bottom-row {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   padding: 0;
-  font-size: 8px;
-}
-
-.node-top-row .handle-label,
-.node-bottom-row .handle-label {
-  flex: 1;
-  text-align: center;
-  font-family: 'Roboto Mono', monospace;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  pointer-events: none;
-  user-select: none;
+  font-size: 9px;
+  min-height: 13px;
 }
 
 .node-content {
   display: flex;
   align-items: center;
-  justify-content: center;
-  padding: 2px 4px;
+  justify-content: space-between;
+  padding: 2px 0;
   overflow: hidden;
+}
+
+.node-content .handle-label {
+  font-size: 8px;
+  font-family: 'Roboto Mono', monospace;
+  color: var(--text-muted);
+  font-weight: 500;
+  text-transform: uppercase;
+  opacity: 0.45;
+  pointer-events: none;
+  user-select: none;
+  padding: 0 3px;
+  flex-shrink: 0;
 }
 
 .node-label {
   font-weight: 600;
-  font-size: 0.75rem;
+  font-size: 0.95rem;
   color: var(--text-on-light);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
   max-width: 100%;
+  text-align: center;
 }
 
 /* ============================================
@@ -698,7 +708,7 @@
   width: 54px;
   min-width: 54px;
   max-width: 54px;
-  font-size: 8px;
+  font-size: 9px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 500;
   text-align: left;
@@ -720,7 +730,7 @@
   width: 54px;
   min-width: 54px;
   max-width: 54px;
-  font-size: 8px;
+  font-size: 9px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 500;
   text-align: right;
@@ -759,7 +769,7 @@
 .node-when-badge,
 .node-fx-badge,
 .node-notes-badge {
-  font-size: 6px;
+  font-size: 7px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
   border-radius: 2px;
@@ -816,7 +826,7 @@
 }
 
 .node-custom-badge-text {
-  font-size: 5.5px;
+  font-size: 7px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
   color: rgba(128, 60, 200, 0.95);
@@ -856,7 +866,7 @@
 }
 
 .node-io-badge-text {
-  font-size: 5.5px;
+  font-size: 7px;
   font-family: 'Roboto Mono', monospace;
   font-weight: 600;
   color: rgba(36, 170, 90, 0.95);
@@ -870,7 +880,7 @@
 
 
 .node-warning-badge {
-  font-size: 7px;
+  font-size: 8px;
   font-weight: 700;
   color: var(--color-warning);
   background-color: rgba(240, 173, 78, 0.15);
@@ -893,21 +903,21 @@
 }
 
 .custom-workflow-nav-btn {
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   padding: 2px 10px;
   min-width: 32px;
 }
 
 .custom-workflow-nav-label {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.8rem;
+  font-size: 0.9rem;
   color: var(--text-secondary, #aaa);
 }
 
 /* Expression toggle button in param control */
 .expression-toggle {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   font-style: italic;
   font-weight: 700;
   color: var(--text-secondary);
@@ -932,6 +942,39 @@
   border-color: var(--color-primary);
   background-color: rgba(74, 144, 226, 0.14);
   box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.15);
+}
+
+/* Scatter toggle button in param control (mirrors expression-toggle with cyan) */
+.scatter-toggle {
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  background-color: transparent;
+  border: 1px solid var(--border-subtle);
+  border-radius: 4px;
+  padding: 3px 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  user-select: none;
+  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.scatter-toggle:hover {
+  color: var(--color-cyan);
+  border-color: rgba(74, 198, 226, 0.5);
+  background-color: rgba(74, 198, 226, 0.06);
+}
+
+.scatter-toggle.active {
+  color: var(--color-cyan);
+  border-color: var(--color-cyan);
+  background-color: rgba(74, 198, 226, 0.14);
+}
+
+.scatter-toggle.locked {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .expression-row {
@@ -971,7 +1014,7 @@
   border: 1px solid var(--border-subtle);
   border-left: 2px solid var(--border-subtle);
   border-radius: 5px;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   padding: 5px 10px;
   flex: 1;
   box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
@@ -998,7 +1041,7 @@
 
 .custom-modal .expression-template-select {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   background-color: var(--bg-primary);
   color: var(--text-medium);
   border: 1px solid var(--border-subtle);
@@ -1031,7 +1074,7 @@
 /* Expression preview (valueFrom context) */
 .expression-preview {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--text-muted);
   margin-top: 4px;
   padding: 3px 8px;
@@ -1043,7 +1086,7 @@
 /* Expression validation warning */
 .expression-warning-text {
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--color-danger, #e74c3c);
   margin-top: 4px;
   padding: 3px 8px;
@@ -1066,9 +1109,14 @@
   background-color: rgba(74, 144, 226, 0.05);
 }
 
+.param-card.has-scatter {
+  border-color: rgba(74, 198, 226, 0.3);
+  background-color: rgba(74, 198, 226, 0.06);
+}
+
 /* Scatter + expression info note */
 .expression-scatter-note {
-  font-size: 0.65rem;
+  font-size: 0.75rem;
   color: var(--color-cyan);
   margin-top: 3px;
   opacity: 0.8;
@@ -1095,7 +1143,7 @@
 
 /* Contextual help text for expression mode */
 .expression-help-text {
-  font-size: 0.6rem;
+  font-size: 0.7rem;
   color: var(--text-secondary);
   font-style: italic;
   margin-top: 2px;
@@ -1118,7 +1166,7 @@
   border: 1px solid rgba(255, 255, 255, 0.08) !important;
   color: var(--text-light) !important;
   font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
+  font-size: 0.85rem;
   border-radius: 6px;
   resize: vertical;
   min-height: 60px;
@@ -1166,5 +1214,3 @@
   color: var(--text-light);
   line-height: 1.4;
 }
-
-

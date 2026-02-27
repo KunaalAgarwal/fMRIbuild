@@ -113,6 +113,10 @@ cat >> "${JOB_DIR}/${TOOL}.yml" <<EOF
 miter: "1"
 subsamp: "1"
 fwhm: "4"
+fout: "topup_fieldmap"
+iout: "topup_corrected"
+dfout: "topup_displacement"
+jacout: "topup_jacobian"
 EOF
 
 run_tool "$TOOL" "${JOB_DIR}/${TOOL}.yml" "$CWL"
@@ -148,12 +152,10 @@ for nii in "${TOOL_OUT}/topup_out_fieldcoef.nii.gz"; do
   fi
 done
 
-LOG_FILE="${LOG_DIR}/${TOOL}.log"
-if [[ -f "$LOG_FILE" ]]; then
-  if grep -qiE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" 2>/dev/null; then
-    echo "  WARN: potential errors in log:"
-    grep -iE 'error|exception|segfault|core dump|fatal' "$LOG_FILE" | head -5
-  else
-    echo "  Log: no errors detected"
-  fi
-fi
+# Optional outputs (enabled by fout/iout/dfout/jacout flags)
+verify_nifti_optional "${TOOL_OUT}/topup_fieldmap.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/topup_corrected.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/topup_displacement.nii.gz"
+verify_nifti_optional "${TOOL_OUT}/topup_jacobian.nii.gz"
+
+verify_log "$TOOL"

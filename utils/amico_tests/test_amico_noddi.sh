@@ -55,3 +55,4 @@ for pattern in "${expected_patterns[@]}"; do
   fi
 done
 verify_log "$TOOL"
+verify_file_optional "${dir}/amico_noddi.err.log"

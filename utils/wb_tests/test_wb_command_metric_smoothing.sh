@@ -32,3 +32,4 @@ TOOL_OUT="${OUT_DIR}/${TOOL}"
 
 verify_gifti "${TOOL_OUT}/smoothed.func.gii"
 verify_log "$TOOL"
+verify_file_optional "${TOOL_OUT}/wb_metric_smoothing.err.log"

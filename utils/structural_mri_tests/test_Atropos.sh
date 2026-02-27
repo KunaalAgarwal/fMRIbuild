@@ -44,7 +44,7 @@ post_count=0
 for post in "${TOOL_OUT}"/atropos_seg*Posteriors*.nii.gz; do
   [[ -f "$post" ]] || continue
   verify_nifti "$post" "FLOAT"
-  ((post_count++))
+  post_count=$((post_count + 1))
 done
 if [[ "$post_count" -gt 0 ]]; then
   echo "  Posteriors found: ${post_count}"

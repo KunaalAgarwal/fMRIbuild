@@ -58,7 +58,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const [dockerVersion, setDockerVersion] = useState('latest');
     const [versionValid, setVersionValid] = useState(true);
     const [versionWarning, setVersionWarning] = useState('');
-    const [scatterEnabled, setScatterEnabled] = useState(false);
+    const [scatterToggles, setScatterToggles] = useState({});
     const [whenParam, setWhenParam] = useState('');
     const [whenCondition, setWhenCondition] = useState('');
     const [whenTouched, setWhenTouched] = useState(false);
@@ -66,7 +66,9 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const [expressionToggles, setExpressionToggles] = useState({});
     const [linkMergeValues, setLinkMergeValues] = useState({});
 
-    // Deep clone of internal nodes to track edits (ref syncs from state automatically)
+    // Deep clone of internal nodes to track edits.
+    // Ref mirrors state so the currentIndex effect (below) can read latest nodes
+    // without re-firing when editedNodes changes.
     const [editedNodes, setEditedNodes] = useState([]);
     const editedNodesRef = useRef(editedNodes);
     editedNodesRef.current = editedNodes;
@@ -87,11 +89,15 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         setDockerVersion(node.dockerVersion || 'latest');
         setVersionValid(true);
         setVersionWarning('');
-        setScatterEnabled(node.scatterEnabled || false);
+        const scatterInit = {};
+        if (Array.isArray(node.scatterInputs) && node.scatterInputs.length > 0) {
+            node.scatterInputs.forEach(name => { scatterInit[name] = true; });
+        }
+        setScatterToggles(scatterInit);
         setLinkMergeValues(node.linkMergeOverrides || {});
 
         const whenExpr = node.whenExpression || '';
-        const whenMatch = whenExpr.match(/^\$\(inputs\.(\w+)\s+(.*)\)$/);
+        const whenMatch = whenExpr.match(/^\$\(inputs\.(\w+)\s*(.*)\)$/);
         if (whenMatch) {
             setWhenParam(whenMatch[1]);
             setWhenCondition(whenMatch[2]);
@@ -134,7 +140,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
 
     // Save current node's state back to editedNodes before navigating
     const saveCurrentNodeState = () => {
-        const current = editedNodesRef.current;
+        const current = editedNodes;
         if (current.length === 0) return current;
 
         const finalDockerVersion = dockerVersion.trim() || 'latest';
@@ -150,24 +156,20 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             ? `$(inputs.${whenParam} ${whenCondition.trim()})`
             : '';
 
+        const activeScatterInputs = Object.entries(scatterToggles)
+            .filter(([_, active]) => active)
+            .map(([name]) => name);
+
         const updated = [...current];
         updated[currentIndex] = {
             ...updated[currentIndex],
             parameters: paramValues,
             dockerVersion: finalDockerVersion,
-            scatterEnabled,
+            scatterInputs: activeScatterInputs,
             linkMergeOverrides: linkMergeValues,
             whenExpression,
             expressions: cleanedExpressions,
         };
-
-        // Propagate scatter from first node to all downstream nodes
-        if (currentIndex === firstNodeIndex) {
-            const firstScatter = updated[firstNodeIndex].scatterEnabled;
-            for (const idx of downstreamIndices) {
-                updated[idx] = { ...updated[idx], scatterEnabled: firstScatter };
-            }
-        }
 
         return updated;
     };
@@ -293,12 +295,32 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         });
     };
 
+    const handleToggleScatter = (paramName) => {
+        setScatterToggles(prev => ({ ...prev, [paramName]: !prev[paramName] }));
+    };
+
     const renderParamControl = (param) => {
         const isFileType = param.type === 'File' || param.type === 'Directory';
+        const isFirstNode = currentIndex === firstNodeIndex;
+        const isDownstreamScattered = !isFirstNode && (editedNodes[firstNodeIndex]?.scatterInputs?.length || 0) > 0;
+
+        const scatterBtn = isFirstNode ? (
+            <span
+                className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}`}
+                onClick={() => handleToggleScatter(param.name)}
+                title={scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
+            >{'\u21BB'}</span>
+        ) : isDownstreamScattered ? (
+            <span
+                className="scatter-toggle locked"
+                title={`Inherited from ${nonDummyNodes[firstNodeIndex]?.label || 'root'}`}
+            >{'\u21BB'}</span>
+        ) : null;
 
         if (isFileType) {
             return (
                 <div className="param-control">
+                    {scatterBtn}
                     <span
                         className={`expression-toggle${expressionToggles[param.name] ? ' active' : ''}`}
                         onClick={() => handleToggleFx(param.name)}
@@ -313,6 +335,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         if (isExpressionMode) {
             return (
                 <div className="param-control">
+                    {scatterBtn}
                     <span className="expression-toggle active" onClick={() => handleToggleFx(param.name)} title="Switch to value mode">fx</span>
                 </div>
             );
@@ -371,6 +394,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         return (
             <div className="param-control">
                 <div className="expression-row">
+                    {scatterBtn}
                     <span className="expression-toggle" onClick={() => handleToggleFx(param.name)} title="Switch to expression mode">fx</span>
                     {control}
                 </div>
@@ -440,30 +464,6 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                         </Form.Group>
                     )}
 
-                    {/* Scatter Toggle */}
-                    <Form.Group className="scatter-toggle-group">
-                        <div className="scatter-toggle-row">
-                            <Form.Label className="modal-label" style={{ marginBottom: 0 }}>
-                                Scatter (Batch Processing)
-                            </Form.Label>
-                            <Form.Check
-                                type="switch"
-                                id={`cwp-scatter-${currentNode.id}`}
-                                checked={scatterEnabled}
-                                onChange={(e) => setScatterEnabled(e.target.checked)}
-                                className="scatter-switch"
-                                disabled={currentIndex !== firstNodeIndex}
-                            />
-                        </div>
-                        {currentIndex === firstNodeIndex ? (
-                            <div className="scatter-help-text">Enabling scatter propagates to all downstream nodes</div>
-                        ) : (
-                            <div className="scatter-help-text">
-                                Inherited from first node ({nonDummyNodes[firstNodeIndex]?.label || 'root'})
-                            </div>
-                        )}
-                    </Form.Group>
-
                     {/* Conditional Expression Builder */}
                     <Form.Group className="when-expression-group">
                         <Form.Label className="modal-label" style={{ marginBottom: 6 }}>
@@ -503,6 +503,12 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                         )}
                     </Form.Group>
 
+                    {Object.values(scatterToggles).filter(Boolean).length > 1 && (
+                        <div className="scatter-dotproduct-note">
+                            Multiple scatter inputs will use <code>dotproduct</code> (zip element-wise). All arrays must be the same length.
+                        </div>
+                    )}
+
                     {/* Parameters */}
                     <div className="params-scroll scrollbar-thin">
                         {[
@@ -516,7 +522,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                         const isFileType = param.type === 'File' || param.type === 'Directory';
                                         const wiredSources = currentNodeWiredInputs.get(param.name) || [];
                                         return (
-                                            <div key={param.name} className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''}`}>
+                                            <div key={param.name} className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''} ${scatterToggles[param.name] ? 'has-scatter' : ''}`}>
                                                 <div className="param-card-header">
                                                     <span className="param-name">{param.name}</span>
                                                     <span className="param-type-badge">{param.type}</span>
@@ -598,7 +604,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                                             <div className="expression-input-row">
                                                                 <Form.Control type="text" size="sm"
                                                                     className={`expression-input${exprVal ? ' filled' : ''}${exprWarning ? ' invalid' : ''}`}
-                                                                    placeholder={param.type === 'string' ? 'self.toUpperCase()' : 'self + 1'}
+                                                                    placeholder={param.type === 'string' || param.type === 'enum' ? 'self.toUpperCase()' : 'self + 1'}
                                                                     value={exprVal}
                                                                     onChange={(e) => setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value }))}
                                                                 />

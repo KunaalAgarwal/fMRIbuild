@@ -1,0 +1,33 @@
+{
+  "name": "scatter_source_node",
+  "description": "Explicit scatterInputs on bet source node feeds into flirt",
+  "nodes": [
+    {
+      "id": "node_1", "type": "default",
+      "position": { "x": 100, "y": 100 },
+      "data": {
+        "label": "bet", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+        "scatterInputs": ["input", "output"],
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    },
+    {
+      "id": "node_2", "type": "default",
+      "position": { "x": 400, "y": 100 },
+      "data": {
+        "label": "flirt", "isDummy": false,
+        "parameters": {}, "dockerVersion": "latest",
+        "linkMergeOverrides": {}, "whenExpression": "", "expressions": {}
+      }
+    }
+  ],
+  "edges": [
+    {
+      "id": "edge_1_2", "source": "node_1", "target": "node_2",
+      "data": {
+        "mappings": [{ "sourceOutput": "brain_extraction", "targetInput": "input" }]
+      }
+    }
+  ]
+}

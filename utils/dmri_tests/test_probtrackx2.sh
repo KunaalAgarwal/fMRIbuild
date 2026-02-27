@@ -86,6 +86,13 @@ if [[ -d "$OUTPUT_DIR/probtrack_out" ]]; then
       echo "  Log: no critical errors detected" | tee -a "$RESULTS_FILE"
     fi
   fi
+
+  # Check stderr log
+  if [[ -f "$OUTPUT_DIR/probtrackx2_stderr.log" ]]; then
+    echo "  FOUND: probtrackx2_stderr.log" | tee -a "$RESULTS_FILE"
+  else
+    echo "  OPTIONAL-SKIP: probtrackx2_stderr.log (not produced)" | tee -a "$RESULTS_FILE"
+  fi
 fi
 
 # Summary

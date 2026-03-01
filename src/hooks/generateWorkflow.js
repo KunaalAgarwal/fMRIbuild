@@ -118,7 +118,8 @@ if [ "\${1:-}" = "--bids" ]; then
     --bids-dir "\$BIDS_DIR" \\
     --query bids_query.json \\
     --job job.yml \\
-    --output job.yml
+    --output job.yml \\
+    --relative-to .
   cwltool --outdir /output "\$@" \\
     workflows/${safeWorkflowName}.cwl \\
     job.yml
@@ -540,7 +541,8 @@ python3 resolve_bids.py \\
   --bids-dir /absolute/path/to/your/bids/dataset \\
   --query bids_query.json \\
   --job workflows/${safeWorkflowName}_job.yml \\
-  --output job.yml
+  --output job.yml \\
+  --relative-to .
 cwltool workflows/${safeWorkflowName}.cwl job.yml
 \`\`\`
 

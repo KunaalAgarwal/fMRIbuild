@@ -153,6 +153,45 @@ function toArrayType(typeStr) {
     return { type: 'array', items: base };
 }
 
+/**
+ * Check if a wired source will produce a double-nested array due to scatter.
+ * When a scattered step's output is already an array type (e.g. File[]),
+ * scatter wraps it in another array → File[][]. Downstream steps expecting
+ * File[] need a valueFrom expression to flatten.
+ */
+function sourceNeedsFlatten(ctx, ws) {
+    if (ws.isBIDSInput) return false;
+    if (!ctx.scatteredSteps.has(ws.sourceNodeId)) return false;
+
+    const sourceNode = ctx.nodeMap.get(ws.sourceNodeId);
+    if (!sourceNode) return false;
+
+    const sourceTool = getToolConfigSync(sourceNode.data.label);
+    if (!sourceTool) return false;
+
+    const outputDef = sourceTool.outputs?.[ws.sourceOutput];
+    if (!outputDef?.type) return false;
+
+    // Strip nullable marker before checking for array
+    const baseType = outputDef.type.replace(/\?$/, '');
+    return baseType.endsWith('[]');
+}
+
+/**
+ * Resolve a wired source, injecting a valueFrom flatten expression when the
+ * source is a scattered step with an array-typed output (double nesting).
+ * Sets ctx.needsInlineJavascript and ctx.needsStepInputExpression when flattening.
+ */
+function resolveWithFlatten(ctx, ws) {
+    const source = ctx.resolveWiredSource(ws);
+    if (sourceNeedsFlatten(ctx, ws)) {
+        ctx.needsInlineJavascript = true;
+        ctx.needsStepInputExpression = true;
+        return { source, valueFrom: '$(self.flat())' };
+    }
+    return source;
+}
+
 /** Check if a value is safely YAML-serializable. */
 function isSerializable(val) {
     if (val === null || val === undefined) return false;
@@ -273,7 +312,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
                 ctx.needsMultipleInputFeature = true;
             }
         } else if (wiredSources.length === 1) {
-            step.in[inputName] = ctx.resolveWiredSource(wiredSources[0]);
+            step.in[inputName] = resolveWithFlatten(ctx, wiredSources[0]);
         } else if (wiredSources.length > 1) {
             const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
             step.in[inputName] = {
@@ -358,7 +397,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         const wiredSources = ctx.wiredInputsMap.get(nodeId)?.get(inputName) || [];
 
         if (wiredSources.length === 1) {
-            step.in[inputName] = ctx.resolveWiredSource(wiredSources[0]);
+            step.in[inputName] = resolveWithFlatten(ctx, wiredSources[0]);
         } else if (wiredSources.length > 1) {
             const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
             step.in[inputName] = {
@@ -431,9 +470,17 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
                 ? outputName
                 : `${stepId}_${outputName}`;
 
-            const outputType = isScattered
-                ? toArrayType(outputDef.type)
-                : toCWLType(outputDef.type);
+            // Scattered step with array output → double nesting (e.g. File[] → File[][])
+            const baseOutputType = (outputDef.type || 'File').replace(/\?$/, '');
+            let outputType;
+            if (isScattered && baseOutputType.endsWith('[]')) {
+                const itemType = baseOutputType.slice(0, -2);
+                outputType = { type: 'array', items: { type: 'array', items: itemType } };
+            } else if (isScattered) {
+                outputType = toArrayType(outputDef.type);
+            } else {
+                outputType = toCWLType(outputDef.type);
+            }
 
             const outputEntry = {
                 type: outputType,

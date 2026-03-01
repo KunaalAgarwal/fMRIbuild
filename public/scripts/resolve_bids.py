@@ -191,6 +191,19 @@ def find_matching_files(bids_dir, selection):
     return matched, errors
 
 
+def make_relative_path(filepath, relative_to):
+    """Convert an absolute path to be relative to a base directory.
+
+    Falls back to the original path if relative computation fails
+    (e.g. cross-drive paths on Windows).
+    """
+    try:
+        rel = os.path.relpath(filepath, relative_to)
+        return rel.replace('\\', '/')  # Normalize to forward slashes for CWL
+    except ValueError:
+        return filepath
+
+
 def find_events_file(nifti_path):
     """Find the events TSV paired with a BOLD NIfTI file."""
     events_path = re.sub(r'_bold\.(nii\.gz|nii)$', '_events.tsv', str(nifti_path))
@@ -199,9 +212,10 @@ def find_events_file(nifti_path):
     return None
 
 
-def resolve_queries(bids_dir, query):
+def resolve_queries(bids_dir, query, relative_to=None):
     """Resolve all selection queries against a BIDS directory.
 
+    When relative_to is provided, file paths are made relative to that directory.
     Returns (resolved_dict, errors, warnings).
     """
     selections = query.get('selections', {})
@@ -224,7 +238,8 @@ def resolve_queries(bids_dir, query):
         # Build file list
         file_entries = []
         for m in matched:
-            file_entries.append({'class': 'File', 'path': m['path']})
+            path = make_relative_path(m['path'], relative_to) if relative_to else m['path']
+            file_entries.append({'class': 'File', 'path': path})
 
         resolved[key] = file_entries
 
@@ -234,7 +249,8 @@ def resolve_queries(bids_dir, query):
             for m in matched:
                 events_path = find_events_file(m['path'])
                 if events_path:
-                    events_entries.append({'class': 'File', 'path': events_path})
+                    evt_path = make_relative_path(events_path, relative_to) if relative_to else events_path
+                    events_entries.append({'class': 'File', 'path': evt_path})
                 else:
                     all_warnings.append(
                         f'No events TSV found for {os.path.basename(m["path"])}'
@@ -442,6 +458,11 @@ def main():
         '--output', default=None,
         help='Output job.yml path (defaults to --job path if provided)'
     )
+    parser.add_argument(
+        '--relative-to', default=None, dest='relative_to',
+        help='Make file paths relative to this directory (typically the output file directory). '
+             'If not provided, absolute paths are used.'
+    )
     args = parser.parse_args()
 
     # Determine output path
@@ -472,8 +493,9 @@ def main():
         print(f'Error reading query file: {e}', file=sys.stderr)
         sys.exit(1)
 
-    # Resolve
-    resolved, errors, warnings = resolve_queries(args.bids_dir, query)
+    # Resolve (relative_to makes paths relative to a base directory for portability)
+    relative_to = os.path.abspath(args.relative_to) if args.relative_to else None
+    resolved, errors, warnings = resolve_queries(args.bids_dir, query, relative_to)
 
     for w in warnings:
         print(f'Warning: {w}', file=sys.stderr)

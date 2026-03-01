@@ -65,3 +65,32 @@
   opacity: 0.35;
   cursor: not-allowed;
 }
+
+/* Toggle tools button — above auto-layout, same visual style */
+.toggle-tools-button {
+  position: absolute;
+  bottom: 175px;
+  left: 10px;
+  z-index: 5;
+  font-family: 'Roboto Mono', monospace;
+  font-size: 0.65rem;
+  font-weight: 500;
+  padding: 5px 10px;
+  background-color: rgba(46, 46, 46, 0.92);
+  color: var(--text-medium, #b0b0b0);
+  border: 1px solid var(--border-subtle, #444);
+  border-radius: 4px;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, bottom 0.25s ease;
+}
+
+.toggle-tools-button:hover {
+  background-color: rgba(74, 144, 226, 0.18);
+  border-color: rgba(74, 144, 226, 0.5);
+  color: var(--text-light, #e0e0e0);
+}
+
+.toggle-tools-button.tools-hidden {
+  bottom: 10px;
+}

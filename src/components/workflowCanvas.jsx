@@ -226,6 +226,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   // BIDS modal state
   const [showBIDSModal, setShowBIDSModal] = useState(false);
   const [bidsModalNodeId, setBidsModalNodeId] = useState(null);
+  const [toolsHidden, setToolsHidden] = useState(false);
   const bidsFileInputRef = useRef(null);
   const bidsPickerTargetRef = useRef(null);
   const { showError, showWarning, showInfo } = useToast();
@@ -809,14 +810,22 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 style={{ backgroundColor: 'var(--minimap-bg)' }}
               />
               <Background variant="dots" gap={12} size={1} />
-              <Controls />
+              {!toolsHidden && <Controls />}
+              {!toolsHidden && (
+                <button
+                  className="auto-layout-button"
+                  onClick={handleAutoLayout}
+                  disabled={nodes.length < 2}
+                  title="Auto Layout (Ctrl+Shift+L)"
+                >
+                  Auto Layout
+                </button>
+              )}
               <button
-                className="auto-layout-button"
-                onClick={handleAutoLayout}
-                disabled={nodes.length < 2}
-                title="Auto Layout (Ctrl+Shift+L)"
+                className={`toggle-tools-button${toolsHidden ? ' tools-hidden' : ''}`}
+                onClick={() => setToolsHidden(prev => !prev)}
               >
-                Auto Layout
+                {toolsHidden ? 'Show tools' : 'Hide tools'}
               </button>
             </ReactFlow>
           </WiredInputsContext.Provider>

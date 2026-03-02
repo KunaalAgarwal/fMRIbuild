@@ -394,14 +394,28 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             return;
         }
 
-        // Skip record types - these are complex types handled by CWL directly
+        // Record types: mutually exclusive parameter groups
         if (type === 'record') {
             const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
             const recordEntry = { type: ['null', 'Any'] };
-            const recordValue = getValidUserParam(node.data, inputName);
-            if (recordValue !== undefined) {
-                recordEntry.default = recordValue;
+            const selectedVariant = getValidUserParam(node.data, inputName);
+
+            if (selectedVariant && inputDef.recordVariants) {
+                const variant = inputDef.recordVariants.find(v => v.name === selectedVariant);
+                if (variant?.fields) {
+                    const fieldKey = Object.keys(variant.fields)[0];
+                    const fieldType = variant.fields[fieldKey]?.type;
+                    if (fieldType === 'boolean') {
+                        recordEntry.default = { [selectedVariant]: true };
+                    } else if (fieldType === 'File') {
+                        recordEntry.default = { [selectedVariant]: { class: 'File', path: 'PLACEHOLDER' } };
+                    } else {
+                        recordEntry.default = { [selectedVariant]: null };
+                    }
+                    ctx.jobDefaults[wfInputName] = recordEntry.default;
+                }
             }
+
             ctx.wf.inputs[wfInputName] = recordEntry;
             step.in[inputName] = wfInputName;
             return;

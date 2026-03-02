@@ -245,10 +245,8 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const allParams = useMemo(() => {
         if (!tool) return { required: [], optional: [] };
         const required = Object.entries(tool.requiredInputs || {})
-            .filter(([_, def]) => def.type !== 'record')
             .map(([name, def]) => ({ name, ...def }));
         const optional = Object.entries(tool.optionalInputs || {})
-            .filter(([_, def]) => def.type !== 'record')
             .map(([name, def]) => ({ name, ...def }));
         return { required, optional };
     }, [tool]);
@@ -370,6 +368,27 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                         onClick={() => handleToggleFx(param.name)}
                         title={expressionToggles[param.name] ? 'Switch to value mode' : 'Switch to expression mode'}
                     >fx</span>
+                </div>
+            );
+        }
+
+        // Record type: dropdown to select from mutually exclusive variants
+        if (param.type === 'record' && param.recordVariants) {
+            return (
+                <div className="param-control">
+                    <Form.Select
+                        size="sm"
+                        className={`param-select${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
+                        value={paramValues[param.name] ?? ''}
+                        onChange={(e) => updateParam(param.name, e.target.value || null)}
+                    >
+                        <option value="">-- none --</option>
+                        {param.recordVariants.map(v => (
+                            <option key={v.name} value={v.name}>
+                                {v.fields?.[v.name]?.label || v.name}
+                            </option>
+                        ))}
+                    </Form.Select>
                 </div>
             );
         }

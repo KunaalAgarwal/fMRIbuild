@@ -97,6 +97,12 @@ function mergeToolData(toolName, parsed, annotation) {
             enriched.options = enumHint;
         }
 
+        // Add record variant definitions for record-type inputs
+        if (inputDef.isRecord && inputDef.recordVariants) {
+            enriched.isRecord = true;
+            enriched.recordVariants = inputDef.recordVariants;
+        }
+
         // Classify: nullable = optional, non-nullable = required
         if (inputDef.nullable) {
             optionalInputs[inputName] = enriched;

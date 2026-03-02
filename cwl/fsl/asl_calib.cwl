@@ -148,3 +148,7 @@ outputs:
     type: File
     outputBinding:
       glob: asl_calib.log
+  err_log:
+    type: File
+    outputBinding:
+      glob: asl_calib.err.log

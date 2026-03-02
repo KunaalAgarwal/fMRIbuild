@@ -118,3 +118,7 @@ outputs:
     type: File
     outputBinding:
       glob: basil.log
+  err_log:
+    type: File
+    outputBinding:
+      glob: basil.err.log

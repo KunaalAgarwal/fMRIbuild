@@ -1,0 +1,227 @@
+/* Output Configuration Modal */
+.output-config-modal .modal-dialog {
+    max-width: min(80vw, 700px);
+}
+
+.output-config-modal .modal-content {
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    color: var(--text-light);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-lg);
+    font-family: 'Inter', sans-serif;
+}
+
+.output-config-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 14px 20px;
+    background-color: var(--bg-header);
+    border-radius: 8px 8px 0 0;
+}
+
+.output-config-modal .modal-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.8rem, 0.6rem + 0.5vw, 1rem);
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.output-config-modal .modal-body {
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    max-height: 60vh;
+    overflow-y: auto;
+}
+
+.output-config-modal .modal-footer {
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 12px 20px;
+    background-color: var(--bg-header);
+    border-radius: 0 0 8px 8px;
+    gap: 10px;
+}
+
+/* Toolbar with count and select all/none */
+.output-config-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.output-config-count {
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.65rem, 0.5rem + 0.4vw, 0.8rem);
+    color: var(--text-muted);
+}
+
+.output-config-actions {
+    display: flex;
+    gap: 6px;
+}
+
+.output-config-actions .btn-link {
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.6rem, 0.45rem + 0.4vw, 0.72rem);
+    color: var(--text-muted);
+    text-decoration: none;
+    padding: 3px 8px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.03);
+}
+
+.output-config-actions .btn-link:hover {
+    color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.2);
+    text-decoration: none;
+}
+
+/* Group of outputs per upstream tool node */
+.output-config-groups {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.output-config-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.output-config-group-header {
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.6rem, 0.42rem + 0.5vw, 0.78rem);
+    font-weight: 600;
+    color: var(--color-primary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding: 6px 10px 4px;
+    border-left: 2px solid var(--color-primary);
+    background-color: rgba(74, 144, 226, 0.06);
+    border-radius: 0 4px 4px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.output-config-group-header:first-child {
+    margin-top: 0;
+}
+
+.output-config-custom-badge {
+    font-size: clamp(0.55rem, 0.4rem + 0.4vw, 0.68rem);
+    background-color: var(--bg-interactive);
+    color: var(--text-medium);
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-transform: lowercase;
+}
+
+.output-config-scatter-badge {
+    font-size: clamp(0.55rem, 0.4rem + 0.4vw, 0.68rem);
+    color: #6fc2cf;
+    padding: 2px 6px;
+    border-radius: 3px;
+    font-weight: 500;
+    text-transform: lowercase;
+    background-color: rgba(74, 198, 226, 0.1);
+}
+
+/* Individual output item (checkbox row) */
+.output-config-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: clamp(6px, 0.3rem + 0.3vw, 12px) clamp(10px, 0.5rem + 0.5vw, 16px);
+    background-color: var(--bg-tertiary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.output-config-item:hover {
+    border-color: rgba(255, 255, 255, 0.15);
+}
+
+.output-config-item.selected {
+    border-color: var(--color-success);
+    background-color: rgba(61, 139, 64, 0.1);
+}
+
+.output-config-item.selected .io-name {
+    color: var(--color-success);
+}
+
+
+/* Empty state */
+.output-config-empty {
+    text-align: center;
+    color: var(--text-secondary);
+    font-family: 'Roboto Mono', monospace;
+    font-size: clamp(0.72rem, 0.55rem + 0.45vw, 0.88rem);
+    padding: 30px 20px;
+}
+
+/* Button styles matching existing patterns */
+.output-config-modal .btn-primary {
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    font-size: 0.85rem;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.output-config-modal .btn-primary:hover {
+    background-color: #3a7bc8;
+    border-color: #3a7bc8;
+}
+
+.output-config-modal .btn-primary:disabled {
+    opacity: 0.5;
+}
+
+.output-config-modal .btn-secondary {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.15);
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    padding: 8px 20px;
+    border-radius: 5px;
+    font-weight: 500;
+}
+
+.output-config-modal .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.25);
+    color: var(--text-light);
+}
+
+/* Clickable "config" button on the Output node */
+.node-output-config-btn {
+    font-size: 7px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    border-radius: 2px;
+    padding: 0px 3px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    color: var(--color-primary, #4a90e2);
+    background-color: rgba(74, 144, 226, 0.12);
+    border: 1px solid rgba(74, 144, 226, 0.3);
+    cursor: pointer;
+    transition: all 0.12s ease;
+}
+
+.node-output-config-btn:hover {
+    background-color: rgba(74, 144, 226, 0.25);
+    border-color: rgba(74, 144, 226, 0.5);
+}

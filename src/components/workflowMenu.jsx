@@ -64,6 +64,9 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
     if (dummyDef?.isBIDS) {
       event.dataTransfer.setData('node/isBIDS', 'true');
     }
+    if (dummyDef?.isOutputNode) {
+      event.dataTransfer.setData('node/isOutputNode', 'true');
+    }
   }, []);
 
   const handleCustomWorkflowDragStart = useCallback((event, workflow) => {

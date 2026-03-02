@@ -3357,9 +3357,10 @@ export const dummyNodes = {
         {
             "name": "Output",
             "fullName": "Workflow Output",
-            "function": "Represents the final output of the workflow",
-            "typicalUse": "Connect from the last processing step to show where results go",
-            "isDummy": true
+            "function": "Represents the final output of the workflow. Click the Outputs button to select which upstream outputs appear in the final CWL workflow.",
+            "typicalUse": "Connect from the last processing step, then click Outputs to configure which outputs appear in the final workflow",
+            "isDummy": true,
+            "isOutputNode": true
         },
         {
             "name": "BIDS Input",

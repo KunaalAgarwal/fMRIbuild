@@ -500,12 +500,101 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
 }
 
 /**
+ * Declare workflow-level outputs based on user selections from the Output node.
+ *
+ * The selectedOutputs map uses keys like "canvasNodeId/outputName".
+ * Maps canvasNodeId -> stepId using ctx.getStepId.
+ *
+ * Mutates: ctx.wf.outputs.
+ */
+function declareSelectedOutputs(ctx, selectedOutputs, conditionalStepIds) {
+    // Collect selected outputs grouped by canvas node ID
+    const selectedByNode = new Map();
+    for (const [key, isSelected] of Object.entries(selectedOutputs)) {
+        if (!isSelected) continue;
+        const slashIdx = key.indexOf('/');
+        if (slashIdx === -1) continue;
+        const canvasNodeId = key.substring(0, slashIdx);
+        const outputName = key.substring(slashIdx + 1);
+
+        if (!selectedByNode.has(canvasNodeId)) {
+            selectedByNode.set(canvasNodeId, []);
+        }
+        selectedByNode.get(canvasNodeId).push(outputName);
+    }
+
+    // Count total selected outputs for naming (single output = no prefix)
+    let totalSelectedOutputs = 0;
+    for (const outputs of selectedByNode.values()) {
+        totalSelectedOutputs += outputs.length;
+    }
+
+    for (const [canvasNodeId, outputNames] of selectedByNode) {
+        const node = ctx.nodeMap.get(canvasNodeId);
+        if (!node) continue; // Node may have been removed or is a dummy
+
+        let stepId;
+        try {
+            stepId = ctx.getStepId(canvasNodeId);
+        } catch {
+            continue; // Node not in topo-sort (stale selection)
+        }
+
+        const tool = getToolConfigSync(node.data.label);
+        const outputs = tool?.outputs || {};
+        const scatterConfig = computeStepScatter(ctx, canvasNodeId);
+        const isScattered = scatterConfig !== null;
+
+        for (const outputName of outputNames) {
+            const outputDef = outputs[outputName];
+            if (!outputDef) continue;
+
+            const wfOutputName = totalSelectedOutputs === 1
+                ? outputName
+                : `${stepId}_${outputName}`;
+
+            const baseOutputType = (outputDef.type || 'File').replace(/\?$/, '');
+            let outputType;
+            if (isScattered && baseOutputType.endsWith('[]')) {
+                const itemType = baseOutputType.slice(0, -2);
+                outputType = { type: 'array', items: { type: 'array', items: itemType } };
+            } else if (isScattered) {
+                outputType = toArrayType(outputDef.type);
+            } else {
+                outputType = toCWLType(outputDef.type);
+            }
+
+            const outputEntry = {
+                type: outputType,
+                outputSource: `${stepId}/${outputName}`
+            };
+
+            if (conditionalStepIds.has(canvasNodeId)) {
+                const alreadyNullable = Array.isArray(outputType) && outputType[0] === 'null';
+                if (!alreadyNullable) outputEntry.type = ['null', outputType];
+                outputEntry.pickValue = 'first_non_null';
+            }
+
+            ctx.wf.outputs[wfOutputName] = outputEntry;
+        }
+    }
+}
+
+/**
  * Convert the React-Flow graph into a CWL Workflow JS object.
  * Returns the raw object before YAML serialization.
  */
 export function buildCWLWorkflowObject(graph) {
     // Pre-process: expand any custom workflow nodes into flat internal nodes
     graph = expandCustomWorkflowNodes(graph);
+
+    // Extract Output node configuration before filtering out dummies.
+    // If an Output node exists with selectedOutputs, use those selections
+    // instead of the default "all terminal outputs" behavior.
+    const outputConfigNode = graph.nodes.find(
+        n => n.data?.isDummy && (n.data?.isOutputNode || n.data?.label === 'Output') && n.data?.selectedOutputs
+    );
+    const outputSelections = outputConfigNode?.data?.selectedOutputs || null;
 
     // Extract BIDS nodes before filtering (they generate workflow-level inputs)
     const bidsNodes = graph.nodes.filter(n => n.data?.isBIDS && n.data?.bidsSelections);
@@ -747,9 +836,15 @@ export function buildCWLWorkflowObject(graph) {
     if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
     if (Object.keys(requirements).length > 0) wf.requirements = requirements;
 
-    /* ---------- declare ALL outputs from terminal nodes ---------- */
-    const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
-    declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds);
+    /* ---------- declare workflow-level outputs ---------- */
+    if (outputSelections) {
+        // User configured specific outputs via the Output node
+        declareSelectedOutputs(ctx, outputSelections, conditionalStepIds);
+    } else {
+        // Fallback: all outputs from terminal nodes (original behavior)
+        const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
+        declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds);
+    }
 
     return { wf, jobDefaults, cwlDefaultKeys };
 }

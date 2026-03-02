@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useContext, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
+import { Handle, Position, useUpdateNodeInternals, useNodes, useEdges } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
@@ -11,6 +11,7 @@ import { ScatterPropagationContext } from '../context/ScatterPropagationContext.
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import CustomWorkflowParamModal from './CustomWorkflowParamModal.jsx';
 import IONodeModal from './IONodeModal.jsx';
+import OutputConfigModal from './OutputConfigModal.jsx';
 import '../styles/workflowItem.css';
 
 // Compute a font size that scales down for longer node labels
@@ -63,6 +64,11 @@ const NodeComponent = ({ data, id }) => {
 
     // I/O node modal state
     const [showIOModal, setShowIOModal] = useState(false);
+
+    // Output config modal state (for Output dummy nodes)
+    const [showOutputConfigModal, setShowOutputConfigModal] = useState(false);
+    const allCanvasNodes = useNodes();
+    const allCanvasEdges = useEdges();
 
     // Custom workflow node state (must be at top level for hooks rules)
     const [showCustomModal, setShowCustomModal] = useState(false);
@@ -441,6 +447,11 @@ const NodeComponent = ({ data, id }) => {
 
     // Render I/O dummy nodes (Input/Output) with green-styled 3-row layout
     if (isDummy && !data.isBIDS) {
+        const isOutputNode = data.isOutputNode === true || data.label === 'Output';
+        const outputCount = isOutputNode && data.selectedOutputs
+            ? Object.values(data.selectedOutputs).filter(Boolean).length
+            : null;
+
         return (
             <>
                 <div className="node-wrapper node-io" onDoubleClick={() => setShowIOModal(true)}>
@@ -463,7 +474,16 @@ const NodeComponent = ({ data, id }) => {
                             {data.expressions && Object.keys(data.expressions).length > 0 && <span className="node-fx-badge">fx</span>}
                             {data.notes && <span className="node-notes-badge">N</span>}
                         </span>
-                        <span className="node-info-spacer"></span>
+                        {isOutputNode ? (
+                            <span
+                                className="node-output-config-btn"
+                                onClick={(e) => { e.stopPropagation(); setShowOutputConfigModal(true); }}
+                            >
+                                {outputCount !== null ? `config (${outputCount})` : 'config'}
+                            </span>
+                        ) : (
+                            <span className="node-info-spacer"></span>
+                        )}
                     </div>
                 </div>
                 <IONodeModal
@@ -473,6 +493,18 @@ const NodeComponent = ({ data, id }) => {
                     notes={data.notes || ''}
                     onSave={(updated) => data.onSaveIO?.(updated)}
                 />
+                {isOutputNode && (
+                    <OutputConfigModal
+                        show={showOutputConfigModal}
+                        onHide={() => setShowOutputConfigModal(false)}
+                        outputNodeId={id}
+                        outputNodeData={data}
+                        allNodes={allCanvasNodes}
+                        allEdges={allCanvasEdges}
+                        scatteredNodeIds={propagatedIds}
+                        onSave={(updated) => data.onSaveOutputConfig?.(updated)}
+                    />
+                )}
             </>
         );
     }

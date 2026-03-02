@@ -265,6 +265,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             ...(node.data.isCustomWorkflow ? { onUpdateInternalBIDS: (updates) => handleInternalBIDSUpdate(node.id, updates) } : {}),
             // Reattach I/O edit callback for dummy nodes
             onSaveIO: node.data.isDummy ? (data) => handleIONodeUpdate(node.id, data) : null,
+            // Reattach output config callback for Output nodes (fallback to label for legacy nodes)
+            onSaveOutputConfig: (node.data.isOutputNode || (node.data.isDummy && node.data.label === 'Output'))
+                ? (data) => handleOutputNodeUpdate(node.id, data) : null,
           };
 
           // Sync custom workflow nodes with latest saved workflow data
@@ -387,6 +390,24 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 ...node.data,
                 label: updatedData.label ?? node.data.label,
                 notes: updatedData.notes ?? node.data.notes ?? '',
+              }
+            }
+          : node
+      )
+    );
+    markForSync();
+  };
+
+  // Update an Output node's selected outputs configuration.
+  const handleOutputNodeUpdate = (nodeId, updatedData) => {
+    setNodes((prevNodes) =>
+      prevNodes.map((node) =>
+        node.id === nodeId
+          ? {
+              ...node,
+              data: {
+                ...node.data,
+                selectedOutputs: updatedData.selectedOutputs,
               }
             }
           : node
@@ -637,6 +658,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     const name = event.dataTransfer.getData('node/name') || 'Unnamed Node';
     const isDummy = event.dataTransfer.getData('node/isDummy') === 'true';
     const isBIDS = event.dataTransfer.getData('node/isBIDS') === 'true';
+    const isOutputNode = event.dataTransfer.getData('node/isOutputNode') === 'true';
     const customWorkflowId = event.dataTransfer.getData('node/customWorkflowId');
     if (!reactFlowInstance) return;
 
@@ -697,8 +719,11 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     } else {
       createNode((id) => ({
         isDummy: isDummy,
+        isOutputNode: isOutputNode || undefined,
+        selectedOutputs: isOutputNode ? null : undefined,
         onSaveParameters: isDummy ? null : (newData) => handleNodeUpdate(id, newData),
         onSaveIO: isDummy ? (data) => handleIONodeUpdate(id, data) : null,
+        onSaveOutputConfig: isOutputNode ? (data) => handleOutputNodeUpdate(id, data) : null,
       }));
     }
   };

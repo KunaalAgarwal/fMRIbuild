@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { Modal, Form, Button } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { DOCKER_TAGS } from '../utils/toolAnnotations.js';
-import { EXPRESSION_TEMPLATES } from '../utils/expressionTemplates.js';
+import ExpressionEditor from './ExpressionEditor.jsx';
 import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import { topoSort } from '../utils/topoSort.js';
 import TagDropdown from './TagDropdown.jsx';
@@ -621,74 +621,16 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                                         </div>
                                                     </div>
                                                 )}
-                                                {isFileType && expressionToggles[param.name] && (() => {
-                                                    const exprVal = expressionValues[param.name] || '';
-                                                    const exprWarning = expressionWarnings[param.name];
-                                                    const fileTemplates = EXPRESSION_TEMPLATES.filter(t => t.applicableTypes.includes(param.type));
-                                                    return (
-                                                        <div className="expression-file-details">
-                                                            <div className="expression-input-row">
-                                                                <Form.Control type="text" size="sm"
-                                                                    className={`expression-input${exprVal ? ' filled' : ''}${exprWarning ? ' invalid' : ''}`}
-                                                                    placeholder="self.nameroot"
-                                                                    value={exprVal}
-                                                                    onChange={(e) => setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value }))}
-                                                                />
-                                                                {fileTemplates.length > 0 && (
-                                                                    <Form.Select size="sm" className="expression-template-select"
-                                                                        value={fileTemplates.find(t => t.expression === exprVal)?.expression || ''}
-                                                                        onChange={(e) => { if (e.target.value) setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value })); }}>
-                                                                        <option value="">Templates</option>
-                                                                        {fileTemplates.map(t => (
-                                                                            <option key={t.label} value={t.expression} title={t.description}>{t.label}</option>
-                                                                        ))}
-                                                                    </Form.Select>
-                                                                )}
-                                                            </div>
-                                                            {exprVal.trim() && !exprWarning && (
-                                                                <div className="expression-preview">valueFrom: $({exprVal.trim()})</div>
-                                                            )}
-                                                            {exprWarning && (
-                                                                <div className="expression-warning-text">{exprWarning}</div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })()}
-                                                {!isFileType && expressionToggles[param.name] && (() => {
-                                                    const exprVal = expressionValues[param.name] || '';
-                                                    const exprWarning = expressionWarnings[param.name];
-                                                    const applicableTemplates = EXPRESSION_TEMPLATES.filter(
-                                                        t => t.applicableTypes.includes(param.type)
-                                                    );
-                                                    return (
-                                                        <div className="expression-scalar-details">
-                                                            <div className="expression-input-row">
-                                                                <Form.Control type="text" size="sm"
-                                                                    className={`expression-input${exprVal ? ' filled' : ''}${exprWarning ? ' invalid' : ''}`}
-                                                                    placeholder={param.type === 'string' || param.type === 'enum' ? 'self.toUpperCase()' : 'self + 1'}
-                                                                    value={exprVal}
-                                                                    onChange={(e) => setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value }))}
-                                                                />
-                                                                {applicableTemplates.length > 0 && (
-                                                                    <Form.Select size="sm" className="expression-template-select"
-                                                                        value={applicableTemplates.find(t => t.expression === exprVal)?.expression || ''}
-                                                                        onChange={(e) => { if (e.target.value) setExpressionValues(prev => ({ ...prev, [param.name]: e.target.value })); }}>
-                                                                        <option value="">Templates</option>
-                                                                        {applicableTemplates.map(t => (
-                                                                            <option key={t.label} value={t.expression} title={t.description}>{t.label}</option>
-                                                                        ))}
-                                                                    </Form.Select>
-                                                                )}
-                                                            </div>
-                                                            {exprVal.trim() && !exprWarning && (
-                                                                <div className="expression-preview">valueFrom: $({exprVal.trim()})</div>
-                                                            )}
-                                                            {exprWarning && (
-                                                                <div className="expression-warning-text">{exprWarning}</div>
-                                                            )}
-                                                        </div>
-                                                    );
-                                                })()}
+                                                {expressionToggles[param.name] && (
+                                                    <ExpressionEditor
+                                                        paramName={param.name}
+                                                        paramType={param.type}
+                                                        isFileType={isFileType}
+                                                        value={expressionValues[param.name]}
+                                                        onChange={(val) => setExpressionValues(prev => ({ ...prev, [param.name]: val }))}
+                                                        warning={expressionWarnings[param.name]}
+                                                    />
+                                                )}
                                                 {param.label && (
                                                     <div className="param-description">{param.label}</div>
                                                 )}

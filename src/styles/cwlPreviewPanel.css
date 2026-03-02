@@ -190,6 +190,10 @@
     flex-shrink: 0;
 }
 
+.cwl-fullscreen-modal .modal-dialog {
+    max-width: 95vw;
+}
+
 .cwl-fullscreen-modal .modal-content {
     border-radius: 8px;
     background-color: var(--bg-secondary);
@@ -211,7 +215,7 @@
 
 .cwl-fullscreen-modal .modal-title {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.95rem;
+    font-size: 1.1rem;
     font-weight: 500;
     color: var(--text-light);
 }
@@ -224,7 +228,7 @@
 .cwl-split-container {
     display: flex;
     gap: 12px;
-    height: 70vh;
+    height: 80vh;
 }
 
 .cwl-split-pane {
@@ -248,7 +252,7 @@
 
 .cwl-split-pane-label {
     font-family: 'Roboto Mono', monospace;
-    font-size: 0.8rem;
+    font-size: 0.95rem;
     font-weight: 600;
     color: var(--text-light);
     letter-spacing: 0.5px;
@@ -260,7 +264,7 @@
     overflow-y: auto;
     overflow-x: auto;
     border-radius: 0 0 6px 6px;
-    font-size: clamp(0.75rem, 1vw, 0.9rem);
+    font-size: clamp(0.85rem, 1.1vw, 1.05rem);
 }
 
 .cwl-split-pane .cwl-code-fullscreen::-webkit-scrollbar:horizontal {

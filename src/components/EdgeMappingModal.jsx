@@ -15,7 +15,7 @@ const getBaseType = (type) => {
 
 const isArrayType = (type) => type?.includes('[]') || false;
 
-const formatTypeHint = (type, extensions, enumSymbols = null) => {
+const formatTypeHint = (type, extensions) => {
     const baseType = getBaseType(type);
     const isArray = isArrayType(type);
     const suffix = isArray ? '[]' : '';
@@ -519,10 +519,14 @@ const EdgeMappingModal = ({
     const isOutputMapped = (outputName) => mappingsByOutput.has(outputName);
     const isInputMapped = (inputName) => mappingsByInput.has(inputName);
 
+    // O(1) lookup maps for outputs and inputs
+    const outputByName = useMemo(() => new Map((sourceIO?.outputs || []).map(o => [o.name, o])), [sourceIO]);
+    const inputByName = useMemo(() => new Map((targetIO?.inputs || []).map(i => [i.name, i])), [targetIO]);
+
     // Check type compatibility for a specific output-input pair
     const getMappingCompatibility = (outputName, inputName) => {
-        const output = sourceIO.outputs.find(o => o.name === outputName);
-        const input = targetIO.inputs.find(i => i.name === inputName);
+        const output = outputByName.get(outputName);
+        const input = inputByName.get(inputName);
         return checkTypeCompatibility(
             output?.type,
             input?.type,
@@ -533,10 +537,10 @@ const EdgeMappingModal = ({
     };
 
     // Check if any current mappings have type issues
-    const hasIncompatibleMappings = mappings.some(m => {
+    const hasIncompatibleMappings = useMemo(() => mappings.some(m => {
         const { compatible } = getMappingCompatibility(m.sourceOutput, m.targetInput);
         return !compatible;
-    });
+    }), [mappings, outputByName, inputByName, sourceIsScattered]);
 
     // Collect unique scatter/gather notes from current mappings for banner display
     const { inheritNotes, gatherNotes } = useMemo(() => {
@@ -636,7 +640,7 @@ const EdgeMappingModal = ({
                                             <div className="io-item-main">
                                                 <span className="io-name">{output.label}</span>
                                                 <span className="io-type" title={output.type + (output.extensions?.length ? ' (' + output.extensions.join(', ') + ')' : '') + (output.enumSymbols?.length ? ' (' + output.enumSymbols.join(', ') + ')' : '')}>
-                                                    {formatTypeHint(output.type, output.extensions, output.enumSymbols)}
+                                                    {formatTypeHint(output.type, output.extensions)}
                                                 </span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
@@ -803,7 +807,7 @@ const EdgeMappingModal = ({
                                             <div className="io-item-main">
                                                 <span className="io-name">{input.label}</span>
                                                 <span className="io-type" title={input.type + (input.acceptedExtensions?.length ? ' (' + input.acceptedExtensions.join(', ') + ')' : '') + (input.enumSymbols?.length ? ' (' + input.enumSymbols.join(', ') + ')' : '')}>
-                                                    {formatTypeHint(input.type, input.acceptedExtensions, input.enumSymbols)}
+                                                    {formatTypeHint(input.type, input.acceptedExtensions)}
                                                 </span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>

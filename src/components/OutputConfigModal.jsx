@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Modal, Button } from 'react-bootstrap';
+import { useNodes, useEdges } from 'reactflow';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import '../styles/outputConfigModal.css';
 
@@ -76,7 +77,6 @@ function getNodeOutputs(nodeData) {
                 if (consumedOutputs.has(namespacedName)) return;
                 outputs.push({
                     name,
-                    namespacedName,
                     type: def.type || 'File',
                     label: def.label || name,
                     group: node.label,
@@ -97,7 +97,9 @@ function getNodeOutputs(nodeData) {
     }));
 }
 
-const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, allNodes, allEdges, scatteredNodeIds, onSave }) => {
+const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatteredNodeIds, onSave }) => {
+    const allNodes = useNodes();
+    const allEdges = useEdges();
     const [selections, setSelections] = useState({});
 
     // Discover upstream nodes and their outputs
@@ -113,7 +115,7 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, allNode
             isScattered: scatteredNodeIds?.has(node.id) || false,
             outputs: getNodeOutputs(node.data),
         }));
-    }, [show, outputNodeId, allNodes, allEdges]);
+    }, [show, outputNodeId, allNodes, allEdges, scatteredNodeIds]);
 
     // Initialize selections when modal opens
     useEffect(() => {
@@ -233,5 +235,4 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, allNode
     );
 };
 
-export { discoverUpstreamNodes };
 export default OutputConfigModal;

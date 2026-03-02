@@ -1,57 +1,47 @@
-import { useState } from 'react';
+import { useReducer, useCallback } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
-const DEFAULT_WORKSPACES = [{ id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null }];
+const DEFAULT_WORKSPACE = { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null };
 
-export function useWorkspaces() {
-  // Initialize state from localStorage or use defaults if nothing is stored.
-  // Each workspace is now an object with 'nodes' and 'edges'
-  const [workspaces, setWorkspaces] = useState(() => {
-    try {
-      const savedWorkspaces = JSON.parse(localStorage.getItem('workspaces'));
-      if (savedWorkspaces) {
-        // Migrate existing data to include name and id fields
-        return savedWorkspaces.map(ws => ({
-          id: ws.id || crypto.randomUUID(),
-          nodes: ws.nodes || [],
-          edges: ws.edges || [],
-          name: ws.name || '',
-          workflowName: ws.workflowName || '',
-          savedWorkflowId: ws.savedWorkflowId || null,
-          viewport: ws.viewport || null
-        }));
-      }
-    } catch {
-      // Corrupted localStorage — fall through to default
-    }
-    return DEFAULT_WORKSPACES;
-  });
-
-  const [currentWorkspace, setCurrentWorkspace] = useState(() => {
-    const savedIndex = parseInt(localStorage.getItem('currentWorkspace'), 10);
-    if (isNaN(savedIndex) || savedIndex < 0) return 0;
-    // Bounds-check against stored workspace count to handle corrupted localStorage
-    try {
-      const stored = JSON.parse(localStorage.getItem('workspaces'));
-      if (Array.isArray(stored) && savedIndex >= stored.length) return 0;
-    } catch { /* fall through */ }
-    return savedIndex;
-  });
-
-  // Debounced localStorage writes (300ms delay prevents main thread blocking)
-  useDebouncedStorage('workspaces', workspaces, 300);
-  useDebouncedStorage('currentWorkspace', currentWorkspace, 300);
-
-  const addNewWorkspace = () => {
-    setWorkspaces((prev) => {
-      const updated = [...prev, { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null }];
-      setCurrentWorkspace(updated.length - 1);
-      return updated;
-    });
+function migrateWorkspace(ws) {
+  return {
+    id: ws.id || crypto.randomUUID(),
+    nodes: ws.nodes || [],
+    edges: ws.edges || [],
+    name: ws.name || '',
+    workflowName: ws.workflowName || '',
+    savedWorkflowId: ws.savedWorkflowId || null,
+    viewport: ws.viewport || null
   };
+}
 
-  const addNewWorkspaceWithData = (data) => {
-    setWorkspaces((prev) => {
+function initState() {
+  let workspaces = [DEFAULT_WORKSPACE];
+  let currentIndex = 0;
+  try {
+    const saved = JSON.parse(localStorage.getItem('workspaces'));
+    if (Array.isArray(saved) && saved.length > 0) {
+      workspaces = saved.map(migrateWorkspace);
+    }
+  } catch { /* corrupted localStorage — use default */ }
+  try {
+    const savedIdx = parseInt(localStorage.getItem('currentWorkspace'), 10);
+    if (!isNaN(savedIdx) && savedIdx >= 0 && savedIdx < workspaces.length) {
+      currentIndex = savedIdx;
+    }
+  } catch { /* fall through */ }
+  return { workspaces, currentIndex };
+}
+
+function workspaceReducer(state, action) {
+  switch (action.type) {
+    case 'ADD_WORKSPACE': {
+      const newWs = { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null };
+      const updated = [...state.workspaces, newWs];
+      return { workspaces: updated, currentIndex: updated.length - 1 };
+    }
+    case 'ADD_WORKSPACE_WITH_DATA': {
+      const { data } = action;
       const newWs = {
         id: crypto.randomUUID(),
         nodes: data.nodes || [],
@@ -61,29 +51,28 @@ export function useWorkspaces() {
         savedWorkflowId: data.savedWorkflowId || null,
         viewport: null
       };
-      const updated = [...prev, newWs];
-      setCurrentWorkspace(updated.length - 1);
-      return updated;
-    });
-  };
-
-  const clearCurrentWorkspace = () => {
-    setWorkspaces((prevWorkspaces) => {
-      const updatedWorkspaces = [...prevWorkspaces];
-      // Preserve id and names; clear nodes, edges, and viewport
-      const ws = updatedWorkspaces[currentWorkspace];
-      updatedWorkspaces[currentWorkspace] = { id: ws?.id || crypto.randomUUID(), nodes: [], edges: [], name: ws?.name || '', workflowName: ws?.workflowName || '', savedWorkflowId: ws?.savedWorkflowId || null, viewport: null };
-      return updatedWorkspaces;
-    });
-  };
-
-  const updateCurrentWorkspaceItems = (newItems) => {
-    // newItems is expected to be an object with shape: { nodes, edges }
-    setWorkspaces((prevWorkspaces) => {
-      const updatedWorkspaces = [...prevWorkspaces];
-      // Preserve the id and name when updating nodes/edges
-      const ws = updatedWorkspaces[currentWorkspace];
-      updatedWorkspaces[currentWorkspace] = {
+      const updated = [...state.workspaces, newWs];
+      return { workspaces: updated, currentIndex: updated.length - 1 };
+    }
+    case 'CLEAR_CURRENT': {
+      const ws = state.workspaces[state.currentIndex];
+      const updated = [...state.workspaces];
+      updated[state.currentIndex] = {
+        id: ws?.id || crypto.randomUUID(),
+        nodes: [],
+        edges: [],
+        name: ws?.name || '',
+        workflowName: ws?.workflowName || '',
+        savedWorkflowId: ws?.savedWorkflowId || null,
+        viewport: null
+      };
+      return { ...state, workspaces: updated };
+    }
+    case 'UPDATE_CURRENT_ITEMS': {
+      const { newItems } = action;
+      const ws = state.workspaces[state.currentIndex];
+      const updated = [...state.workspaces];
+      updated[state.currentIndex] = {
         ...newItems,
         id: ws?.id || crypto.randomUUID(),
         name: ws?.name || '',
@@ -91,55 +80,36 @@ export function useWorkspaces() {
         savedWorkflowId: ws?.savedWorkflowId || null,
         viewport: newItems.viewport !== undefined ? newItems.viewport : (ws?.viewport || null)
       };
-      return updatedWorkspaces;
-    });
-  };
-
-  const removeCurrentWorkspace = () => {
-    if (workspaces.length === 1) return;
-    setWorkspaces((prevWorkspaces) =>
-      prevWorkspaces.filter((_, index) => index !== currentWorkspace)
-    );
-    setCurrentWorkspace((prev) => (prev >= workspaces.length - 1 ? workspaces.length - 2 : prev));
-  };
-
-  const updateWorkspaceName = (newName) => {
-    setWorkspaces((prevWorkspaces) => {
-      const updatedWorkspaces = [...prevWorkspaces];
-      updatedWorkspaces[currentWorkspace] = {
-        ...updatedWorkspaces[currentWorkspace],
-        name: newName
+      return { ...state, workspaces: updated };
+    }
+    case 'REMOVE_CURRENT': {
+      if (state.workspaces.length === 1) return state;
+      const idx = state.currentIndex;
+      const updated = state.workspaces.filter((_, i) => i !== idx);
+      return {
+        workspaces: updated,
+        currentIndex: idx >= updated.length ? updated.length - 1 : idx
       };
-      return updatedWorkspaces;
-    });
-  };
-
-  const updateWorkflowName = (newName) => {
-    setWorkspaces((prevWorkspaces) => {
-      const updatedWorkspaces = [...prevWorkspaces];
-      updatedWorkspaces[currentWorkspace] = {
-        ...updatedWorkspaces[currentWorkspace],
-        workflowName: newName
-      };
-      return updatedWorkspaces;
-    });
-  };
-
-  const updateSavedWorkflowId = (id) => {
-    setWorkspaces((prevWorkspaces) => {
-      const updatedWorkspaces = [...prevWorkspaces];
-      updatedWorkspaces[currentWorkspace] = {
-        ...updatedWorkspaces[currentWorkspace],
-        savedWorkflowId: id
-      };
-      return updatedWorkspaces;
-    });
-  };
-
-  const removeWorkflowNodesFromAll = (workflowId) => {
-    setWorkspaces((prev) => {
+    }
+    case 'UPDATE_NAME': {
+      const updated = [...state.workspaces];
+      updated[state.currentIndex] = { ...updated[state.currentIndex], name: action.name };
+      return { ...state, workspaces: updated };
+    }
+    case 'UPDATE_WORKFLOW_NAME': {
+      const updated = [...state.workspaces];
+      updated[state.currentIndex] = { ...updated[state.currentIndex], workflowName: action.name };
+      return { ...state, workspaces: updated };
+    }
+    case 'UPDATE_SAVED_ID': {
+      const updated = [...state.workspaces];
+      updated[state.currentIndex] = { ...updated[state.currentIndex], savedWorkflowId: action.id };
+      return { ...state, workspaces: updated };
+    }
+    case 'REMOVE_WORKFLOW_NODES': {
+      const { workflowId } = action;
       let anyChanged = false;
-      const updated = prev.map(ws => {
+      const updated = state.workspaces.map(ws => {
         const removedIds = new Set();
         const filteredNodes = ws.nodes.filter(n => {
           if (n.data?.isCustomWorkflow && n.data?.customWorkflowId === workflowId) {
@@ -155,22 +125,47 @@ export function useWorkspaces() {
         );
         return { ...ws, nodes: filteredNodes, edges: filteredEdges };
       });
-      return anyChanged ? updated : prev;
-    });
-  };
-
-  const saveViewportForWorkspace = (index, viewport) => {
-    setWorkspaces((prev) => {
-      if (index < 0 || index >= prev.length) return prev;
-      const updated = [...prev];
+      return anyChanged ? { ...state, workspaces: updated } : state;
+    }
+    case 'SAVE_VIEWPORT': {
+      const { index, viewport } = action;
+      if (index < 0 || index >= state.workspaces.length) return state;
+      const updated = [...state.workspaces];
       updated[index] = { ...updated[index], viewport };
-      return updated;
-    });
-  };
+      return { ...state, workspaces: updated };
+    }
+    case 'SET_CURRENT_INDEX': {
+      const idx = action.index;
+      if (idx < 0 || idx >= state.workspaces.length) return state;
+      return { ...state, currentIndex: idx };
+    }
+    default:
+      return state;
+  }
+}
+
+export function useWorkspaces() {
+  const [state, dispatch] = useReducer(workspaceReducer, undefined, initState);
+
+  // Debounced localStorage writes (300ms delay prevents main thread blocking)
+  useDebouncedStorage('workspaces', state.workspaces, 300);
+  useDebouncedStorage('currentWorkspace', state.currentIndex, 300);
+
+  const addNewWorkspace = useCallback(() => dispatch({ type: 'ADD_WORKSPACE' }), []);
+  const addNewWorkspaceWithData = useCallback((data) => dispatch({ type: 'ADD_WORKSPACE_WITH_DATA', data }), []);
+  const clearCurrentWorkspace = useCallback(() => dispatch({ type: 'CLEAR_CURRENT' }), []);
+  const updateCurrentWorkspaceItems = useCallback((newItems) => dispatch({ type: 'UPDATE_CURRENT_ITEMS', newItems }), []);
+  const removeCurrentWorkspace = useCallback(() => dispatch({ type: 'REMOVE_CURRENT' }), []);
+  const updateWorkspaceName = useCallback((newName) => dispatch({ type: 'UPDATE_NAME', name: newName }), []);
+  const updateWorkflowName = useCallback((newName) => dispatch({ type: 'UPDATE_WORKFLOW_NAME', name: newName }), []);
+  const updateSavedWorkflowId = useCallback((id) => dispatch({ type: 'UPDATE_SAVED_ID', id }), []);
+  const removeWorkflowNodesFromAll = useCallback((workflowId) => dispatch({ type: 'REMOVE_WORKFLOW_NODES', workflowId }), []);
+  const saveViewportForWorkspace = useCallback((index, viewport) => dispatch({ type: 'SAVE_VIEWPORT', index, viewport }), []);
+  const setCurrentWorkspace = useCallback((index) => dispatch({ type: 'SET_CURRENT_INDEX', index }), []);
 
   return {
-    workspaces,
-    currentWorkspace,
+    workspaces: state.workspaces,
+    currentWorkspace: state.currentIndex,
     setCurrentWorkspace,
     addNewWorkspace,
     addNewWorkspaceWithData,

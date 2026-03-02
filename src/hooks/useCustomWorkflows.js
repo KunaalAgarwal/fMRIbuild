@@ -24,16 +24,19 @@ export function useCustomWorkflows() {
   };
 
   const saveWorkflow = (workflowData) => {
-    // Check if a workflow with the same name already exists (update it)
+    // Snapshot for return value (best-effort at call time)
     const existingIndex = customWorkflows.findIndex(w => w.name === workflowData.name);
     if (existingIndex >= 0) {
       const existingId = customWorkflows[existingIndex].id;
       setCustomWorkflows(prev => {
+        // Re-find inside updater to avoid stale index from outer closure
+        const idx = prev.findIndex(w => w.name === workflowData.name);
+        if (idx < 0) return [...prev, { ...workflowData, id: crypto.randomUUID(), createdAt: Date.now(), updatedAt: Date.now() }];
         const updated = [...prev];
-        updated[existingIndex] = {
+        updated[idx] = {
           ...workflowData,
-          id: prev[existingIndex].id,
-          createdAt: prev[existingIndex].createdAt,
+          id: prev[idx].id,
+          createdAt: prev[idx].createdAt,
           updatedAt: Date.now()
         };
         return updated;

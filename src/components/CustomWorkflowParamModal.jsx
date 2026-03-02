@@ -15,8 +15,8 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     );
 
     // Compute topological order for scatter propagation
-    const { firstNodeIndex, downstreamIndices } = useMemo(() => {
-        if (nonDummyNodes.length === 0) return { firstNodeIndex: 0, downstreamIndices: [] };
+    const firstNodeIndex = useMemo(() => {
+        if (nonDummyNodes.length === 0) return 0;
 
         const nodeIds = new Set(nonDummyNodes.map(n => n.id));
         const dummyIds = new Set((internalNodes || []).filter(n => n.isDummy).map(n => n.id));
@@ -25,15 +25,11 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         );
 
         let order;
-        try { order = topoSort(nonDummyNodes, realEdges); } catch { return { firstNodeIndex: 0, downstreamIndices: [] }; }
+        try { order = topoSort(nonDummyNodes, realEdges); } catch { return 0; }
 
-        // Map topo order IDs back to nonDummyNodes indices
         const idToIndex = new Map(nonDummyNodes.map((n, i) => [n.id, i]));
         const topoIndices = order.map(id => idToIndex.get(id)).filter(i => i !== undefined);
-        const first = topoIndices.length > 0 ? topoIndices[0] : 0;
-        const downstream = topoIndices.slice(1);
-
-        return { firstNodeIndex: first, downstreamIndices: downstream };
+        return topoIndices.length > 0 ? topoIndices[0] : 0;
     }, [nonDummyNodes, internalEdges, internalNodes]);
 
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -136,9 +132,11 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         if (node) loadNodeState(node);
     }, [currentIndex]);
 
-    // Save current node's state back to editedNodes before navigating
+    // Save current node's state back to editedNodes before navigating.
+    // Uses editedNodesRef to avoid stale state from batched updates (H7).
+    // Computes when-warning inline to avoid stale useMemo value (H6).
     const saveCurrentNodeState = () => {
-        const current = editedNodes;
+        const current = editedNodesRef.current;
         if (current.length === 0) return current;
 
         const finalDockerVersion = dockerVersion.trim() || 'latest';
@@ -150,7 +148,23 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             }
         });
 
-        const whenExpression = whenParam && whenCondition.trim() && !whenWarning
+        // Compute when-warning inline (not from useMemo) to get freshest validation
+        let computedWhenWarning = null;
+        if (whenParam) {
+            const cond = whenCondition.trim();
+            if (!cond) {
+                computedWhenWarning = 'Enter a condition';
+            } else {
+                const hasOperator = VALID_OPERATORS.some(op => cond.startsWith(op));
+                if (!hasOperator) computedWhenWarning = 'Invalid operator';
+                else {
+                    const afterOp = cond.replace(/^(==|!=|>=|<=|>|<)\s*/, '');
+                    if (!afterOp) computedWhenWarning = 'Missing value';
+                }
+            }
+        }
+
+        const whenExpression = whenParam && whenCondition.trim() && !computedWhenWarning
             ? `$(inputs.${whenParam} ${whenCondition.trim()})`
             : '';
 
@@ -179,7 +193,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         setCurrentIndex(newIndex);
     };
 
-    const handleClose = () => {
+    const handleSave = () => {
         const finalNodes = saveCurrentNodeState();
         // Map back to original internal nodes (including dummy nodes)
         const allUpdated = (internalNodes || []).map(origNode => {
@@ -188,6 +202,11 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             return edited || origNode;
         });
         onClose(allUpdated);
+    };
+
+    const handleCancel = () => {
+        // Discard changes — pass back original unmodified nodes
+        onClose(internalNodes);
     };
 
     // Get tool definition for current node
@@ -204,7 +223,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         return filtered;
     }, [wiredInputs, currentNode?.id]);
 
-    const tool = currentNode ? getToolConfigSync(currentNode.label) : null;
+    const tool = useMemo(() => currentNode ? getToolConfigSync(currentNode.label) : null, [currentNode?.label]);
     const dockerImage = tool?.dockerImage || null;
 
     // Compute which inputs of the current node are wired from internal BIDS nodes
@@ -285,11 +304,15 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     };
 
     const clampToBounds = (name, param) => {
-        const val = paramValues[name];
-        if (val === null || val === undefined || !param.bounds) return;
-        const [min, max] = param.bounds;
-        if (val < min) updateParam(name, min);
-        else if (val > max) updateParam(name, max);
+        if (!param.bounds) return;
+        setParamValues(prev => {
+            const val = prev[name];
+            if (val === null || val === undefined) return prev;
+            const [min, max] = param.bounds;
+            if (val < min) return { ...prev, [name]: min };
+            if (val > max) return { ...prev, [name]: max };
+            return prev;
+        });
     };
 
     const updateLinkMerge = (inputName, value) => {
@@ -428,7 +451,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     return (
         <Modal
             show={show}
-            onHide={handleClose}
+            onHide={handleCancel}
             centered
             className="custom-modal"
             size="lg"
@@ -691,6 +714,10 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
 
                 </Form>
             </Modal.Body>
+            <Modal.Footer>
+                <Button variant="secondary" size="sm" onClick={handleCancel}>Cancel</Button>
+                <Button variant="primary" size="sm" onClick={handleSave}>Save</Button>
+            </Modal.Footer>
         </Modal>
     );
 };

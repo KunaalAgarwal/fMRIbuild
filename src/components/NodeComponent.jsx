@@ -1,6 +1,6 @@
 import { useState, useMemo, useRef, useContext, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
-import { Handle, Position, useUpdateNodeInternals, useNodes, useEdges } from 'reactflow';
+import { Handle, Position, useUpdateNodeInternals } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
@@ -68,8 +68,6 @@ const NodeComponent = ({ data, id }) => {
 
     // Output config modal state (for Output dummy nodes)
     const [showOutputConfigModal, setShowOutputConfigModal] = useState(false);
-    const allCanvasNodes = useNodes();
-    const allCanvasEdges = useEdges();
 
     // Custom workflow node state (must be at top level for hooks rules)
     const [showCustomModal, setShowCustomModal] = useState(false);
@@ -502,8 +500,6 @@ const NodeComponent = ({ data, id }) => {
                         onHide={() => setShowOutputConfigModal(false)}
                         outputNodeId={id}
                         outputNodeData={data}
-                        allNodes={allCanvasNodes}
-                        allEdges={allCanvasEdges}
                         scatteredNodeIds={propagatedIds}
                         onSave={(updated) => data.onSaveOutputConfig?.(updated)}
                     />
@@ -514,7 +510,7 @@ const NodeComponent = ({ data, id }) => {
 
     // Render BIDS node with hexagonal decoration and dynamic output ports
     if (isDummy && data.isBIDS) {
-        const selectionCount = data.bidsSelections
+        const selectionCount = data.bidsSelections?.selections
             ? Object.keys(data.bidsSelections.selections).length
             : 0;
         const hasData = data.bidsStructure != null;

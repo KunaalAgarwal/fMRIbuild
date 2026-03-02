@@ -132,7 +132,7 @@ function expandCustomWorkflowNodes(graph) {
 /** Convert a type string to its CWL representation. */
 function toCWLType(typeStr, makeNullable = false, enumSymbols = null) {
     if (!typeStr) return makeNullable ? ['null', 'File'] : 'File';
-    if (typeStr === 'record') return null;
+    if (typeStr === 'record') return makeNullable ? ['null', 'Any'] : 'Any';
     if (typeStr === 'enum' && enumSymbols) {
         const enumType = { type: 'enum', symbols: enumSymbols };
         return makeNullable ? ['null', enumType] : enumType;
@@ -209,6 +209,14 @@ function getUserParams(nodeData) {
     const p = nodeData.parameters;
     if (p && typeof p === 'object' && !Array.isArray(p)) return p;
     return null;
+}
+
+/** Get a validated user parameter value, or undefined if missing/empty/non-serializable. */
+function getValidUserParam(nodeData, inputName) {
+    const params = getUserParams(nodeData);
+    const val = params?.[inputName];
+    if (val !== undefined && val !== null && val !== '' && isSerializable(val)) return val;
+    return undefined;
 }
 
 /** Return a sensible default value for a CWL type. Prefers CWL-defined defaults. */
@@ -317,10 +325,16 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             step.in[inputName] = resolveWithFlatten(ctx, wiredSources[0]);
         } else if (wiredSources.length > 1) {
             const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
-            step.in[inputName] = {
+            const entry = {
                 source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
                 linkMerge,
             };
+            if (wiredSources.some(ws => sourceNeedsFlatten(ctx, ws))) {
+                entry.valueFrom = '$(self.flat())';
+                ctx.needsInlineJavascript = true;
+                ctx.needsStepInputExpression = true;
+            }
+            step.in[inputName] = entry;
             ctx.needsMultipleInputFeature = true;
         } else {
             // Not wired - expose as workflow input
@@ -335,9 +349,8 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
 
             // Pre-fill jobDefaults for scalar required params if user set a value
             if (type !== 'File' && type !== 'Directory') {
-                const params = getUserParams(node.data);
-                const userValue = params?.[inputName];
-                if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
+                const userValue = getValidUserParam(node.data, inputName);
+                if (userValue !== undefined) {
                     ctx.jobDefaults[wfInputName] = userValue;
                 }
             }
@@ -385,9 +398,8 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         if (type === 'record') {
             const wfInputName = makeWfInputName(stepId, inputName, isSingleNode);
             const recordEntry = { type: ['null', 'Any'] };
-            const params = getUserParams(node.data);
-            const recordValue = params?.[inputName];
-            if (recordValue !== undefined && recordValue !== null && recordValue !== '' && isSerializable(recordValue)) {
+            const recordValue = getValidUserParam(node.data, inputName);
+            if (recordValue !== undefined) {
                 recordEntry.default = recordValue;
             }
             ctx.wf.inputs[wfInputName] = recordEntry;
@@ -402,10 +414,16 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             step.in[inputName] = resolveWithFlatten(ctx, wiredSources[0]);
         } else if (wiredSources.length > 1) {
             const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
-            step.in[inputName] = {
+            const entry = {
                 source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
                 linkMerge,
             };
+            if (wiredSources.some(ws => sourceNeedsFlatten(ctx, ws))) {
+                entry.valueFrom = '$(self.flat())';
+                ctx.needsInlineJavascript = true;
+                ctx.needsStepInputExpression = true;
+            }
+            step.in[inputName] = entry;
             ctx.needsMultipleInputFeature = true;
         } else {
             // Not wired — expose as nullable workflow input with job default
@@ -415,10 +433,9 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
                 ? ['null', toArrayType(type)]
                 : toCWLType(type, true, inputDef.enumSymbols);
             const inputEntry = { type: inputType };
-            const params = getUserParams(node.data);
-            const userValue = params?.[inputName];
+            const userValue = getValidUserParam(node.data, inputName);
             let value;
-            if (userValue !== undefined && userValue !== null && userValue !== '' && isSerializable(userValue)) {
+            if (userValue !== undefined) {
                 value = userValue;
             } else {
                 value = defaultForType(type, inputDef);
@@ -453,10 +470,30 @@ function computeStepScatter(ctx, nodeId) {
     return result;
 }
 
+/** Compute the CWL output type, accounting for scatter-induced array wrapping. */
+function computeOutputCWLType(outputDef, isScattered) {
+    const baseOutputType = (outputDef.type || 'File').replace(/\?$/, '');
+    if (isScattered && baseOutputType.endsWith('[]')) {
+        const itemType = baseOutputType.slice(0, -2);
+        return { type: 'array', items: { type: 'array', items: itemType } };
+    }
+    if (isScattered) return toArrayType(outputDef.type);
+    return toCWLType(outputDef.type);
+}
+
+/** Wrap an output entry for conditional steps (pickValue + nullable type). */
+function wrapConditional(outputEntry, isConditional, ctx) {
+    if (!isConditional) return;
+    const alreadyNullable = Array.isArray(outputEntry.type) && outputEntry.type[0] === 'null';
+    if (!alreadyNullable) outputEntry.type = ['null', outputEntry.type];
+    outputEntry.pickValue = 'first_non_null';
+    ctx.needsMultipleInputFeature = true;
+}
+
 /**
  * Declare workflow-level outputs for all terminal nodes (nodes with no outgoing edges).
  *
- * Mutates: ctx.wf.outputs.
+ * Mutates: ctx.wf.outputs, ctx.needsMultipleInputFeature.
  */
 function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
     terminalNodes.forEach(node => {
@@ -464,7 +501,6 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
         const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
         const stepId = ctx.getStepId(node.id);
         const isSingleTerminal = terminalNodes.length === 1;
-        // A terminal node is scattered if it has effective scatter inputs
         const scatterConfig = computeStepScatter(ctx, node.id);
         const isScattered = scatterConfig !== null;
 
@@ -473,30 +509,12 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
                 ? outputName
                 : `${stepId}_${outputName}`;
 
-            // Scattered step with array output → double nesting (e.g. File[] → File[][])
-            const baseOutputType = (outputDef.type || 'File').replace(/\?$/, '');
-            let outputType;
-            if (isScattered && baseOutputType.endsWith('[]')) {
-                const itemType = baseOutputType.slice(0, -2);
-                outputType = { type: 'array', items: { type: 'array', items: itemType } };
-            } else if (isScattered) {
-                outputType = toArrayType(outputDef.type);
-            } else {
-                outputType = toCWLType(outputDef.type);
-            }
-
             const outputEntry = {
-                type: outputType,
+                type: computeOutputCWLType(outputDef, isScattered),
                 outputSource: `${stepId}/${outputName}`
             };
 
-            // Conditional terminal nodes: output may be null when step is skipped
-            if (conditionalStepIds.has(node.id)) {
-                const alreadyNullable = Array.isArray(outputType) && outputType[0] === 'null';
-                if (!alreadyNullable) outputEntry.type = ['null', outputType];
-                outputEntry.pickValue = 'first_non_null';
-            }
-
+            wrapConditional(outputEntry, conditionalStepIds.has(node.id), ctx);
             ctx.wf.outputs[wfOutputName] = outputEntry;
         });
     });
@@ -556,28 +574,12 @@ function declareSelectedOutputs(ctx, selectedOutputs, conditionalStepIds) {
                 ? outputName
                 : `${stepId}_${outputName}`;
 
-            const baseOutputType = (outputDef.type || 'File').replace(/\?$/, '');
-            let outputType;
-            if (isScattered && baseOutputType.endsWith('[]')) {
-                const itemType = baseOutputType.slice(0, -2);
-                outputType = { type: 'array', items: { type: 'array', items: itemType } };
-            } else if (isScattered) {
-                outputType = toArrayType(outputDef.type);
-            } else {
-                outputType = toCWLType(outputDef.type);
-            }
-
             const outputEntry = {
-                type: outputType,
+                type: computeOutputCWLType(outputDef, isScattered),
                 outputSource: `${stepId}/${outputName}`
             };
 
-            if (conditionalStepIds.has(canvasNodeId)) {
-                const alreadyNullable = Array.isArray(outputType) && outputType[0] === 'null';
-                if (!alreadyNullable) outputEntry.type = ['null', outputType];
-                outputEntry.pickValue = 'first_non_null';
-            }
-
+            wrapConditional(outputEntry, conditionalStepIds.has(canvasNodeId), ctx);
             ctx.wf.outputs[wfOutputName] = outputEntry;
         }
     }
@@ -750,7 +752,7 @@ export function buildCWLWorkflowObject(graph) {
 
     /* ---------- shared context for extracted helpers ---------- */
     const ctx = {
-        wf, jobDefaults, cwlDefaultKeys, wiredInputsMap, scatteredSteps, sourceNodeIds, nodeMap,
+        wf, jobDefaults, cwlDefaultKeys, wiredInputsMap, scatteredSteps, nodeMap,
         bidsEdges, resolveWiredSource, getStepId, arrayTypedInputs,
         effectiveScatterMap: new Map(), // populated below
         needsMultipleInputFeature: false,
@@ -830,15 +832,6 @@ export function buildCWLWorkflowObject(graph) {
         wf.steps[stepId] = finalStep;
     });
 
-    /* ---------- assemble requirements ---------- */
-    const requirements = {};
-    if (ctx.needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
-    const hasAnyScatter = [...ctx.effectiveScatterMap.values()].some(s => s.size > 0);
-    if (hasAnyScatter) requirements.ScatterFeatureRequirement = {};
-    if (ctx.needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
-    if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
-    if (Object.keys(requirements).length > 0) wf.requirements = requirements;
-
     /* ---------- declare workflow-level outputs ---------- */
     if (outputSelections) {
         // User configured specific outputs via the Output node
@@ -848,6 +841,15 @@ export function buildCWLWorkflowObject(graph) {
         const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
         declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds);
     }
+
+    /* ---------- assemble requirements (after outputs, which may set pickValue/needsMultipleInputFeature) ---------- */
+    const requirements = {};
+    if (ctx.needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
+    const hasAnyScatter = [...ctx.effectiveScatterMap.values()].some(s => s.size > 0);
+    if (hasAnyScatter) requirements.ScatterFeatureRequirement = {};
+    if (ctx.needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
+    if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
+    if (Object.keys(requirements).length > 0) wf.requirements = requirements;
 
     return { wf, jobDefaults, cwlDefaultKeys };
 }

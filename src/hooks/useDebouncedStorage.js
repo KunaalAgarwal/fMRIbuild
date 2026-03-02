@@ -3,6 +3,7 @@ import { useEffect, useRef } from 'react';
 /**
  * Debounces localStorage writes to prevent main thread blocking.
  * Writes are batched and delayed to reduce synchronous I/O overhead.
+ * Flushes pending writes on unmount and before page unload.
  *
  * @param {string} key - localStorage key
  * @param {any} value - Value to persist (will be JSON.stringify'd)
@@ -28,13 +29,33 @@ export function useDebouncedStorage(key, value, delay = 300) {
             } catch (err) {
                 console.error(`Failed to save to localStorage key "${key}":`, err);
             }
+            timeoutRef.current = null;
         }, delay);
 
-        // Cleanup on unmount or key change
+        // Cleanup: flush on unmount or key change
         return () => {
             if (timeoutRef.current) {
                 clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+                try {
+                    localStorage.setItem(key, JSON.stringify(valueRef.current));
+                } catch { /* best effort */ }
             }
         };
     }, [key, value, delay]);
+
+    // Flush pending writes before page unload
+    useEffect(() => {
+        const handleBeforeUnload = () => {
+            if (timeoutRef.current) {
+                clearTimeout(timeoutRef.current);
+                timeoutRef.current = null;
+                try {
+                    localStorage.setItem(key, JSON.stringify(valueRef.current));
+                } catch { /* best effort */ }
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+    }, [key]);
 }

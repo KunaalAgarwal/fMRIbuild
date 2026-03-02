@@ -45,17 +45,6 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
   // Memoized node lookup for O(1) access
   const nodeMap = useNodeLookup(nodes);
-  // Refs to track current nodes/edges for closures (fixes stale closure issue)
-  const nodesRef = useRef(nodes);
-  useEffect(() => {
-    nodesRef.current = nodes;
-  }, [nodes]);
-
-  const edgesRef = useRef(edges);
-  useEffect(() => {
-    edgesRef.current = edges;
-  }, [edges]);
-
   // Deferred workspace sync: flag-based to avoid setState-during-render.
   // Only syncs when explicitly marked (user actions), not on drag/selection changes.
   const needsSyncRef = useRef(false);
@@ -248,7 +237,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       prevWorkspaceRef.current = currentWorkspaceIndex;
       prevWorkspaceIdRef.current = workflowItems.id;
 
-      if (workspaceSwitched || workflowItems.nodes.length !== nodes.length) {
+      // Sync canvas when workspace switches or workspace content was externally reset (e.g. clear)
+      const nodeIdsChanged = workflowItems.nodes.map(n => n.id).join(',') !== nodes.map(n => n.id).join(',');
+      if (workspaceSwitched || nodeIdsChanged) {
         let anyCustomSynced = false;
         const initialNodes = (workflowItems.nodes || []).map((node) => {
           const restoredData = {
@@ -321,17 +312,24 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     }
   }, [workflowItems, nodes.length, currentWorkspaceIndex]);
 
-  // Auto-center when canvas container resizes (e.g. panel open/close)
+  // Auto-center when canvas container resizes (e.g. panel open/close), debounced to prevent thrashing
   useEffect(() => {
     const el = reactFlowWrapper.current;
     if (!el || !reactFlowInstance) return;
 
+    let timeoutId;
     const observer = new ResizeObserver(() => {
-      reactFlowInstance.fitView();
+      clearTimeout(timeoutId);
+      timeoutId = setTimeout(() => {
+        reactFlowInstance.fitView();
+      }, 150);
     });
 
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      clearTimeout(timeoutId);
+      observer.disconnect();
+    };
   }, [reactFlowInstance]);
 
   // Update a node's parameters and dockerVersion.
@@ -536,7 +534,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   };
 
   // Build a flat node-info object for the EdgeMappingModal from a ReactFlow node.
-  const buildEdgeModalNode = (node) => ({
+  const buildEdgeModalNode = useCallback((node) => ({
     id: node.id,
     label: node.data.label,
     isDummy: node.data.isDummy || false,
@@ -546,7 +544,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     internalNodes: node.data.internalNodes || [],
     internalEdges: node.data.internalEdges || [],
     isScattered: scatterContext.propagatedIds.has(node.id),
-  });
+  }), [scatterContext]);
 
   // Connect edges - open modal to configure mapping.
   const onConnect = useCallback(
@@ -567,7 +565,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           setShowEdgeModal(true);
         }
       },
-      [nodeMap]
+      [nodeMap, buildEdgeModalNode]
   );
 
   // Handle double-click on edge to edit mapping
@@ -589,7 +587,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
           setShowEdgeModal(true);
         }
       },
-      [nodeMap]
+      [nodeMap, buildEdgeModalNode]
   );
 
   // Handle saving edge mappings from modal

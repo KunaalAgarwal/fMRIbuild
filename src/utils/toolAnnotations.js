@@ -3630,9 +3630,7 @@ export const MODALITY_ASSIGNMENTS = {
 };
 
 // Pre-computed Map for O(1) annotation lookup by tool name.
-export const annotationByName = new Map(
-    Object.entries(TOOL_ANNOTATIONS).map(([name, ann]) => [name, ann])
-);
+export const annotationByName = new Map(Object.entries(TOOL_ANNOTATIONS));
 // Also add dummy nodes
 for (const category of Object.values(dummyNodes)) {
     for (const tool of category) {
@@ -3665,7 +3663,7 @@ function buildToolsByModality(assignments) {
 export const toolsByModality = buildToolsByModality(MODALITY_ASSIGNMENTS);
 
 // Dev-time validation: warn if any tool in TOOL_ANNOTATIONS is not in any modality
-if (typeof process === 'undefined' || process.env?.NODE_ENV !== 'production') {
+if (import.meta.env.DEV) {
     const modalityToolNames = new Set();
     for (const libraries of Object.values(MODALITY_ASSIGNMENTS)) {
         for (const categories of Object.values(libraries)) {

@@ -97,13 +97,7 @@ export function ToastProvider({ children }) {
 export function useToast() {
     const context = useContext(ToastContext);
     if (!context) {
-        // Fallback to alert if ToastProvider is not available
-        return {
-            showError: (msg) => alert(msg),
-            showWarning: (msg) => alert(msg),
-            showSuccess: (msg) => alert(msg),
-            showInfo: (msg) => alert(msg),
-        };
+        throw new Error('useToast must be used within a ToastProvider');
     }
     return context;
 }

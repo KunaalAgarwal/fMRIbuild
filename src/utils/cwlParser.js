@@ -40,10 +40,13 @@ export async function getToolDefinition(cwlPath) {
 
     const promise = fetchAndParse(cwlPath);
     pendingCache.set(cwlPath, promise);
-    const result = await promise;
-    resolvedCache.set(cwlPath, result);
-    pendingCache.delete(cwlPath);
-    return result;
+    try {
+        const result = await promise;
+        resolvedCache.set(cwlPath, result);
+        return result;
+    } finally {
+        pendingCache.delete(cwlPath);
+    }
 }
 
 /**
@@ -69,7 +72,7 @@ export async function preloadAllCWL(cwlPaths) {
 /**
  * Returns true once at least one CWL file has been cached.
  */
-export function isPreloaded() {
+export function hasLoadedTools() {
     return resolvedCache.size > 0;
 }
 

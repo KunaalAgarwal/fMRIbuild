@@ -27,7 +27,9 @@ export function topoSort(nodes, edges) {
     }
 
     if (order.length !== nodes.length) {
-        throw new Error('Workflow graph has cycles.');
+        const sorted = new Set(order);
+        const cycleNodes = nodes.filter(n => !sorted.has(n.id)).map(n => n.id);
+        throw new Error(`Workflow graph has cycles. Involved nodes: ${cycleNodes.join(', ')}`);
     }
 
     return order;

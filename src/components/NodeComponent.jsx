@@ -48,6 +48,7 @@ const NodeComponent = ({ data, id }) => {
     const [versionValid, setVersionValid] = useState(true);
     const [versionWarning, setVersionWarning] = useState('');
     const [scatterToggles, setScatterToggles] = useState({});
+    const [scatterMethod, setScatterMethod] = useState('dotproduct');
     const [linkMergeValues, setLinkMergeValues] = useState(data.linkMergeOverrides || {});
     const [whenParam, setWhenParam] = useState('');
     const [whenCondition, setWhenCondition] = useState('');
@@ -298,10 +299,11 @@ const NodeComponent = ({ data, id }) => {
         const scatterInit = {};
         const savedScatter = data.scatterInputs || [];
         savedScatter.forEach(name => { scatterInit[name] = true; });
-        if (data.scatterInputs === undefined && upstreamScatterInputs.size > 0) {
+        if ((!data.scatterInputs || data.scatterInputs.length === 0) && upstreamScatterInputs.size > 0) {
             upstreamScatterInputs.forEach(name => { scatterInit[name] = true; });
         }
         setScatterToggles(scatterInit);
+        setScatterMethod(data.scatterMethod || 'dotproduct');
 
         // Initialize linkMergeOverrides, whenExpression, and expressions from saved data
         setLinkMergeValues(data.linkMergeOverrides || {});
@@ -371,6 +373,7 @@ const NodeComponent = ({ data, id }) => {
                 params: paramValues,
                 dockerVersion: finalDockerVersion,
                 scatterInputs: activeScatterInputs,
+                scatterMethod: activeScatterInputs.length > 1 ? scatterMethod : undefined,
                 linkMergeOverrides: linkMergeValues,
                 whenExpression: whenParam && whenCondition.trim() && !whenWarning
                     ? `$(inputs.${whenParam} ${whenCondition.trim()})`
@@ -979,6 +982,33 @@ const NodeComponent = ({ data, id }) => {
                                 Step only runs when the condition is true. Skipped steps produce null outputs.
                             </div>
                         </Form.Group>
+
+                        {/* Scatter Method (visible only when 2+ scatter inputs active) */}
+                        {(() => {
+                            const activeScatterCount = Object.values(scatterToggles).filter(Boolean).length;
+                            return activeScatterCount > 1 ? (
+                                <Form.Group className="scatter-method-group">
+                                    <Form.Label className="modal-label" style={{ marginBottom: 6 }}>
+                                        Scatter Method
+                                    </Form.Label>
+                                    <Form.Select
+                                        size="sm"
+                                        className="scatter-method-select"
+                                        value={scatterMethod}
+                                        onChange={(e) => setScatterMethod(e.target.value)}
+                                    >
+                                        <option value="dotproduct">dotproduct</option>
+                                        <option value="flat_crossproduct">flat_crossproduct</option>
+                                        <option value="nested_crossproduct">nested_crossproduct</option>
+                                    </Form.Select>
+                                    <div className="scatter-method-help-text">
+                                        {scatterMethod === 'dotproduct' && 'Pairs elements 1:1 across inputs (arrays must be the same length). [A,B] \u00d7 [1,2] \u2192 (A,1), (B,2)'}
+                                        {scatterMethod === 'flat_crossproduct' && 'Cartesian product of all inputs \u2014 results in a flat list. [A,B] \u00d7 [1,2] \u2192 (A,1), (A,2), (B,1), (B,2)'}
+                                        {scatterMethod === 'nested_crossproduct' && 'Cartesian product \u2014 results nested by the first input. [A,B] \u00d7 [1,2] \u2192 [(A,1),(A,2)], [(B,1),(B,2)]'}
+                                    </div>
+                                </Form.Group>
+                            ) : null;
+                        })()}
 
                         {/* Unified Parameter Pane */}
                         <div className="params-scroll scrollbar-thin">

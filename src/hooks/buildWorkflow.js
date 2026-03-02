@@ -37,6 +37,7 @@ function expandCustomWorkflowNodes(graph) {
                     parameters: iNode.parameters || {},
                     dockerVersion: iNode.dockerVersion || 'latest',
                     scatterInputs: iNode.scatterInputs,
+                    scatterMethod: iNode.scatterMethod,
                     linkMergeOverrides: iNode.linkMergeOverrides || {},
                     whenExpression: iNode.whenExpression || '',
                     expressions: iNode.expressions || {},
@@ -239,8 +240,9 @@ function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
     const node = ctx.nodeMap.get(nodeId);
     const explicitScatter = node?.data?.scatterInputs;
 
-    // Explicit configuration takes precedence (filter to valid input names)
-    if (Array.isArray(explicitScatter)) {
+    // Explicit configuration takes precedence (filter to valid input names).
+    // Empty array (from modal save before edges were connected) falls through to auto-detect.
+    if (Array.isArray(explicitScatter) && explicitScatter.length > 0) {
         const allInputNames = new Set([
             ...Object.keys(effectiveTool.requiredInputs || {}),
             ...Object.keys(effectiveTool.optionalInputs || {}),
@@ -445,7 +447,8 @@ function computeStepScatter(ctx, nodeId) {
         scatter: scatterInputs.length === 1 ? scatterInputs[0] : scatterInputs,
     };
     if (scatterInputs.length > 1) {
-        result.scatterMethod = 'dotproduct';
+        const node = ctx.nodeMap.get(nodeId);
+        result.scatterMethod = node?.data?.scatterMethod || 'dotproduct';
     }
     return result;
 }

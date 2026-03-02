@@ -266,7 +266,7 @@ function HeaderBar() {
                                 </p>
                                 <ul className="howto-list">
                                     <li><strong>Workflow Input</strong> &mdash; defines an input file or value that the user supplies when running the pipeline.</li>
-                                    <li><strong>Workflow Output</strong> &mdash; marks a result that should be collected as a final output of the pipeline.</li>
+                                    <li><strong>Workflow Output</strong> &mdash; collects specific results as final pipeline outputs. Connect it to upstream nodes, then double-click to open the Output Configuration modal where you can select exactly which outputs to include.</li>
                                     <li><strong>BIDS Dataset</strong> &mdash; imports files from a BIDS-compliant dataset directory (see <span className="howto-nav-ref" onClick={() => setActiveKey("7")}>BIDS Integration</span>).</li>
                                 </ul>
                             </Accordion.Body>
@@ -290,6 +290,8 @@ function HeaderBar() {
                                     <li>Scroll to zoom in and out.</li>
                                     <li>Click and drag on empty canvas space to pan.</li>
                                     <li>Use the controls in the bottom-left corner for zoom buttons and fit-to-view.</li>
+                                    <li>Click <strong>Auto Layout</strong> (or press <code className="howto-code">Ctrl+Shift+L</code>) to automatically arrange nodes as a layered directed graph.</li>
+                                    <li>Click <strong>Hide tools</strong> to collapse the bottom-left toolbar (zoom controls and Auto Layout). The button moves to the corner and reads <strong>Show tools</strong> to restore them.</li>
                                     <li>The minimap in the bottom-right provides an overview of your full workflow.</li>
                                 </ul>
                                 <div className="howto-subheading">Removing Elements</div>
@@ -371,6 +373,23 @@ function HeaderBar() {
                                 <ul className="howto-list">
                                     <li>Useful for processing multiple subjects or runs in parallel.</li>
                                     <li>When enabled on the first node in a chain, scatter propagates automatically to all downstream connected nodes.</li>
+                                    <li>Array-typed inputs (e.g. <code className="howto-code">File[]</code>) naturally <em>gather</em> scattered outputs without propagating scatter further.</li>
+                                </ul>
+
+                                <div className="howto-subheading">Scatter Method</div>
+                                <p className="howto-section-intro">
+                                    When a step scatters over two or more inputs, a <strong>Scatter Method</strong> dropdown appears in the parameter modal. This controls how the input arrays are combined:
+                                </p>
+                                <ul className="howto-list">
+                                    <li><code className="howto-code">dotproduct</code> (default) &mdash; pairs elements 1:1 across inputs. All arrays must be the same length.
+                                        <br /><code className="howto-code">[A,B] &times; [1,2] &rarr; (A,1), (B,2)</code>
+                                    </li>
+                                    <li><code className="howto-code">flat_crossproduct</code> &mdash; Cartesian product of all inputs, producing a flat list of every combination.
+                                        <br /><code className="howto-code">[A,B] &times; [1,2] &rarr; (A,1), (A,2), (B,1), (B,2)</code>
+                                    </li>
+                                    <li><code className="howto-code">nested_crossproduct</code> &mdash; Cartesian product with results nested by the first input.
+                                        <br /><code className="howto-code">[A,B] &times; [1,2] &rarr; [(A,1),(A,2)], [(B,1),(B,2)]</code>
+                                    </li>
                                 </ul>
 
                                 <div className="howto-subheading">Conditional Steps (When Expression)</div>

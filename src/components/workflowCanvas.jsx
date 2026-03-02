@@ -346,6 +346,9 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                     parameters: updatedData.params || updatedData,
                     dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest',
                     scatterInputs: updatedData.scatterInputs || node.data.scatterInputs || [],
+                    scatterMethod: updatedData.scatterMethod !== undefined
+                        ? updatedData.scatterMethod
+                        : node.data.scatterMethod,
                     linkMergeOverrides: updatedData.linkMergeOverrides || node.data.linkMergeOverrides || {},
                     whenExpression: updatedData.whenExpression !== undefined
                         ? updatedData.whenExpression

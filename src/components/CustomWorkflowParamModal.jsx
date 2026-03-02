@@ -44,6 +44,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const [versionValid, setVersionValid] = useState(true);
     const [versionWarning, setVersionWarning] = useState('');
     const [scatterToggles, setScatterToggles] = useState({});
+    const [scatterMethod, setScatterMethod] = useState('dotproduct');
     const [whenParam, setWhenParam] = useState('');
     const [whenCondition, setWhenCondition] = useState('');
     const [whenTouched, setWhenTouched] = useState(false);
@@ -90,6 +91,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             }
         }
         setScatterToggles(scatterInit);
+        setScatterMethod(node.scatterMethod || 'dotproduct');
         setLinkMergeValues(node.linkMergeOverrides || {});
 
         const whenExpr = node.whenExpression || '';
@@ -162,6 +164,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             parameters: paramValues,
             dockerVersion: finalDockerVersion,
             scatterInputs: activeScatterInputs,
+            scatterMethod: activeScatterInputs.length > 1 ? scatterMethod : undefined,
             linkMergeOverrides: linkMergeValues,
             whenExpression,
             expressions: cleanedExpressions,
@@ -522,9 +525,26 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                     </Form.Group>
 
                     {Object.values(scatterToggles).filter(Boolean).length > 1 && (
-                        <div className="scatter-dotproduct-note">
-                            Multiple scatter inputs will use <code>dotproduct</code> (zip element-wise). All arrays must be the same length.
-                        </div>
+                        <Form.Group className="scatter-method-group">
+                            <Form.Label className="modal-label" style={{ marginBottom: 6 }}>
+                                Scatter Method
+                            </Form.Label>
+                            <Form.Select
+                                size="sm"
+                                className="scatter-method-select"
+                                value={scatterMethod}
+                                onChange={(e) => setScatterMethod(e.target.value)}
+                            >
+                                <option value="dotproduct">dotproduct</option>
+                                <option value="flat_crossproduct">flat_crossproduct</option>
+                                <option value="nested_crossproduct">nested_crossproduct</option>
+                            </Form.Select>
+                            <div className="scatter-method-help-text">
+                                {scatterMethod === 'dotproduct' && 'Pairs elements 1:1 across inputs (arrays must be the same length). [A,B] \u00d7 [1,2] \u2192 (A,1), (B,2)'}
+                                {scatterMethod === 'flat_crossproduct' && 'Cartesian product of all inputs \u2014 results in a flat list. [A,B] \u00d7 [1,2] \u2192 (A,1), (A,2), (B,1), (B,2)'}
+                                {scatterMethod === 'nested_crossproduct' && 'Cartesian product \u2014 results nested by the first input. [A,B] \u00d7 [1,2] \u2192 [(A,1),(A,2)], [(B,1),(B,2)]'}
+                            </div>
+                        </Form.Group>
                     )}
 
                     {/* Parameters */}

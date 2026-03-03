@@ -401,9 +401,9 @@ const EdgeMappingModal = ({
                 ? (outputsScrollRect.right - containerRect.left + inputsScrollRect.left - containerRect.left) / 2
                 : (x1 + x2) / 2;
 
-            // Look up labels for off-screen text
-            const outputLabel = sourceIO.outputs.find(o => o.name === mapping.sourceOutput)?.label || mapping.sourceOutput;
-            const inputLabel = targetIO.inputs.find(i => i.name === mapping.targetInput)?.label || mapping.targetInput;
+            // Use parameter names for off-screen text
+            const outputLabel = mapping.sourceOutput;
+            const inputLabel = mapping.targetInput;
 
             // Gap boundaries (column edges relative to container)
             const gapLeftX = outputsScrollRect

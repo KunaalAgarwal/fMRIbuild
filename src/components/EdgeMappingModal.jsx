@@ -805,12 +805,15 @@ const EdgeMappingModal = ({
                                             title={!selectedCompatibility.compatible ? selectedCompatibility.reason : ''}
                                         >
                                             <div className="io-item-main">
-                                                <span className="io-name">{input.label}</span>
+                                                <span className="io-name">{input.name}</span>
                                                 <span className="io-type" title={input.type + (input.acceptedExtensions?.length ? ' (' + input.acceptedExtensions.join(', ') + ')' : '') + (input.enumSymbols?.length ? ' (' + input.enumSymbols.join(', ') + ')' : '')}>
                                                     {formatTypeHint(input.type, input.acceptedExtensions)}
                                                 </span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
+                                            {input.label && input.label !== input.name && (
+                                                <div className="io-label">{input.label}</div>
+                                            )}
                                             {input.enumSymbols?.length > 0 && (
                                                 <div className="io-enum-values">{input.enumSymbols.map(s => `'${s}'`).join(', ')}</div>
                                             )}

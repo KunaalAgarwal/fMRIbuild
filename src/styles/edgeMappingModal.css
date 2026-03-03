@@ -165,6 +165,15 @@
     white-space: nowrap;
 }
 
+.io-label {
+    font-size: clamp(0.58rem, 0.4rem + 0.45vw, 0.72rem);
+    color: var(--text-secondary);
+    padding: 0 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 .io-type {
     font-family: 'Roboto Mono', monospace;
     font-size: clamp(0.62rem, 0.45rem + 0.5vw, 0.8rem);

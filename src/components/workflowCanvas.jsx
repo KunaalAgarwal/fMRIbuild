@@ -421,6 +421,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const handleBIDSNodeUpdate = (nodeId, updates) => {
     // Handle signal actions from NodeComponent
     if (updates._openModal) {
+      bidsPickerTargetRef.current = nodeId;
       setBidsModalNodeId(nodeId);
       setShowBIDSModal(true);
       return;
@@ -503,7 +504,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     }
 
     // Store structure and open modal — route to internal or regular BIDS node
-    if (typeof target === 'object' && target.cwNodeId) {
+    if (target !== null && typeof target === 'object' && target.cwNodeId) {
       updateInternalBIDSNode(target.cwNodeId, { bidsStructure: result.bidsStructure });
       setBidsModalNodeId(target.cwNodeId);
     } else {
@@ -519,7 +520,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const handleBIDSModalClose = (bidsSelections) => {
     if (bidsSelections && bidsModalNodeId) {
       const target = bidsPickerTargetRef.current;
-      if (typeof target === 'object' && target.cwNodeId) {
+      if (target !== null && typeof target === 'object' && target.cwNodeId) {
         // Internal BIDS node within a custom workflow
         updateInternalBIDSNode(target.cwNodeId, { bidsSelections });
       } else {
@@ -886,7 +887,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
             bidsStructure={(() => {
                 if (!bidsModalNodeId) return null;
                 const target = bidsPickerTargetRef.current;
-                if (typeof target === 'object' && target.cwNodeId) {
+                if (target !== null && typeof target === 'object' && target.cwNodeId) {
                     const cwNode = nodeMap.get(target.cwNodeId);
                     return cwNode?.data?.internalNodes?.find(n => n.isBIDS)?.bidsStructure || null;
                 }

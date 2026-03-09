@@ -576,7 +576,11 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
                       {SUFFIX_DEFS[group.suffix] && (
                         <span className="bids-suffix-desc">{SUFFIX_DEFS[group.suffix]}</span>
                       )}
+                    </div>
 
+                    {/* Task / Run / Events row */}
+                    {(isFunc || (filters.runs || []).length > 1) && (
+                    <div className="bids-output-filters">
                       {/* Task filter (func only) */}
                       {isFunc && (filters.tasks || []).length > 0 && (
                         <>
@@ -623,6 +627,7 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
                         </label>
                       )}
                     </div>
+                    )}
                   </div>
                 );
               })}

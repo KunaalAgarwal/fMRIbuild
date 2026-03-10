@@ -1,0 +1,385 @@
+/* ── Modal shell ─────────────────────────────────────────────── */
+
+.workflow-comparison-modal .modal-dialog {
+    max-width: 95vw;
+}
+
+.workflow-comparison-modal .modal-content {
+    border-radius: 8px;
+    background-color: var(--bg-secondary);
+    color: var(--text-light);
+    border: 1px solid var(--border-subtle);
+    box-shadow: var(--shadow-lg);
+    font-family: 'Inter', sans-serif;
+}
+
+.workflow-comparison-modal .modal-header {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    padding: 16px 20px;
+    background-color: var(--bg-header);
+    border-radius: 8px 8px 0 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.workflow-comparison-modal .modal-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 500;
+    color: var(--text-light);
+}
+
+.workflow-comparison-modal .modal-body {
+    padding: 20px;
+    background-color: var(--bg-secondary);
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.workflow-comparison-modal .modal-body::-webkit-scrollbar {
+    width: 6px;
+}
+
+.workflow-comparison-modal .modal-body::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.15);
+    border-radius: 3px;
+}
+
+/* ── Revert button in header ─────────────────────────────────── */
+
+.diff-revert-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 193, 7, 0.5);
+    color: rgba(255, 193, 7, 0.9);
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+    white-space: nowrap;
+    letter-spacing: 0.3px;
+}
+
+.diff-revert-btn:hover {
+    background-color: rgba(255, 193, 7, 0.2);
+    border-color: rgba(255, 193, 7, 0.8);
+    color: rgba(255, 220, 80, 1);
+}
+
+/* ── No-changes placeholder ──────────────────────────────────── */
+
+.diff-no-changes {
+    text-align: center;
+    color: var(--text-secondary, #888);
+    font-style: italic;
+    padding: 48px 0;
+    font-size: 1rem;
+}
+
+/* ── Section ─────────────────────────────────────────────────── */
+
+.diff-section {
+    margin-bottom: 20px;
+}
+
+.diff-section:last-child {
+    margin-bottom: 0;
+}
+
+.diff-section-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    padding: 8px 12px;
+    border-radius: 6px;
+    background-color: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    user-select: none;
+    transition: background-color 0.15s;
+}
+
+.diff-section-header:hover {
+    background-color: rgba(255, 255, 255, 0.06);
+}
+
+.diff-section-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-light);
+}
+
+.diff-section-chevron {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #888);
+    transition: transform 0.2s;
+}
+
+.diff-section-chevron.expanded {
+    transform: rotate(90deg);
+}
+
+.diff-section-body {
+    padding: 12px 0 0 0;
+}
+
+/* ── Count badges ────────────────────────────────────────────── */
+
+.diff-count-badge {
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 10px;
+    line-height: 1.4;
+}
+
+.diff-count-badge.added {
+    background-color: rgba(76, 175, 80, 0.15);
+    color: #66bb6a;
+}
+
+.diff-count-badge.removed {
+    background-color: rgba(231, 76, 60, 0.15);
+    color: #ef5350;
+}
+
+.diff-count-badge.modified {
+    background-color: rgba(255, 193, 7, 0.15);
+    color: #ffca28;
+}
+
+/* ── Sub-section headers (Added / Removed / Modified) ─────── */
+
+.diff-subsection-header {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin: 16px 0 8px 0;
+    padding-left: 4px;
+}
+
+.diff-subsection-header:first-child {
+    margin-top: 4px;
+}
+
+.diff-subsection-header.added {
+    color: #66bb6a;
+}
+
+.diff-subsection-header.removed {
+    color: #ef5350;
+}
+
+.diff-subsection-header.modified {
+    color: #ffca28;
+}
+
+/* ── Diff cards ──────────────────────────────────────────────── */
+
+.diff-card {
+    border-radius: 6px;
+    padding: 12px 16px;
+    margin-bottom: 10px;
+    border-left: 3px solid;
+}
+
+.diff-card-added {
+    background-color: rgba(76, 175, 80, 0.06);
+    border-left-color: #66bb6a;
+}
+
+.diff-card-removed {
+    background-color: rgba(231, 76, 60, 0.06);
+    border-left-color: #ef5350;
+}
+
+.diff-card-modified {
+    background-color: rgba(255, 193, 7, 0.06);
+    border-left-color: #ffca28;
+}
+
+.diff-card-title {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-light);
+    margin-bottom: 4px;
+}
+
+.diff-card-summary {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #888);
+}
+
+/* ── Property-level diffs (inside modified cards) ────────────── */
+
+.diff-property-list {
+    margin-top: 10px;
+}
+
+.diff-property-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 6px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.diff-property-row:first-child {
+    border-top: none;
+}
+
+.diff-property-label {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #888);
+    min-width: 140px;
+    flex-shrink: 0;
+    padding-top: 2px;
+}
+
+.diff-property-values {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+    min-width: 0;
+    flex-wrap: wrap;
+}
+
+.diff-value-saved {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #ef9a9a;
+    padding: 2px 8px;
+    border-radius: 3px;
+    word-break: break-all;
+    max-width: 45%;
+}
+
+.diff-value-current {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #a5d6a7;
+    padding: 2px 8px;
+    border-radius: 3px;
+    word-break: break-all;
+    max-width: 45%;
+}
+
+.diff-value-arrow {
+    color: var(--text-secondary, #888);
+    font-size: 0.75rem;
+    flex-shrink: 0;
+}
+
+.diff-value-empty {
+    font-style: italic;
+    opacity: 0.5;
+}
+
+/* ── Sub-changes (nested object diffs) ───────────────────────── */
+
+.diff-sub-changes {
+    margin-top: 4px;
+    padding-left: 12px;
+    border-left: 2px solid rgba(255, 255, 255, 0.06);
+}
+
+.diff-sub-change {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 2px 0;
+    font-size: 0.78rem;
+}
+
+.diff-sub-key {
+    font-family: 'Roboto Mono', monospace;
+    color: var(--text-secondary, #888);
+    min-width: 100px;
+    flex-shrink: 0;
+}
+
+.diff-sub-value-saved {
+    font-family: 'Roboto Mono', monospace;
+    background-color: rgba(231, 76, 60, 0.1);
+    color: #ef9a9a;
+    padding: 1px 6px;
+    border-radius: 3px;
+    word-break: break-all;
+    max-width: 40%;
+}
+
+.diff-sub-value-current {
+    font-family: 'Roboto Mono', monospace;
+    background-color: rgba(76, 175, 80, 0.1);
+    color: #a5d6a7;
+    padding: 1px 6px;
+    border-radius: 3px;
+    word-break: break-all;
+    max-width: 40%;
+}
+
+/* ── Metadata rows ───────────────────────────────────────────── */
+
+.diff-metadata-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 12px;
+    border-radius: 4px;
+    background-color: rgba(255, 193, 7, 0.04);
+    margin-bottom: 4px;
+}
+
+.diff-metadata-field {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-light);
+    min-width: 140px;
+}
+
+/* ── Edge mapping list ───────────────────────────────────────── */
+
+.diff-mapping-list {
+    margin-top: 4px;
+    padding-left: 8px;
+}
+
+.diff-mapping-item {
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.78rem;
+    color: var(--text-secondary, #888);
+    padding: 1px 0;
+}
+
+/* ── Responsive ──────────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+    .workflow-comparison-modal .modal-dialog {
+        max-width: 98vw;
+        margin: 8px;
+    }
+
+    .diff-property-row {
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .diff-property-label {
+        min-width: unset;
+    }
+
+    .diff-value-saved,
+    .diff-value-current {
+        max-width: 100%;
+    }
+}

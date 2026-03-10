@@ -116,6 +116,87 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     return wiredMap;
   }, [edges, nodeMap]);
 
+  // Detect inputs that need a flatten expression due to scattered array outputs.
+  // When a scattered step produces an array type (e.g. File[]), scatter wraps it
+  // in another array (File[][]). Downstream inputs expecting File[] need
+  // $(self.flat()) to unwrap. Returns Map<nodeId, Set<inputName>>.
+  const flattenInputs = useMemo(() => {
+    const result = new Map();
+    for (const [nodeId, inputMap] of wiredContext) {
+      for (const [inputName, sources] of inputMap) {
+        for (const src of sources) {
+          if (!scatterContext.propagatedIds.has(src.sourceNodeId)) continue;
+          const sourceNode = nodeMap.get(src.sourceNodeId);
+          if (!sourceNode || sourceNode.data?.isDummy) continue;
+          const sourceTool = getToolConfigSync(sourceNode.data.label);
+          if (!sourceTool) continue;
+          const outputDef = sourceTool.outputs?.[src.sourceOutput];
+          if (!outputDef?.type) continue;
+          const baseType = outputDef.type.replace(/\?$/, '');
+          if (baseType.endsWith('[]')) {
+            if (!result.has(nodeId)) result.set(nodeId, new Set());
+            result.get(nodeId).add(inputName);
+          }
+        }
+      }
+    }
+    return result;
+  }, [wiredContext, scatterContext.propagatedIds, nodeMap]);
+
+  // Sync flatten expressions into node.data.expressions so they appear in the UI.
+  const prevFlattenKeyRef = useRef('');
+  useEffect(() => {
+    // Build a stable key to detect actual changes and avoid render loops.
+    const parts = [];
+    for (const [nodeId, inputs] of flattenInputs) {
+      parts.push(nodeId + ':' + [...inputs].sort().join(','));
+    }
+    const key = parts.sort().join('|');
+    if (key === prevFlattenKeyRef.current) return;
+    prevFlattenKeyRef.current = key;
+
+    const FLATTEN = '$(self.flat())';
+    setNodes(prev => {
+      let changed = false;
+      const updated = prev.map(node => {
+        const needs = flattenInputs.get(node.id);
+        const exprs = node.data.expressions || {};
+        let newExprs = null;
+
+        // Add flatten where needed and expression is empty or already flatten
+        if (needs) {
+          for (const inputName of needs) {
+            if (!exprs[inputName] || exprs[inputName] === FLATTEN) {
+              if (exprs[inputName] !== FLATTEN) {
+                if (!newExprs) newExprs = { ...exprs };
+                newExprs[inputName] = FLATTEN;
+              }
+            }
+          }
+        }
+
+        // Remove stale flatten expressions
+        for (const [inputName, expr] of Object.entries(exprs)) {
+          if (expr === FLATTEN && (!needs || !needs.has(inputName))) {
+            if (!newExprs) newExprs = { ...exprs };
+            delete newExprs[inputName];
+          }
+        }
+
+        if (newExprs) {
+          changed = true;
+          return { ...node, data: { ...node.data, expressions: newExprs } };
+        }
+        return node;
+      });
+      if (changed) {
+        markForSync();
+        return updated;
+      }
+      return prev;
+    });
+  }, [flattenInputs, setNodes, markForSync]);
+
   // Sync on-canvas custom workflow nodes when saved workflows change.
   // Also removes orphaned nodes whose workflow was deleted.
   useEffect(() => {

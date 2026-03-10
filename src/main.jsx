@@ -9,6 +9,7 @@ import OutputNameInput from './components/outputNameInput';
 import WorkflowNameInput from './components/workflowNameInput';
 import Footer from "./components/footer";
 import CWLPreviewPanel from './components/CWLPreviewPanel';
+import WorkflowComparisonModal from './components/WorkflowComparisonModal';
 import { useWorkspaces } from './hooks/useWorkspaces';
 import { useGenerateWorkflow } from './hooks/generateWorkflow';
 import { ToastProvider, useToast } from './context/ToastContext.jsx';
@@ -17,6 +18,7 @@ import { TOOL_ANNOTATIONS } from './utils/toolAnnotations.js';
 import { preloadAllCWL } from './utils/cwlParser.js';
 import { invalidateMergeCache } from './utils/toolRegistry.js';
 import { topoSort } from './utils/topoSort.js';
+import { serializeNodes, serializeEdges, hasUnsavedChanges, computeWorkflowDiff } from './utils/workflowDiff.js';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
@@ -49,61 +51,6 @@ function computeBoundaryNodes(nodes, edges) {
     };
 }
 
-/**
- * Serialize workspace nodes for saving as a custom workflow.
- * Strips non-serializable data (callbacks) and normalizes shape.
- */
-function serializeNodes(nodes) {
-    return nodes.map(n => ({
-        id: n.id,
-        label: n.data?.label || n.label || '',
-        isDummy: n.data?.isDummy || n.isDummy || false,
-        isBIDS: n.data?.isBIDS || false,
-        bidsStructure: n.data?.bidsStructure || null,
-        bidsSelections: n.data?.bidsSelections || null,
-        notes: n.data?.notes || '',
-        parameters: n.data?.parameters || {},
-        dockerVersion: n.data?.dockerVersion || 'latest',
-        scatterInputs: n.data?.scatterInputs,
-        linkMergeOverrides: n.data?.linkMergeOverrides || {},
-        whenExpression: n.data?.whenExpression || '',
-        expressions: n.data?.expressions || {},
-        position: n.position || { x: 0, y: 0 }
-    }));
-}
-
-function serializeEdges(edges) {
-    return edges.map(e => ({
-        id: e.id,
-        source: e.source,
-        target: e.target,
-        data: { mappings: e.data?.mappings || [] }
-    }));
-}
-
-/**
- * Compare workspace content against a saved custom workflow (ignoring node positions).
- * Returns true if there are differences (unsaved changes).
- */
-function hasUnsavedChanges(workspace, savedWorkflow) {
-    if (!workspace || !savedWorkflow) return false;
-
-    // Compare workflow name
-    if ((workspace.workflowName || '') !== (savedWorkflow.name || '')) return true;
-
-    // Compare output name
-    if ((workspace.name || '') !== (savedWorkflow.outputName || '')) return true;
-
-    const wsNodes = serializeNodes(workspace.nodes || []).map(({ position, ...rest }) => rest);
-    const savedNodes = savedWorkflow.nodes.map(({ position, ...rest }) => rest);
-
-    const wsEdges = serializeEdges(workspace.edges || []);
-    const savedEdges = serializeEdges(savedWorkflow.edges || []);
-
-    return JSON.stringify(wsNodes) !== JSON.stringify(savedNodes) ||
-           JSON.stringify(wsEdges) !== JSON.stringify(savedEdges);
-}
-
 
 function App() {
     const {
@@ -130,6 +77,8 @@ function App() {
     // This state will eventually hold a function returned by WorkflowCanvas
     const [getWorkflowData, setGetWorkflowData] = useState(null);
     const [cwlReady, setCwlReady] = useState(false);
+    const [showComparisonModal, setShowComparisonModal] = useState(false);
+    const [comparisonDiffData, setComparisonDiffData] = useState(null);
 
     const { generateWorkflow } = useGenerateWorkflow();
     const { showError, showSuccess, showWarning, showInfo } = useToast();
@@ -266,6 +215,7 @@ function App() {
                 parameters: n.parameters || {},
                 dockerVersion: n.dockerVersion || 'latest',
                 scatterInputs: n.scatterInputs,
+                scatterMethod: n.scatterMethod,
                 linkMergeOverrides: n.linkMergeOverrides || {},
                 whenExpression: n.whenExpression || '',
                 expressions: n.expressions || {},
@@ -290,23 +240,31 @@ function App() {
         showInfo(`Editing "${workflow.name}" in new workspace`);
     }, [addNewWorkspaceWithData, showInfo, workspaces, handleWorkspaceSwitch]);
 
-    const handleRevertWorkflow = useCallback(() => {
+    const handleOpenComparison = useCallback(() => {
         if (!savedWorkflowId) {
             showWarning('Current workspace is not editing a saved workflow.');
             return;
         }
-
         const workflow = customWorkflows.find(w => w.id === savedWorkflowId);
         if (!workflow) {
             showError('Saved workflow not found.');
             return;
         }
-
         const currentWs = workspaces[currentWorkspace];
         if (!hasUnsavedChanges(currentWs, workflow)) {
             showInfo(`"${workflow.name}" has no unsaved changes.`);
             return;
         }
+        const diffData = computeWorkflowDiff(workflow, currentWs);
+        setComparisonDiffData(diffData);
+        setShowComparisonModal(true);
+    }, [savedWorkflowId, customWorkflows, workspaces, currentWorkspace, showWarning, showError, showInfo]);
+
+    const handleRevertWorkflow = useCallback(() => {
+        if (!savedWorkflowId) return;
+
+        const workflow = customWorkflows.find(w => w.id === savedWorkflowId);
+        if (!workflow) return;
 
         const nodes = workflow.nodes.map(n => ({
             id: n.id,
@@ -321,6 +279,7 @@ function App() {
                 parameters: n.parameters || {},
                 dockerVersion: n.dockerVersion || 'latest',
                 scatterInputs: n.scatterInputs,
+                scatterMethod: n.scatterMethod,
                 linkMergeOverrides: n.linkMergeOverrides || {},
                 whenExpression: n.whenExpression || '',
                 expressions: n.expressions || {},
@@ -339,7 +298,7 @@ function App() {
         updateWorkflowName(workflow.name);
         updateWorkspaceName(workflow.outputName || '');
         showSuccess(`Reverted "${workflow.name}" to last saved state.`);
-    }, [savedWorkflowId, customWorkflows, workspaces, currentWorkspace, revertCurrentWorkspaceItems, updateWorkflowName, updateWorkspaceName, showWarning, showError, showInfo, showSuccess]);
+    }, [savedWorkflowId, customWorkflows, revertCurrentWorkspaceItems, updateWorkflowName, updateWorkspaceName, showSuccess]);
 
     const saveButtonLabel = savedWorkflowId ? 'Update Workflow' : 'Save Workflow';
 
@@ -359,7 +318,7 @@ function App() {
                         onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName)}
                         onSaveWorkflow={handleSaveAsCustomNode}
                         saveButtonLabel={saveButtonLabel}
-                        onRevertWorkflow={handleRevertWorkflow}
+                        onRevertWorkflow={handleOpenComparison}
                         showRevert={!!savedWorkflowId}
                         workflowHasChanges={workflowHasChanges}
                     />
@@ -402,6 +361,16 @@ function App() {
                     />
                 </div>
                 <Footer />
+                <WorkflowComparisonModal
+                    show={showComparisonModal}
+                    onHide={() => setShowComparisonModal(false)}
+                    diffData={comparisonDiffData}
+                    onRevert={() => {
+                        handleRevertWorkflow();
+                        setShowComparisonModal(false);
+                    }}
+                    savedName={savedWorkflow?.name || ''}
+                />
             </div>
     );
 }

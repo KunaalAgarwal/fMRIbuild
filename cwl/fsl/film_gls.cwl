@@ -152,19 +152,13 @@ outputs:
         - $(inputs.results_dir || 'results')/threshac1.nii.gz
         - $(inputs.results_dir || 'results')/threshac1.nii
   cope:
-    type:
-      - 'null'
-      - type: array
-        items: File
+    type: File[]
     outputBinding:
       glob:
         - $(inputs.results_dir || 'results')/cope*.nii.gz
         - $(inputs.results_dir || 'results')/cope*.nii
   varcope:
-    type:
-      - 'null'
-      - type: array
-        items: File
+    type: File[]
     outputBinding:
       glob:
         - $(inputs.results_dir || 'results')/varcope*.nii.gz

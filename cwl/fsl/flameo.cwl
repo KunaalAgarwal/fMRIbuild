@@ -15,7 +15,7 @@ hints:
     dockerPull: brainlife/fsl:latest
 
 stdout: flameo.log
-stderr: flameo.log
+stderr: flameo.err.log
 
 inputs:
   # Required inputs
@@ -68,6 +68,7 @@ inputs:
   log_dir:
     type: ['null', string]
     label: Output directory name (default stats)
+    default: stats
     inputBinding:
       prefix: --ld=
       separate: false

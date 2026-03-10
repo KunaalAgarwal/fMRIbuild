@@ -300,8 +300,6 @@ function App() {
         showSuccess(`Reverted "${workflow.name}" to last saved state.`);
     }, [savedWorkflowId, customWorkflows, revertCurrentWorkspaceItems, updateWorkflowName, updateWorkspaceName, showSuccess]);
 
-    const saveButtonLabel = savedWorkflowId ? 'Update Workflow' : 'Save Workflow';
-
     // Detect unsaved changes against the saved custom workflow
     const savedWorkflow = savedWorkflowId ? customWorkflows.find(w => w.id === savedWorkflowId) : null;
     const workflowHasChanges = savedWorkflow ? hasUnsavedChanges(workspaces[currentWorkspace], savedWorkflow) : false;
@@ -317,9 +315,8 @@ function App() {
                         workspaceCount={workspaces.length}
                         onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName)}
                         onSaveWorkflow={handleSaveAsCustomNode}
-                        saveButtonLabel={saveButtonLabel}
                         onRevertWorkflow={handleOpenComparison}
-                        showRevert={!!savedWorkflowId}
+                        isSavedWorkflow={!!savedWorkflowId}
                         workflowHasChanges={workflowHasChanges}
                     />
                     <div className="workflow-names-container">
@@ -365,6 +362,10 @@ function App() {
                     show={showComparisonModal}
                     onHide={() => setShowComparisonModal(false)}
                     diffData={comparisonDiffData}
+                    onSave={() => {
+                        handleSaveAsCustomNode();
+                        setShowComparisonModal(false);
+                    }}
                     onRevert={() => {
                         handleRevertWorkflow();
                         setShowComparisonModal(false);

@@ -985,6 +985,15 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
                 }
                 return nodeMap.get(bidsModalNodeId)?.data?.bidsStructure || null;
             })()}
+            bidsSelections={(() => {
+                if (!bidsModalNodeId) return null;
+                const target = bidsPickerTargetRef.current;
+                if (target !== null && typeof target === 'object' && target.cwNodeId) {
+                    const cwNode = nodeMap.get(target.cwNodeId);
+                    return cwNode?.data?.internalNodes?.find(n => n.isBIDS)?.bidsSelections || null;
+                }
+                return nodeMap.get(bidsModalNodeId)?.data?.bidsSelections || null;
+            })()}
         />
       </div>
   );

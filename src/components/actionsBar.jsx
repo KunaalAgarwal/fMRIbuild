@@ -2,8 +2,7 @@ import '../styles/actionsBar.css';
 import '../styles/workflowItem.css';
 
 
-const ActionsBar = ({ onNewWorkspace, onClearWorkspace, onRemoveWorkspace, workspaceCount, onGenerateWorkflow, onSaveWorkflow, saveButtonLabel, onRevertWorkflow, showRevert, workflowHasChanges }) => {
-    const isUpdate = saveButtonLabel === 'Update Workflow';
+const ActionsBar = ({ onNewWorkspace, onClearWorkspace, onRemoveWorkspace, workspaceCount, onGenerateWorkflow, onSaveWorkflow, onRevertWorkflow, isSavedWorkflow, workflowHasChanges }) => {
     return (
         <div className="actions-bar" style={{ position: 'relative' }}>
             <button className="actions-button" onClick={onNewWorkspace}>
@@ -22,24 +21,21 @@ const ActionsBar = ({ onNewWorkspace, onClearWorkspace, onRemoveWorkspace, works
                 Remove Workspace
             </button>
             <div className="separator"></div>
-            <button
-                className="actions-button btn-save"
-                onClick={onSaveWorkflow}
-                disabled={isUpdate && !workflowHasChanges}
-            >
-                {saveButtonLabel || 'Save Workflow'}
-            </button>
-            {showRevert && (
-                <>
-                    <div className="separator"></div>
-                    <button
-                        className="actions-button btn-revert"
-                        onClick={onRevertWorkflow}
-                        disabled={!workflowHasChanges}
-                    >
-                        Revert Changes
-                    </button>
-                </>
+            {isSavedWorkflow ? (
+                <button
+                    className="actions-button btn-revert"
+                    onClick={onRevertWorkflow}
+                    disabled={!workflowHasChanges}
+                >
+                    Staged Changes
+                </button>
+            ) : (
+                <button
+                    className="actions-button btn-save"
+                    onClick={onSaveWorkflow}
+                >
+                    Save Workflow
+                </button>
             )}
             <div className="separator"></div>
             <button className="actions-button btn-generate" onClick={onGenerateWorkflow}>

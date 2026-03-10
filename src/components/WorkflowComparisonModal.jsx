@@ -83,12 +83,17 @@ function formatScatterMethod(method) {
     return labels[method] || method;
 }
 
+const MERGE_METHOD_LABELS = { merge_flattened: 'Merge Flattened', merge_nested: 'Merge Nested' };
+
+function formatMergeMethodLabel(method) {
+    return MERGE_METHOD_LABELS[method] || method;
+}
+
 function formatLinkMerge(overrides) {
     if (!overrides || typeof overrides !== 'object') return null;
     const entries = Object.entries(overrides).filter(([, v]) => v);
     if (entries.length === 0) return null;
-    const labels = { merge_flattened: 'Merge Flattened', merge_nested: 'Merge Nested' };
-    return entries.map(([k, v]) => `${k}: ${labels[v] || v}`).join(', ');
+    return entries.map(([k, v]) => `${k}: ${formatMergeMethodLabel(v)}`).join(', ');
 }
 
 /** Property display configs by node type. */
@@ -102,7 +107,7 @@ const BIDS_DISPLAY_PROPS = [
 const OPERATIONAL_DISPLAY_PROPS = [
     { key: 'dockerVersion', label: 'Docker Version' },
     { key: 'parameters', label: 'Parameters', isObject: true },
-    { key: 'whenExpression', label: 'When Expression' },
+    { key: 'whenExpression', label: 'Conditional' },
     { key: 'expressions', label: 'Expressions', isObject: true },
     { key: 'scatterInputs', label: 'Scatter' },
     { key: 'scatterMethod', label: 'Scatter Method' },
@@ -134,14 +139,18 @@ function formatSimpleValue(key, value) {
     return String(value);
 }
 
-function objectToSubChanges(value, changeType) {
+function objectToSubChanges(value, changeType, propKey) {
     if (!value || typeof value !== 'object') return [];
     const entries = Object.entries(value).filter(([, v]) => v !== undefined && v !== null && v !== '');
-    return entries.map(([k, v]) => ({
-        key: k,
-        ...(changeType === 'added' ? { current: typeof v === 'object' ? JSON.stringify(v) : String(v) } : { saved: typeof v === 'object' ? JSON.stringify(v) : String(v) }),
-        type: changeType,
-    }));
+    const isLinkMerge = propKey === 'linkMergeOverrides';
+    return entries.map(([k, v]) => {
+        const formatted = isLinkMerge ? formatMergeMethodLabel(v) : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+        return {
+            key: k,
+            ...(changeType === 'added' ? { current: formatted } : { saved: formatted }),
+            type: changeType,
+        };
+    });
 }
 
 function NodeCard({ node, type }) {
@@ -153,7 +162,7 @@ function NodeCard({ node, type }) {
         const properties = [];
         for (const { key, label, isObject } of displayProps) {
             if (isObject) {
-                const subs = objectToSubChanges(node[key], type === 'added' ? 'added' : 'removed');
+                const subs = objectToSubChanges(node[key], type === 'added' ? 'added' : 'removed', key);
                 if (subs.length > 0) properties.push({ displayName: label, subChanges: subs });
             } else {
                 const formatted = formatSimpleValue(key, node[key]);
@@ -262,7 +271,7 @@ function EdgeCard({ edge, type }) {
     );
 }
 
-export default function WorkflowComparisonModal({ show, onHide, diffData, onRevert, savedName }) {
+export default function WorkflowComparisonModal({ show, onHide, diffData, onRevert, onSave, savedName }) {
     if (!diffData) return null;
 
     const nodeTotal = diffData.nodes.added.length + diffData.nodes.removed.length + diffData.nodes.modified.length;
@@ -278,9 +287,14 @@ export default function WorkflowComparisonModal({ show, onHide, diffData, onReve
         >
             <Modal.Header>
                 <Modal.Title>Staged Changes: {savedName}</Modal.Title>
-                <button className="diff-revert-btn" onClick={onRevert}>
-                    Revert to Saved
-                </button>
+                <div style={{ display: 'flex', gap: '8px' }}>
+                    <button className="diff-save-btn" onClick={onSave}>
+                        Update Workflow
+                    </button>
+                    <button className="diff-revert-btn" onClick={onRevert}>
+                        Revert Changes
+                    </button>
+                </div>
             </Modal.Header>
             <Modal.Body>
                 {!diffData.hasDifferences ? (

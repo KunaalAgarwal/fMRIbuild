@@ -95,7 +95,7 @@ function nextGroupId() {
  * Level 2: Data type / modality selection (right top)
  * Level 3: Output groups with suffix/task/run filters (right bottom)
  */
-const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
+const BIDSDataModal = ({ show, onClose, bidsStructure, bidsSelections: savedSelections }) => {
   // --- Subject selection state ---
   const [selectedSubjects, setSelectedSubjects] = useState(new Set());
   const [subjectSearch, setSubjectSearch] = useState('');
@@ -120,54 +120,88 @@ const BIDSDataModal = ({ show, onClose, bidsStructure }) => {
   // Initialize state when modal opens
   useEffect(() => {
     if (show && bidsStructure) {
-      // Default: select all subjects
-      setSelectedSubjects(new Set(allSubjectIds));
       setSubjectSearch('');
 
-      // Discover all data types across all subjects
-      const allDatatypes = new Set();
-      for (const sub of Object.values(bidsStructure.subjects)) {
-        for (const ses of Object.values(sub.sessions)) {
-          for (const dt of Object.keys(ses)) {
-            allDatatypes.add(dt);
-          }
+      // Restore from saved selections if available
+      if (savedSelections?.selections && Object.keys(savedSelections.selections).length > 0) {
+        // Restore subjects: find the first entry's subjects config
+        const firstSel = Object.values(savedSelections.selections)[0];
+        if (firstSel.subjects === 'all') {
+          setSelectedSubjects(new Set(allSubjectIds));
+        } else {
+          // Filter to only subjects that still exist in the dataset
+          const validSubjects = (firstSel.subjects || []).filter(s => allSubjectIds.includes(s));
+          setSelectedSubjects(new Set(validSubjects));
         }
-      }
-      setSelectedDataTypes(new Set(allDatatypes));
 
-      // Create one default output group per data type with all unique suffixes
-      const groups = [];
-      for (const dt of [...allDatatypes].sort()) {
-        const suffixes = new Set();
-        const tasks = new Set();
+        // Restore selected datatypes from saved output groups
+        const savedDatatypes = new Set();
+        for (const sel of Object.values(savedSelections.selections)) {
+          savedDatatypes.add(sel.datatype);
+        }
+        setSelectedDataTypes(savedDatatypes);
+
+        // Restore output groups from saved selections
+        const groups = [];
+        for (const [label, sel] of Object.entries(savedSelections.selections)) {
+          groups.push({
+            id: nextGroupId(),
+            datatype: sel.datatype,
+            suffix: sel.suffix,
+            task: sel.task || 'all',
+            run: sel.run || 'all',
+            includeEvents: sel.include_events || false,
+            extractSidecarParams: sel.extract_sidecar_params || [],
+            label,
+          });
+        }
+        setOutputGroups(groups);
+      } else {
+        // First time: default initialization
+        setSelectedSubjects(new Set(allSubjectIds));
+
+        // Discover all data types across all subjects
+        const allDatatypes = new Set();
         for (const sub of Object.values(bidsStructure.subjects)) {
           for (const ses of Object.values(sub.sessions)) {
-            if (!ses[dt]) continue;
-            for (const f of ses[dt]) {
-              suffixes.add(f.suffix);
-              if (f.entities.task) tasks.add(f.entities.task);
+            for (const dt of Object.keys(ses)) {
+              allDatatypes.add(dt);
             }
           }
         }
-        // One group per unique suffix in this datatype
-        for (const suffix of [...suffixes].sort()) {
-          const group = {
-            id: nextGroupId(),
-            datatype: dt,
-            suffix,
-            task: 'all',
-            run: 'all',
-            includeEvents: dt === 'func' && suffix === 'bold',
-            extractSidecarParams: [],
-            label: '',
-          };
-          group.label = autoLabel(group);
-          groups.push(group);
+        setSelectedDataTypes(new Set(allDatatypes));
+
+        // Create one default output group per data type with all unique suffixes
+        const groups = [];
+        for (const dt of [...allDatatypes].sort()) {
+          const suffixes = new Set();
+          for (const sub of Object.values(bidsStructure.subjects)) {
+            for (const ses of Object.values(sub.sessions)) {
+              if (!ses[dt]) continue;
+              for (const f of ses[dt]) {
+                suffixes.add(f.suffix);
+              }
+            }
+          }
+          for (const suffix of [...suffixes].sort()) {
+            const group = {
+              id: nextGroupId(),
+              datatype: dt,
+              suffix,
+              task: 'all',
+              run: 'all',
+              includeEvents: dt === 'func' && suffix === 'bold',
+              extractSidecarParams: [],
+              label: '',
+            };
+            group.label = autoLabel(group);
+            groups.push(group);
+          }
         }
+        setOutputGroups(groups);
       }
-      setOutputGroups(groups);
     }
-  }, [show, bidsStructure, allSubjectIds]);
+  }, [show, bidsStructure, allSubjectIds, savedSelections]);
 
   // Derived: data type availability across selected subjects
   const datatypeAvailability = useMemo(() => {

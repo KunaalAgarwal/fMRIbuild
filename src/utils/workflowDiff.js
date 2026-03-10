@@ -2,6 +2,8 @@
  * Workflow serialization and diff utilities.
  * Moved from main.jsx and extended with structured diff computation.
  */
+import { computeScatteredNodes } from './scatterPropagation.js';
+import { getToolConfigSync } from './toolRegistry.js';
 
 /**
  * Serialize workspace nodes for saving as a custom workflow.
@@ -63,7 +65,7 @@ const DISPLAY_NAMES = {
     scatterInputs: 'Scatter',
     scatterMethod: 'Scatter Method',
     linkMergeOverrides: 'Multiple Input',
-    whenExpression: 'When Expression',
+    whenExpression: 'Conditional',
     expressions: 'Expressions',
     parameters: 'Parameters',
     notes: 'Notes',
@@ -105,12 +107,14 @@ function formatValue(v) {
 
 /**
  * Compute sub-property diffs for key-value objects (parameters, expressions, etc.).
+ * @param {string} [parentProp] - parent property name, used to format values (e.g. linkMergeOverrides)
  */
-function diffObject(saved, current) {
+function diffObject(saved, current, parentProp) {
     const savedObj = saved && typeof saved === 'object' ? saved : {};
     const currentObj = current && typeof current === 'object' ? current : {};
     const allKeys = new Set([...Object.keys(savedObj), ...Object.keys(currentObj)]);
     const subChanges = [];
+    const isLinkMerge = parentProp === 'linkMergeOverrides';
 
     for (const key of allKeys) {
         const sVal = savedObj[key];
@@ -118,8 +122,8 @@ function diffObject(saved, current) {
         if (!valuesEqual(sVal, cVal)) {
             subChanges.push({
                 key,
-                saved: formatValue(sVal),
-                current: formatValue(cVal),
+                saved: isLinkMerge ? (sVal ? formatMergeMethod(sVal) : null) : formatValue(sVal),
+                current: isLinkMerge ? (cVal ? formatMergeMethod(cVal) : null) : formatValue(cVal),
                 type: sVal === undefined ? 'added' : cVal === undefined ? 'removed' : 'modified',
             });
         }
@@ -144,12 +148,102 @@ function diffNode(savedNode, currentNode) {
                 current: formatValue(cVal),
             };
             if (OBJECT_PROPS.has(prop)) {
-                change.subChanges = diffObject(sVal, cVal);
+                change.subChanges = diffObject(sVal, cVal, prop);
             }
             changes.push(change);
         }
     }
     return changes;
+}
+
+/* ── Multi-input helpers ─────────────────────────────────────── */
+
+const MERGE_METHOD_LABELS = {
+    merge_flattened: 'Merge Flattened',
+    merge_nested: 'Merge Nested',
+};
+
+function formatMergeMethod(method) {
+    return MERGE_METHOD_LABELS[method] || method || 'Merge Flattened';
+}
+
+/**
+ * Build a map of which target node inputs have multiple sources wired to them.
+ * Returns Map<targetNodeId, Set<inputName>> for inputs with >1 source.
+ */
+function buildMultiSourceMap(edges) {
+    // Count sources per (targetNode, inputName)
+    const counts = new Map(); // nodeId → Map<inputName, count>
+    for (const edge of edges) {
+        const mappings = edge.data?.mappings || [];
+        for (const m of mappings) {
+            if (!counts.has(edge.target)) counts.set(edge.target, new Map());
+            const nodeMap = counts.get(edge.target);
+            nodeMap.set(m.targetInput, (nodeMap.get(m.targetInput) || 0) + 1);
+        }
+    }
+    // Filter to only multi-source inputs
+    const result = new Map();
+    for (const [nodeId, inputMap] of counts) {
+        const multiInputs = new Set();
+        for (const [inputName, count] of inputMap) {
+            if (count > 1) multiInputs.add(inputName);
+        }
+        if (multiInputs.size > 0) result.set(nodeId, multiInputs);
+    }
+    return result;
+}
+
+/* ── Scatter propagation helpers ──────────────────────────────── */
+
+/**
+ * Build Map<nodeId, Set<inputName>> of array-typed inputs for gather detection.
+ * Mirrors workflowCanvas.jsx lines 72-86.
+ */
+function buildArrayTypedInputs(flatNodes) {
+    const arrayTypedInputs = new Map();
+    for (const node of flatNodes) {
+        if (node.isDummy || node.isBIDS) continue;
+        const tool = getToolConfigSync(node.label);
+        if (!tool) continue;
+        const arrayInputs = new Set();
+        const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
+        for (const [name, def] of Object.entries(allInputs)) {
+            if (def.type && def.type.endsWith('[]')) {
+                arrayInputs.add(name);
+            }
+        }
+        if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
+    }
+    return arrayTypedInputs;
+}
+
+/**
+ * Wrap flat-shape nodes into the { id, data: {...} } shape that
+ * computeScatteredNodes expects, then run propagation.
+ */
+function computePropagation(flatNodes, flatEdges) {
+    // Wrap flat nodes → { id, data: { ... } }
+    const wrappedNodes = flatNodes.map(n => ({
+        id: n.id,
+        data: {
+            label: n.label,
+            isDummy: n.isDummy,
+            isBIDS: n.isBIDS,
+            scatterInputs: n.scatterInputs,
+            bidsSelections: n.bidsSelections,
+            isCustomWorkflow: n.isCustomWorkflow,
+            internalNodes: n.internalNodes,
+        },
+    }));
+
+    // Filter out non-BIDS dummy nodes and their edges (same as workflowCanvas.jsx)
+    const dummyIds = new Set(wrappedNodes.filter(n => n.data.isDummy && !n.data.isBIDS).map(n => n.id));
+    const realNodes = wrappedNodes.filter(n => !n.data.isDummy || n.data.isBIDS);
+    const realEdges = flatEdges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
+
+    const arrayTypedInputs = buildArrayTypedInputs(flatNodes);
+    return computeScatteredNodes(realNodes, realEdges, arrayTypedInputs);
 }
 
 /**
@@ -263,6 +357,124 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
                 ...edge,
                 sourceLabel: nodeLabelMap.get(edge.source) || edge.source,
                 targetLabel: nodeLabelMap.get(edge.target) || edge.target,
+            });
+        }
+    }
+
+    // ── Helper to find or create a modified node entry ─────────
+    const addedIds = new Set(result.nodes.added.map(n => n.id));
+    const removedIds = new Set(result.nodes.removed.map(n => n.id));
+    const modifiedById = new Map(result.nodes.modified.map(n => [n.id, n]));
+
+    function getOrCreateModified(nodeId) {
+        if (modifiedById.has(nodeId)) return modifiedById.get(nodeId);
+        const currentNode = currentNodeMap.get(nodeId);
+        const savedNode = savedNodeMap.get(nodeId);
+        const entry = {
+            id: nodeId,
+            label: currentNode?.label || savedNode?.label || nodeLabelMap.get(nodeId) || nodeId,
+            savedLabel: savedNode?.label || currentNode?.label || nodeId,
+            isDummy: currentNode?.isDummy || savedNode?.isDummy || false,
+            isBIDS: currentNode?.isBIDS || savedNode?.isBIDS || false,
+            changes: [],
+        };
+        modifiedById.set(nodeId, entry);
+        result.nodes.modified.push(entry);
+        return entry;
+    }
+
+    // ── Scatter Propagation (folded into node diffs) ──────────
+    const savedProp = computePropagation(savedNodesClean, savedEdges);
+    const currentProp = computePropagation(wsNodesClean, wsEdges);
+
+    for (const id of currentProp.scatteredNodeIds) {
+        if (!savedProp.scatteredNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
+            getOrCreateModified(id).changes.push({
+                property: 'scatterPropagation', displayName: 'Scatter',
+                saved: null, current: 'Propagated from upstream',
+            });
+        }
+    }
+    for (const id of savedProp.scatteredNodeIds) {
+        if (!currentProp.scatteredNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
+            getOrCreateModified(id).changes.push({
+                property: 'scatterPropagation', displayName: 'Scatter',
+                saved: 'Propagated from upstream', current: null,
+            });
+        }
+    }
+    for (const id of currentProp.gatherNodeIds) {
+        if (!savedProp.gatherNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
+            getOrCreateModified(id).changes.push({
+                property: 'gatherStatus', displayName: 'Gather',
+                saved: null, current: 'Gathers scattered inputs',
+            });
+        }
+    }
+    for (const id of savedProp.gatherNodeIds) {
+        if (!currentProp.gatherNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
+            getOrCreateModified(id).changes.push({
+                property: 'gatherStatus', displayName: 'Gather',
+                saved: 'Gathers scattered inputs', current: null,
+            });
+        }
+    }
+
+    // ── Multi-Input Changes (folded into node diffs) ──────────
+    const savedMultiSource = buildMultiSourceMap(savedEdges);
+    const currentMultiSource = buildMultiSourceMap(wsEdges);
+    const allMultiSourceNodeIds = new Set([...savedMultiSource.keys(), ...currentMultiSource.keys()]);
+
+    for (const nodeId of allMultiSourceNodeIds) {
+        if (addedIds.has(nodeId) || removedIds.has(nodeId)) continue;
+
+        const savedInputs = savedMultiSource.get(nodeId) || new Set();
+        const currentInputs = currentMultiSource.get(nodeId) || new Set();
+        const allInputNames = new Set([...savedInputs, ...currentInputs]);
+
+        const savedNode = savedNodeMap.get(nodeId);
+        const currentNode = currentNodeMap.get(nodeId);
+        const nodeOverrides = currentNode?.linkMergeOverrides || {};
+        const savedOverrides = savedNode?.linkMergeOverrides || {};
+
+        const subChanges = [];
+        for (const inputName of allInputNames) {
+            const wasMerged = savedInputs.has(inputName);
+            const isMerged = currentInputs.has(inputName);
+
+            if (isMerged && !wasMerged) {
+                subChanges.push({
+                    key: inputName,
+                    saved: null,
+                    current: formatMergeMethod(nodeOverrides[inputName]),
+                    type: 'added',
+                });
+            } else if (!isMerged && wasMerged) {
+                subChanges.push({
+                    key: inputName,
+                    saved: formatMergeMethod(savedOverrides[inputName]),
+                    current: null,
+                    type: 'removed',
+                });
+            } else if (isMerged && wasMerged) {
+                const savedMethod = savedOverrides[inputName] || 'merge_flattened';
+                const currentMethod = nodeOverrides[inputName] || 'merge_flattened';
+                if (savedMethod !== currentMethod) {
+                    subChanges.push({
+                        key: inputName,
+                        saved: formatMergeMethod(savedMethod),
+                        current: formatMergeMethod(currentMethod),
+                        type: 'modified',
+                    });
+                }
+            }
+        }
+
+        if (subChanges.length > 0) {
+            getOrCreateModified(nodeId).changes.push({
+                property: 'multiInput',
+                displayName: 'Multiple Input',
+                subChanges,
             });
         }
     }

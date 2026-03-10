@@ -46,26 +46,43 @@
     border-radius: 3px;
 }
 
-/* ── Revert button in header ─────────────────────────────────── */
+/* ── Header buttons (match actionsBar styling) ─────────────── */
 
+.diff-save-btn,
 .diff-revert-btn {
     background: transparent;
+    padding: clamp(6px, 0.9vw, 12px) clamp(10px, 1.4vw, 22px);
+    border-radius: 6px;
+    font-family: 'Inter', sans-serif;
+    font-size: clamp(0.45rem, 0.95vw, 0.82rem);
+    line-height: 1.3;
+    cursor: pointer;
+    transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease;
+    white-space: nowrap;
+}
+
+.diff-save-btn {
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    color: rgba(168, 85, 247, 0.9);
+}
+
+.diff-save-btn:hover {
+    background-color: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.7);
+    color: rgba(200, 140, 255, 1);
+    box-shadow: 0 0 8px rgba(168, 85, 247, 0.15);
+}
+
+.diff-revert-btn {
     border: 1px solid rgba(255, 193, 7, 0.5);
     color: rgba(255, 193, 7, 0.9);
-    padding: 8px 20px;
-    border-radius: 6px;
-    font-size: 0.85rem;
-    font-weight: 600;
-    cursor: pointer;
-    transition: background-color 0.15s, color 0.15s, border-color 0.15s;
-    white-space: nowrap;
-    letter-spacing: 0.3px;
 }
 
 .diff-revert-btn:hover {
-    background-color: rgba(255, 193, 7, 0.2);
-    border-color: rgba(255, 193, 7, 0.8);
+    background-color: rgba(255, 193, 7, 0.15);
+    border-color: rgba(255, 193, 7, 0.7);
     color: rgba(255, 220, 80, 1);
+    box-shadow: 0 0 8px rgba(255, 193, 7, 0.15);
 }
 
 /* ── No-changes placeholder ──────────────────────────────────── */
@@ -258,8 +275,7 @@
     color: #ef9a9a;
     padding: 2px 8px;
     border-radius: 3px;
-    word-break: break-all;
-    max-width: 45%;
+    word-break: break-word;
 }
 
 .diff-value-current {
@@ -269,8 +285,7 @@
     color: #a5d6a7;
     padding: 2px 8px;
     border-radius: 3px;
-    word-break: break-all;
-    max-width: 45%;
+    word-break: break-word;
 }
 
 .diff-value-arrow {
@@ -313,8 +328,7 @@
     color: #ef9a9a;
     padding: 1px 6px;
     border-radius: 3px;
-    word-break: break-all;
-    max-width: 40%;
+    word-break: break-word;
 }
 
 .diff-sub-value-current {
@@ -323,8 +337,7 @@
     color: #a5d6a7;
     padding: 1px 6px;
     border-radius: 3px;
-    word-break: break-all;
-    max-width: 40%;
+    word-break: break-word;
 }
 
 /* ── Metadata rows ───────────────────────────────────────────── */
@@ -380,6 +393,6 @@
 
     .diff-value-saved,
     .diff-value-current {
-        max-width: 100%;
+        width: 100%;
     }
 }

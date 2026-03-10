@@ -196,6 +196,14 @@ function buildMultiSourceMap(edges) {
 
 /* ── Scatter propagation helpers ──────────────────────────────── */
 
+/** Check if a flat node is itself a scatter source (not just downstream-propagated). */
+function isScatterSource(flatNode) {
+    if (!flatNode) return false;
+    if (flatNode.scatterInputs?.length > 0) return true;
+    if (flatNode.isBIDS && flatNode.bidsSelections) return true;
+    return false;
+}
+
 /**
  * Build Map<nodeId, Set<inputName>> of array-typed inputs for gather detection.
  * Mirrors workflowCanvas.jsx lines 72-86.
@@ -389,6 +397,7 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
 
     for (const id of currentProp.scatteredNodeIds) {
         if (!savedProp.scatteredNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
+            if (isScatterSource(currentNodeMap.get(id))) continue;
             getOrCreateModified(id).changes.push({
                 property: 'scatterPropagation', displayName: 'Scatter',
                 saved: null, current: 'Propagated from upstream',
@@ -397,6 +406,7 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
     }
     for (const id of savedProp.scatteredNodeIds) {
         if (!currentProp.scatteredNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
+            if (isScatterSource(savedNodeMap.get(id))) continue;
             getOrCreateModified(id).changes.push({
                 property: 'scatterPropagation', displayName: 'Scatter',
                 saved: 'Propagated from upstream', current: null,

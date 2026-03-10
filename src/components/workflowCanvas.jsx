@@ -838,22 +838,30 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
               />
               <Background variant="dots" gap={12} size={1} />
               {!toolsHidden && <Controls />}
-              {!toolsHidden && (
+              <div className={`canvas-bottom-bar${toolsHidden ? ' tools-hidden' : ''}`}>
                 <button
-                  className="auto-layout-button"
+                  className="canvas-bottom-btn"
+                  onClick={() => setToolsHidden(prev => !prev)}
+                >
+                  {toolsHidden ? 'Show tools' : 'Hide tools'}
+                </button>
+                <button
+                  className="canvas-bottom-btn collapsible"
                   onClick={handleAutoLayout}
                   disabled={nodes.length < 2}
                   title="Auto Layout (Ctrl+Shift+L)"
                 >
                   Auto Layout
                 </button>
-              )}
-              <button
-                className={`toggle-tools-button${toolsHidden ? ' tools-hidden' : ''}`}
-                onClick={() => setToolsHidden(prev => !prev)}
-              >
-                {toolsHidden ? 'Show tools' : 'Hide tools'}
-              </button>
+                <button
+                  className="canvas-bottom-btn collapsible"
+                  onClick={() => { setEdges([]); markForSync(); }}
+                  disabled={edges.length === 0}
+                  title="Remove all edges"
+                >
+                  Clear Edges
+                </button>
+              </div>
             </ReactFlow>
           </WiredInputsContext.Provider>
           </ScatterPropagationContext.Provider>

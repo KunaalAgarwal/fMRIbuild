@@ -36,12 +36,33 @@
   }
 }
 
-/* Auto-layout button — floating in canvas, above ReactFlow controls */
-.auto-layout-button {
+/* ReactFlow default controls — horizontal, above custom bottom bar */
+.react-flow__controls {
+  display: flex !important;
+  flex-direction: row !important;
+  gap: 2px !important;
+}
+
+.react-flow__controls-button {
+  padding: 7px !important;
+}
+
+.react-flow__panel.bottom.left {
+  bottom: 36px !important;
+  left: 0 !important;
+}
+
+/* Bottom bar — horizontal row of canvas utility buttons */
+.canvas-bottom-bar {
   position: absolute;
-  bottom: 140px;
+  bottom: 10px;
   left: 10px;
   z-index: 5;
+  display: flex;
+  gap: 6px;
+}
+
+.canvas-bottom-btn {
   font-family: 'Roboto Mono', monospace;
   font-size: 0.65rem;
   font-weight: 500;
@@ -52,45 +73,33 @@
   border-radius: 4px;
   cursor: pointer;
   backdrop-filter: blur(4px);
+  white-space: nowrap;
   transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
 }
 
-.auto-layout-button:hover {
+.canvas-bottom-btn:hover {
   background-color: rgba(74, 144, 226, 0.18);
   border-color: rgba(74, 144, 226, 0.5);
   color: var(--text-light, #e0e0e0);
 }
 
-.auto-layout-button:disabled {
+.canvas-bottom-btn:disabled {
   opacity: 0.35;
   cursor: not-allowed;
 }
 
-/* Toggle tools button — above auto-layout, same visual style */
-.toggle-tools-button {
-  position: absolute;
-  bottom: 175px;
-  left: 10px;
-  z-index: 5;
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.65rem;
-  font-weight: 500;
+/* Collapsible buttons animate in/out */
+.canvas-bottom-btn.collapsible {
+  overflow: hidden;
+  max-width: 120px;
+  opacity: 1;
   padding: 5px 10px;
-  background-color: rgba(46, 46, 46, 0.92);
-  color: var(--text-medium, #b0b0b0);
-  border: 1px solid var(--border-subtle, #444);
-  border-radius: 4px;
-  cursor: pointer;
-  backdrop-filter: blur(4px);
-  transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, bottom 0.25s ease;
+  transition: max-width 0.25s ease, opacity 0.2s ease, padding 0.25s ease;
 }
 
-.toggle-tools-button:hover {
-  background-color: rgba(74, 144, 226, 0.18);
-  border-color: rgba(74, 144, 226, 0.5);
-  color: var(--text-light, #e0e0e0);
-}
-
-.toggle-tools-button.tools-hidden {
-  bottom: 10px;
+.canvas-bottom-bar.tools-hidden .canvas-bottom-btn.collapsible {
+  max-width: 0;
+  opacity: 0;
+  padding: 5px 0;
+  border-color: transparent;
 }

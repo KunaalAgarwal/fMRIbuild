@@ -88,6 +88,12 @@ function serializeEdges(edges) {
 function hasUnsavedChanges(workspace, savedWorkflow) {
     if (!workspace || !savedWorkflow) return false;
 
+    // Compare workflow name
+    if ((workspace.workflowName || '') !== (savedWorkflow.name || '')) return true;
+
+    // Compare output name
+    if ((workspace.name || '') !== (savedWorkflow.outputName || '')) return true;
+
     const wsNodes = serializeNodes(workspace.nodes || []).map(({ position, ...rest }) => rest);
     const savedNodes = savedWorkflow.nodes.map(({ position, ...rest }) => rest);
 
@@ -113,6 +119,7 @@ function App() {
         updateWorkflowName,
         updateSavedWorkflowId,
         removeWorkflowNodesFromAll,
+        revertCurrentWorkspaceItems,
         saveViewportForWorkspace
     } = useWorkspaces();
 
@@ -181,6 +188,7 @@ function App() {
 
         const workflowData = {
             name,
+            outputName: currentOutputName,
             nodes: serializedNodes,
             edges: serializedEdges,
             hasValidationWarnings: false,
@@ -206,15 +214,11 @@ function App() {
         if (!currentWorkflowName.trim()) {
             updateWorkflowName(name);
         }
-    }, [getWorkflowData, currentWorkflowName, savedWorkflowId, saveWorkflow, updateWorkflow, updateSavedWorkflowId, getNextDefaultName, showError, showSuccess, showWarning, updateWorkflowName]);
+    }, [getWorkflowData, currentWorkflowName, currentOutputName, savedWorkflowId, saveWorkflow, updateWorkflow, updateSavedWorkflowId, getNextDefaultName, showError, showSuccess, showWarning, updateWorkflowName]);
 
     const handleWorkflowNameChange = useCallback((newName) => {
         updateWorkflowName(newName);
-        // If workspace is bound to a saved workflow, rename it in-place
-        if (savedWorkflowId) {
-            updateWorkflow(savedWorkflowId, { name: newName });
-        }
-    }, [savedWorkflowId, updateWorkflowName, updateWorkflow]);
+    }, [updateWorkflowName]);
 
     const handleWorkspaceSwitch = useCallback((newIndex) => {
         // Warn if leaving a workspace with unsaved custom workflow changes
@@ -279,13 +283,69 @@ function App() {
         addNewWorkspaceWithData({
             nodes,
             edges,
+            name: workflow.outputName || '',
             workflowName: workflow.name,
             savedWorkflowId: workflow.id
         });
         showInfo(`Editing "${workflow.name}" in new workspace`);
     }, [addNewWorkspaceWithData, showInfo, workspaces, handleWorkspaceSwitch]);
 
+    const handleRevertWorkflow = useCallback(() => {
+        if (!savedWorkflowId) {
+            showWarning('Current workspace is not editing a saved workflow.');
+            return;
+        }
+
+        const workflow = customWorkflows.find(w => w.id === savedWorkflowId);
+        if (!workflow) {
+            showError('Saved workflow not found.');
+            return;
+        }
+
+        const currentWs = workspaces[currentWorkspace];
+        if (!hasUnsavedChanges(currentWs, workflow)) {
+            showInfo(`"${workflow.name}" has no unsaved changes.`);
+            return;
+        }
+
+        const nodes = workflow.nodes.map(n => ({
+            id: n.id,
+            type: 'default',
+            data: {
+                label: n.label,
+                isDummy: n.isDummy,
+                isBIDS: n.isBIDS || false,
+                bidsStructure: n.bidsStructure || null,
+                bidsSelections: n.bidsSelections || null,
+                notes: n.notes || '',
+                parameters: n.parameters || {},
+                dockerVersion: n.dockerVersion || 'latest',
+                scatterInputs: n.scatterInputs,
+                linkMergeOverrides: n.linkMergeOverrides || {},
+                whenExpression: n.whenExpression || '',
+                expressions: n.expressions || {},
+            },
+            position: n.position || { x: 0, y: 0 },
+        }));
+
+        const edges = workflow.edges.map(e => ({
+            id: e.id,
+            source: e.source,
+            target: e.target,
+            data: e.data || { mappings: [] },
+        }));
+
+        revertCurrentWorkspaceItems(nodes, edges);
+        updateWorkflowName(workflow.name);
+        updateWorkspaceName(workflow.outputName || '');
+        showSuccess(`Reverted "${workflow.name}" to last saved state.`);
+    }, [savedWorkflowId, customWorkflows, workspaces, currentWorkspace, revertCurrentWorkspaceItems, updateWorkflowName, updateWorkspaceName, showWarning, showError, showInfo, showSuccess]);
+
     const saveButtonLabel = savedWorkflowId ? 'Update Workflow' : 'Save Workflow';
+
+    // Detect unsaved changes against the saved custom workflow
+    const savedWorkflow = savedWorkflowId ? customWorkflows.find(w => w.id === savedWorkflowId) : null;
+    const workflowHasChanges = savedWorkflow ? hasUnsavedChanges(workspaces[currentWorkspace], savedWorkflow) : false;
 
     return (
             <div className="app-layout">
@@ -299,6 +359,9 @@ function App() {
                         onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName)}
                         onSaveWorkflow={handleSaveAsCustomNode}
                         saveButtonLabel={saveButtonLabel}
+                        onRevertWorkflow={handleRevertWorkflow}
+                        showRevert={!!savedWorkflowId}
+                        workflowHasChanges={workflowHasChanges}
                     />
                     <div className="workflow-names-container">
                         <OutputNameInput

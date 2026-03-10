@@ -45,6 +45,17 @@
   color: rgba(200, 140, 255, 1);
 }
 
+.actions-button.btn-revert {
+  border: 1px solid rgba(255, 193, 7, 0.5);
+  color: rgba(255, 193, 7, 0.9);
+}
+
+.actions-button.btn-revert:hover {
+  background-color: rgba(255, 193, 7, 0.2);
+  border-color: rgba(255, 193, 7, 0.8);
+  color: rgba(255, 220, 80, 1);
+}
+
 .actions-button.btn-generate {
   border: 1px solid rgba(74, 144, 226, 0.5);
   color: rgba(74, 144, 226, 0.9);

@@ -255,7 +255,28 @@ function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
             ...Object.keys(effectiveTool.requiredInputs || {}),
             ...Object.keys(effectiveTool.optionalInputs || {}),
         ]);
-        return new Set(explicitScatter.filter(name => allInputNames.has(name)));
+        const result = new Set(explicitScatter.filter(name => allInputNames.has(name)));
+        // Also include auto-detected upstream scatter inputs (they're mandatory
+        // and locked in the UI — explicit scatter alone may be stale)
+        if (ctx.scatteredSteps.has(nodeId)) {
+            const nodeArrayInputs = ctx.arrayTypedInputs?.get(nodeId) || new Set();
+            (incomingEdges || []).forEach(edge => {
+                if (!ctx.scatteredSteps.has(edge.source)) return;
+                (edge.data?.mappings || []).forEach(m => {
+                    if (!nodeArrayInputs.has(m.targetInput)) {
+                        result.add(m.targetInput);
+                    }
+                });
+            });
+            ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
+                (edge.data?.mappings || []).forEach(m => {
+                    if (!nodeArrayInputs.has(m.targetInput)) {
+                        result.add(m.targetInput);
+                    }
+                });
+            });
+        }
+        return result;
     }
 
     // Auto-detect only if node is in the scattered set

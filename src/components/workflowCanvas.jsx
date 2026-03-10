@@ -39,6 +39,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const reactFlowWrapper = useRef(null);
   const prevWorkspaceRef = useRef(currentWorkspaceIndex);
   const prevWorkspaceIdRef = useRef(workflowItems?.id);
+  const prevSyncVersionRef = useRef(workflowItems?.syncVersion || 0);
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
@@ -236,10 +237,12 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
       }
       prevWorkspaceRef.current = currentWorkspaceIndex;
       prevWorkspaceIdRef.current = workflowItems.id;
+      const syncVersionChanged = (workflowItems.syncVersion || 0) !== prevSyncVersionRef.current;
+      prevSyncVersionRef.current = workflowItems.syncVersion || 0;
 
-      // Sync canvas when workspace switches or workspace content was externally reset (e.g. clear)
+      // Sync canvas when workspace switches, content was externally reset (e.g. clear), or reverted
       const nodeIdsChanged = workflowItems.nodes.map(n => n.id).join(',') !== nodes.map(n => n.id).join(',');
-      if (workspaceSwitched || nodeIdsChanged) {
+      if (workspaceSwitched || nodeIdsChanged || syncVersionChanged) {
         let anyCustomSynced = false;
         const initialNodes = (workflowItems.nodes || []).map((node) => {
           const restoredData = {

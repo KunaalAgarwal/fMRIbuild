@@ -1,7 +1,7 @@
 import { useReducer, useCallback } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
-const DEFAULT_WORKSPACE = { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null };
+const DEFAULT_WORKSPACE = { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null, syncVersion: 0 };
 
 function migrateWorkspace(ws) {
   return {
@@ -11,7 +11,8 @@ function migrateWorkspace(ws) {
     name: ws.name || '',
     workflowName: ws.workflowName || '',
     savedWorkflowId: ws.savedWorkflowId || null,
-    viewport: ws.viewport || null
+    viewport: ws.viewport || null,
+    syncVersion: ws.syncVersion || 0
   };
 }
 
@@ -36,7 +37,7 @@ function initState() {
 function workspaceReducer(state, action) {
   switch (action.type) {
     case 'ADD_WORKSPACE': {
-      const newWs = { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null };
+      const newWs = { id: crypto.randomUUID(), nodes: [], edges: [], name: '', workflowName: '', savedWorkflowId: null, viewport: null, syncVersion: 0 };
       const updated = [...state.workspaces, newWs];
       return { workspaces: updated, currentIndex: updated.length - 1 };
     }
@@ -49,7 +50,8 @@ function workspaceReducer(state, action) {
         name: data.name || '',
         workflowName: data.workflowName || '',
         savedWorkflowId: data.savedWorkflowId || null,
-        viewport: null
+        viewport: null,
+        syncVersion: 0
       };
       const updated = [...state.workspaces, newWs];
       return { workspaces: updated, currentIndex: updated.length - 1 };
@@ -64,7 +66,8 @@ function workspaceReducer(state, action) {
         name: ws?.name || '',
         workflowName: ws?.workflowName || '',
         savedWorkflowId: ws?.savedWorkflowId || null,
-        viewport: null
+        viewport: null,
+        syncVersion: ws?.syncVersion || 0
       };
       return { ...state, workspaces: updated };
     }
@@ -78,7 +81,8 @@ function workspaceReducer(state, action) {
         name: ws?.name || '',
         workflowName: ws?.workflowName || '',
         savedWorkflowId: ws?.savedWorkflowId || null,
-        viewport: newItems.viewport !== undefined ? newItems.viewport : (ws?.viewport || null)
+        viewport: newItems.viewport !== undefined ? newItems.viewport : (ws?.viewport || null),
+        syncVersion: ws?.syncVersion || 0
       };
       return { ...state, workspaces: updated };
     }
@@ -139,6 +143,18 @@ function workspaceReducer(state, action) {
       if (idx < 0 || idx >= state.workspaces.length) return state;
       return { ...state, currentIndex: idx };
     }
+    case 'REVERT_CURRENT_ITEMS': {
+      const { nodes, edges } = action;
+      const ws = state.workspaces[state.currentIndex];
+      const updated = [...state.workspaces];
+      updated[state.currentIndex] = {
+        ...ws,
+        nodes,
+        edges,
+        syncVersion: (ws.syncVersion || 0) + 1,
+      };
+      return { ...state, workspaces: updated };
+    }
     default:
       return state;
   }
@@ -161,6 +177,7 @@ export function useWorkspaces() {
   const updateSavedWorkflowId = useCallback((id) => dispatch({ type: 'UPDATE_SAVED_ID', id }), []);
   const removeWorkflowNodesFromAll = useCallback((workflowId) => dispatch({ type: 'REMOVE_WORKFLOW_NODES', workflowId }), []);
   const saveViewportForWorkspace = useCallback((index, viewport) => dispatch({ type: 'SAVE_VIEWPORT', index, viewport }), []);
+  const revertCurrentWorkspaceItems = useCallback((nodes, edges) => dispatch({ type: 'REVERT_CURRENT_ITEMS', nodes, edges }), []);
   const setCurrentWorkspace = useCallback((index) => dispatch({ type: 'SET_CURRENT_INDEX', index }), []);
 
   return {
@@ -176,6 +193,7 @@ export function useWorkspaces() {
     updateWorkflowName,
     updateSavedWorkflowId,
     removeWorkflowNodesFromAll,
+    revertCurrentWorkspaceItems,
     saveViewportForWorkspace
   };
 }

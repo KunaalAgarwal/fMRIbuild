@@ -290,6 +290,7 @@
   border-color: var(--color-danger);
 }
 
+
 /* Smooth padding/font transition when edit/delete buttons appear */
 .custom-workflow-item-wrapper > :first-child {
   transition: padding 0.15s ease, font-size 0.15s ease;

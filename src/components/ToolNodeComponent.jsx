@@ -265,9 +265,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
         const scatterInit = {};
         const savedScatter = data.scatterInputs || [];
         savedScatter.forEach(name => { scatterInit[name] = true; });
-        if ((!data.scatterInputs || data.scatterInputs.length === 0) && upstreamScatterInputs.size > 0) {
-            upstreamScatterInputs.forEach(name => { scatterInit[name] = true; });
-        }
+        upstreamScatterInputs.forEach(name => { scatterInit[name] = true; });
         setScatterToggles(scatterInit);
         setScatterMethod(data.scatterMethod || 'dotproduct');
 

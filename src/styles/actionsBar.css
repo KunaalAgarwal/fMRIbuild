@@ -56,6 +56,12 @@
   color: rgba(255, 220, 80, 1);
 }
 
+.actions-button.btn-revert:disabled {
+  border-color: rgba(255, 193, 7, 0.25);
+  color: rgba(255, 193, 7, 0.45);
+  background-color: transparent;
+}
+
 .actions-button.btn-generate {
   border: 1px solid rgba(74, 144, 226, 0.5);
   color: rgba(74, 144, 226, 0.9);

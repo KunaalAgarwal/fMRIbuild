@@ -621,7 +621,7 @@ export const TOOL_ANNOTATIONS = {
             ]
         },
         "fullName": "Multivariate Exploratory Linear Optimized Decomposition into Independent Components (MELODIC)",
-        "function": "Probabilistic ICA that decomposes fMRI data into spatially independent components representing signal and noise sources.",
+        "function": "Multi-step ICA pipeline that decomposes fMRI data into spatially independent components. Internally chains brain masking, variance normalization, and probabilistic ICA decomposition.",
         "modality": "4D fMRI NIfTI time series (single-subject or concatenated multi-subject).",
         "keyParameters": "-i (input 4D), -o (output directory), -d (dimensionality), --report (generate HTML report), --bgimage (background for report)",
         "keyPoints": "Auto-dimensionality estimation by default (Laplace approximation). Can be run single-subject or group. Components classified as signal vs. noise manually or via FIX.",
@@ -649,7 +649,7 @@ export const TOOL_ANNOTATIONS = {
     "dual_regression": {
         "cwlPath": "cwl/fsl/dual_regression.cwl",
         "fullName": "FSL Dual Regression",
-        "function": "Projects group-level ICA spatial maps back to individual subjects via spatial then temporal regression to obtain subject-specific network maps.",
+        "function": "Multi-step pipeline that projects group-level ICA spatial maps back to individual subjects. Internally chains spatial regression (stage 1), temporal regression (stage 2), and optionally randomise permutation testing (stage 3).",
         "modality": "4D fMRI NIfTI time series for each subject plus group ICA spatial maps.",
         "keyParameters": "<group_ICA_maps> <design_matrix> <design_contrasts> <num_permutations> <subject_list>",
         "keyPoints": "Two-stage regression: (1) spatial regression gives subject time courses, (2) temporal regression gives subject spatial maps. Can include randomise for group comparison.",
@@ -678,7 +678,7 @@ export const TOOL_ANNOTATIONS = {
             ]
         },
         "fullName": "FMRIB's Integrated Registration and Segmentation Tool (FIRST)",
-        "function": "Automated segmentation of subcortical structures using shape and appearance models trained on manually labeled data.",
+        "function": "Multi-step pipeline for subcortical structure segmentation. Internally chains registration, boundary correction, and shape-model segmentation for 15 subcortical structures.",
         "modality": "T1-weighted 3D NIfTI volume (does not need to be brain-extracted).",
         "keyParameters": "-i (input image), -o (output basename), -b (run BET first), -s (comma-separated structures list)",
         "keyPoints": "Models 15 subcortical structures. Outputs meshes (.vtk) and volumetric labels. Can run on selected structures only with -s flag.",
@@ -697,7 +697,7 @@ export const TOOL_ANNOTATIONS = {
     "sienax": {
         "cwlPath": "cwl/fsl/sienax.cwl",
         "fullName": "SIENA Cross-Sectional (SIENAX)",
-        "function": "Cross-sectional brain volume estimation normalized for head size using atlas-based scaling.",
+        "function": "Multi-step pipeline for cross-sectional brain volume estimation. Internally chains BET brain extraction, atlas registration, FAST tissue segmentation, and head-size-normalized volume computation.",
         "modality": "T1-weighted 3D NIfTI volume.",
         "keyParameters": "-o (output directory), -r (regional analysis), -BET (BET options), -S (SIENAX options)",
         "keyPoints": "Single timepoint analysis. Normalizes volumes by head size for cross-subject comparisons. Reports total brain, GM, and WM volumes.",
@@ -716,7 +716,7 @@ export const TOOL_ANNOTATIONS = {
     "siena": {
         "cwlPath": "cwl/fsl/siena.cwl",
         "fullName": "Structural Image Evaluation using Normalisation of Atrophy (SIENA)",
-        "function": "Estimates percentage brain volume change between two timepoints using edge-point displacement analysis.",
+        "function": "Multi-step pipeline that estimates percentage brain volume change between two timepoints. Internally chains BET brain extraction, registration, FAST segmentation, and edge-point displacement analysis.",
         "modality": "Two T1-weighted 3D NIfTI volumes from different timepoints.",
         "keyParameters": "-o (output directory), -BET (BET options), -2 (2-class segmentation), -S (SIENA step options)",
         "keyPoints": "Requires two scans of same subject at different timepoints. Reports percentage brain volume change (PBVC). Accurate to ~0.2% volume change.",
@@ -2609,7 +2609,7 @@ export const TOOL_ANNOTATIONS = {
     "bedpostx": {
         "cwlPath": "cwl/fsl/bedpostx.cwl",
         "fullName": "Bayesian Estimation of Diffusion Parameters Obtained using Sampling Techniques (BEDPOSTX)",
-        "function": "Bayesian estimation of fiber orientation distributions using MCMC sampling, supporting multiple crossing fibers per voxel.",
+        "function": "Multi-step pipeline for Bayesian estimation of fiber orientation distributions. Internally runs multi-fiber MCMC sampling across all voxels with automatic convergence checking, supporting multiple crossing fibers per voxel.",
         "modality": "Directory containing 4D DWI (data.nii.gz), b-values (bvals), b-vectors (bvecs), and brain mask (nodif_brain_mask.nii.gz).",
         "keyParameters": "<data_directory>, -n (max fibers per voxel, default 3)",
         "keyPoints": "Very computationally intensive (hours-days). GPU version (bedpostx_gpu) strongly recommended. Required before probtrackx2. Outputs fiber orientations and uncertainty estimates.",
@@ -2681,7 +2681,7 @@ export const TOOL_ANNOTATIONS = {
     "oxford_asl": {
         "cwlPath": "cwl/fsl/oxford_asl.cwl",
         "fullName": "Oxford ASL Processing Pipeline",
-        "function": "Complete pipeline for ASL MRI quantification including motion correction, registration, calibration, and partial volume correction.",
+        "function": "Multi-step pipeline for ASL MRI quantification. Internally chains motion correction, registration, BASIL kinetic modeling, calibration, and partial volume correction.",
         "modality": "4D ASL NIfTI (tag/control pairs) plus structural T1 image.",
         "keyParameters": "-i (input ASL), -o (output dir), -s (structural image), --casl/--pasl (labeling type), --iaf (input format: tc/ct/diff), --tis (inversion times)",
         "keyPoints": "Handles both pASL and CASL/pCASL. Performs kinetic modeling via BASIL internally. Use --wp for white paper quantification mode. Requires calibration image for absolute CBF.",
@@ -2920,7 +2920,7 @@ export const TOOL_ANNOTATIONS = {
     "mriqc": {
         "cwlPath": "cwl/mriqc/mriqc.cwl",
         "fullName": "MRIQC: MRI Quality Control Pipeline",
-        "function": "Automated quality control pipeline that extracts image quality metrics (IQMs) from structural and functional MRI and generates visual reports.",
+        "function": "Multi-step quality control pipeline. Internally chains brain extraction, spatial normalization, and computation of dozens of image quality metrics (SNR, CNR, EFC, FBER, motion) with visual report generation.",
         "modality": "BIDS-formatted dataset containing T1w, T2w, and/or BOLD fMRI data (NIfTI format).",
         "keyParameters": "<bids_dir> <output_dir> participant, --participant-label (subject IDs), --modalities (T1w, T2w, bold), --no-sub (skip submission to web API)",
         "keyPoints": "Requires BIDS-formatted input. Computes dozens of IQMs (SNR, CNR, EFC, FBER, motion metrics). Generates individual and group-level visual reports.",
@@ -3323,7 +3323,7 @@ export const TOOL_ANNOTATIONS = {
     "ICA_AROMA": {
         "cwlPath": "cwl/ica_aroma/ICA_AROMA.cwl",
         "fullName": "ICA-based Automatic Removal of Motion Artifacts (ICA-AROMA)",
-        "function": "Automatically identifies and removes motion-related ICA components from fMRI data using a classifier trained on temporal and spatial features.",
+        "function": "Multi-step denoising pipeline for fMRI motion artifact removal. Internally chains MELODIC ICA decomposition, motion artifact feature extraction, classifier-based component labeling, and non-aggressive denoising.",
         "modality": "Preprocessed 4D fMRI NIfTI in standard (MNI) space with motion parameters.",
         "keyParameters": "-i (input 4D), -mc (motion parameters), -o (output directory), -a (affine matrix), -w (warp field), -den (denoising type)",
         "keyPoints": "Requires data in MNI space. Classifier uses four features: max RP correlation, edge fraction, HFC spatial fraction, and CSF fraction. Non-aggressive denoising recommended.",
@@ -3478,7 +3478,7 @@ export const DOCKER_TAGS = {
     ]
 };
 
-export const modalityOrder = ["Structural MRI","Functional MRI","Diffusion MRI","Arterial Spin Labeling","PET","Multimodal","Utilities"];
+export const modalityOrder = ["Structural MRI","Functional MRI","Diffusion MRI","Arterial Spin Labeling","PET","Multimodal","Utilities","Pipelines"];
 
 export const modalityDescriptions = {
     "Structural MRI": "T1/T2-weighted imaging for brain anatomy. Used for skull-stripping, tissue segmentation, cortical reconstruction, and spatial registration.",
@@ -3487,7 +3487,8 @@ export const modalityDescriptions = {
     "Arterial Spin Labeling": "Non-invasive perfusion imaging using magnetically labeled blood. Used for cerebral blood flow quantification and partial volume correction.",
     "PET": "Positron Emission Tomography for molecular imaging. Used for kinetic modeling, partial volume correction, and tracer-specific quantification.",
     "Multimodal": "Cross-modality analysis pipelines. Tools that integrate structural, functional, and diffusion data for comprehensive brain mapping.",
-    "Utilities": "General-purpose neuroimaging utilities. Used for format conversion, image math, resampling, and quality control."
+    "Utilities": "General-purpose neuroimaging utilities. Used for format conversion, image math, resampling, and quality control.",
+    "Pipelines": "Complete multi-step analysis pipelines that chain several operations internally. Each tool orchestrates preprocessing, registration, segmentation, or analysis stages as a single command."
 };
 
 export const MODALITY_ASSIGNMENTS = {
@@ -3625,6 +3626,29 @@ export const MODALITY_ASSIGNMENTS = {
     },
     dcm2niix: {
       'Format Conversion': ['dcm2niix']
+    }
+  },
+  'Pipelines': {
+    FSL: {
+      'Structural': ['fsl_anat', 'siena', 'sienax', 'run_first_all'],
+      'Functional': ['feat', 'melodic', 'dual_regression'],
+      'Diffusion': ['bedpostx'],
+      'ASL': ['oxford_asl']
+    },
+    ANTs: {
+      'Structural': ['antsCorticalThickness.sh', 'antsAtroposN4.sh']
+    },
+    FreeSurfer: {
+      'Surface Reconstruction': ['recon-all']
+    },
+    fMRIPrep: {
+      'fMRI Preprocessing': ['fmriprep']
+    },
+    MRIQC: {
+      'Quality Control': ['mriqc']
+    },
+    'ICA-AROMA': {
+      'Denoising': ['ICA_AROMA']
     }
   }
 };

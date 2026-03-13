@@ -21,6 +21,7 @@ const highlightYaml = (yaml) => {
         hl = hl.replace(/&#39;(.*?)&#39;/g, '<span class="cwl-string">$&</span>');
         hl = hl.replace(/&quot;(.*?)&quot;/g, '<span class="cwl-string">$&</span>');
         hl = hl.replace(/\b(true|false|null)\b/g, '<span class="cwl-bool">$1</span>');
+        hl = hl.replace(/(\s#.*)$/, '<span class="cwl-comment">$1</span>');
         return hl;
     }).join('\n');
 };
@@ -66,11 +67,9 @@ function CWLPreviewPanel({ getWorkflowData }) {
             }
             try {
                 const graph = getWorkflowData();
-                const dummyIds = new Set((graph?.nodes || []).filter(n => n.data?.isDummy).map(n => n.id));
                 const realNodeCount = (graph?.nodes || []).filter(n => !n.data?.isDummy).length;
-                const realEdgeCount = (graph?.edges || []).filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target)).length;
                 const hasCustomWorkflow = (graph?.nodes || []).some(n => n.data?.isCustomWorkflow);
-                if (!graph || !graph.nodes || (!hasCustomWorkflow && (realNodeCount < 2 || !graph.edges || realEdgeCount < 1))) {
+                if (!graph || !graph.nodes || (!hasCustomWorkflow && realNodeCount < 1)) {
                     setCwlOutput('');
                     setJobOutput('');
                     setError(null);
@@ -179,7 +178,7 @@ function CWLPreviewPanel({ getWorkflowData }) {
                             )}
                             {showPlaceholder && !error && (
                                 <div className="cwl-empty-message">
-                                    Connect at least two nodes to preview the generated CWL workflow.
+                                    Add a node to preview the generated CWL workflow.
                                 </div>
                             )}
                             {activeContent && (

@@ -567,7 +567,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                                     {isFileType && wiredSources.length === 1 && (
                                                         <div className="input-source-single">
                                                             <span className="input-source">
-                                                                from {wiredSources[0].sourceNodeLabel} / {wiredSources[0].sourceOutput}{propagatedIds.has(wiredSources[0].sourceNodeId) ? ' (scattered)' : ''}
+                                                                from {wiredSources[0].sourceNodeLabel} / {wiredSources[0].sourceOutput}{upstreamScatterInputs.has(param.name) ? ' (scattered)' : ''}
                                                             </span>
                                                         </div>
                                                     )}
@@ -578,7 +578,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                                                 <div className="input-source-multi-sources">
                                                                     {wiredSources.map((src, i) => (
                                                                         <span key={i} className="input-source input-source-detail">
-                                                                            {src.sourceNodeLabel} / {src.sourceOutput}{propagatedIds.has(src.sourceNodeId) ? ' (scattered)' : ''}
+                                                                            {src.sourceNodeLabel} / {src.sourceOutput}{upstreamScatterInputs.has(param.name) ? ' (scattered)' : ''}
                                                                         </span>
                                                                     ))}
                                                                 </div>

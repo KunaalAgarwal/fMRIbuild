@@ -270,6 +270,7 @@ function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
             });
             ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
                 (edge.data?.mappings || []).forEach(m => {
+                    if (m.sourceOutput === 'bids_directory') return;
                     if (!nodeArrayInputs.has(m.targetInput)) {
                         result.add(m.targetInput);
                     }
@@ -296,6 +297,7 @@ function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
     });
     ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
         (edge.data?.mappings || []).forEach(m => {
+            if (m.sourceOutput === 'bids_directory') return;
             if (!inputs.includes(m.targetInput) && !nodeArrayInputs.has(m.targetInput)) {
                 inputs.push(m.targetInput);
             }
@@ -917,8 +919,8 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
 
         // Primitive types
         switch (cwlType) {
-            case 'File':      return { class: 'File', path: 'a/file/path' };
-            case 'Directory':  return { class: 'Directory', path: 'a/directory/path' };
+            case 'File':      return null;
+            case 'Directory':  return null;
             case 'string':     return 'a_string';
             case 'int':
             case 'long':       return 0;
@@ -929,8 +931,23 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
         }
     };
 
+    // Extract the base CWL type, unwrapping nullables and arrays
+    const extractBaseType = (cwlType) => {
+        if (cwlType == null) return { base: null, isArray: false };
+        if (Array.isArray(cwlType)) {
+            const nonNull = cwlType.find(t => t !== 'null');
+            return nonNull ? extractBaseType(nonNull) : { base: null, isArray: false };
+        }
+        if (typeof cwlType === 'object' && cwlType.type === 'array') {
+            const inner = extractBaseType(cwlType.items);
+            return { base: inner.base, isArray: true };
+        }
+        return { base: cwlType, isArray: false };
+    };
+
     const template = {};
     const defaultKeys = new Set(cwlDefaultKeys);
+    const filePlaceholderKeys = new Map();
     for (const [name, def] of Object.entries(wf.inputs)) {
         if (jobDefaults[name] !== undefined) {
             template[name] = jobDefaults[name];
@@ -938,7 +955,13 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
             template[name] = def.default;
             defaultKeys.add(name);
         } else {
-            template[name] = placeholderForType(def.type);
+            const { base, isArray } = extractBaseType(def.type);
+            if (base === 'File' || base === 'Directory') {
+                template[name] = isArray ? [] : null;
+                filePlaceholderKeys.set(name, { base, isArray });
+            } else {
+                template[name] = placeholderForType(def.type);
+            }
         }
     }
     let yaml = YAML.dump(template, { noRefs: true });
@@ -947,6 +970,18 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
         const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const re = new RegExp(`^(${escaped}:.*)$`, 'm');
         yaml = yaml.replace(re, `$1  # tool default`);
+    }
+    // Add structure comments for File/Directory placeholder keys
+    for (const [key, { base, isArray }] of filePlaceholderKeys) {
+        const escaped = key.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const pathLabel = base === 'File' ? '<your/file/path>' : '<your/directory/path>';
+        if (isArray) {
+            const re = new RegExp(`^(${escaped}: \\[\\])$`, 'm');
+            yaml = yaml.replace(re, `$1  # [{class: ${base}, path: ${pathLabel}}]`);
+        } else {
+            const re = new RegExp(`^(${escaped}: null)$`, 'm');
+            yaml = yaml.replace(re, `$1  # {class: ${base}, path: ${pathLabel}}`);
+        }
     }
     return yaml;
 }

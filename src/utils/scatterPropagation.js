@@ -30,12 +30,17 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
     for (const node of nodes) outgoing.set(node.id, []);
     for (const edge of edges) outgoing.get(edge.source)?.push(edge);
 
+    // Collect BIDS node IDs for filtering bids_directory mappings
+    const bidsNodeIds = new Set();
+
     // Phase 1: identify scatter sources
     // - Nodes with explicit scatterInputs
     // - Custom workflow nodes with internal scatter
     // - BIDS nodes with selections (they output File[] arrays)
     const scatteredNodeIds = new Set();
     for (const node of nodes) {
+        if (node.data?.isBIDS) bidsNodeIds.add(node.id);
+
         if ((node.data?.scatterInputs?.length || 0) > 0) {
             scatteredNodeIds.add(node.id);
         } else if (node.data?.isCustomWorkflow &&
@@ -63,8 +68,14 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
             const targetId = edge.target;
             if (scatteredNodeIds.has(targetId)) continue;
 
-            const mappings = edge.data?.mappings || [];
+            let mappings = edge.data?.mappings || [];
             const targetArrayInputs = arrayTypedInputs.get(targetId) || new Set();
+
+            // Skip bids_directory mappings from BIDS nodes — they don't carry scatter
+            if (bidsNodeIds.has(nodeId)) {
+                mappings = mappings.filter(m => m.sourceOutput !== 'bids_directory');
+                if (mappings.length === 0) continue;
+            }
 
             const isGatherEdge = mappings.length > 0 &&
                 mappings.every(m => targetArrayInputs.has(m.targetInput));
@@ -103,11 +114,18 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
 
     // Per-node: which inputs come from scattered upstream (for UI auto-suggest).
     // Skip inputs that are array-typed (gather inputs) — those don't need scatter.
+    // Also skip bids_directory mappings from BIDS nodes — they don't carry scatter.
     const scatteredUpstreamInputs = new Map(); // nodeId → Set<inputName>
     for (const edge of edges) {
         if (!scatteredNodeIds.has(edge.source)) continue;
-        const mappings = edge.data?.mappings || [];
+        let mappings = edge.data?.mappings || [];
         if (mappings.length === 0) continue;
+
+        if (bidsNodeIds.has(edge.source)) {
+            mappings = mappings.filter(m => m.sourceOutput !== 'bids_directory');
+            if (mappings.length === 0) continue;
+        }
+
         const targetArrayInputs = arrayTypedInputs.get(edge.target) || new Set();
         if (!scatteredUpstreamInputs.has(edge.target)) {
             scatteredUpstreamInputs.set(edge.target, new Set());

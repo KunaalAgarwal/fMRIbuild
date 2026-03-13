@@ -41,12 +41,22 @@ const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, 
         return { compatible: true };
     }
 
+    // File[] ↔ Directory: a collection of files is compatible with a directory
+    if (
+        (outBase === 'File' && inBase === 'Directory' && isArrayType(outputType)) ||
+        (outBase === 'Directory' && inBase === 'File' && isArrayType(inputType))
+    ) {
+        return { compatible: true, warning: true, reason: 'File[] treated as Directory' };
+    }
+
     // Base type check — must match before considering array/scatter dimensions
     if (outBase !== inBase) {
         return { compatible: false, reason: `Type mismatch: ${outputType} → ${inputType}` };
     }
 
     // Extension compatibility check for File types
+    // Save warning but don't return early — scatter/gather checks below take priority
+    let extWarning = null;
     if (outBase === 'File' && (outputExtensions || inputAcceptedExtensions)) {
         const extCompat = checkExtensionCompatibility(outputExtensions, inputAcceptedExtensions);
         if (!extCompat.compatible) {
@@ -57,12 +67,7 @@ const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, 
             };
         }
         if (extCompat.warning) {
-            return {
-                compatible: true,
-                warning: true,
-                reason: extCompat.reason,
-                isExtensionWarning: true
-            };
+            extWarning = { warning: true, reason: extCompat.reason, isExtensionWarning: true };
         }
     }
 
@@ -86,6 +91,7 @@ const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, 
         return { compatible: true, scatterNote: true, reason: 'Scatter will be inherited by this step' };
     }
 
+    if (extWarning) return { compatible: true, ...extWarning };
     return { compatible: true };
 };
 
@@ -102,7 +108,7 @@ const getToolIO = (nodeData) => {
     // BIDS Input nodes: dynamic outputs from BIDS selections
     if (isDummy && nodeData.isBIDS) {
         const selections = nodeData.bidsSelections?.selections || {};
-        const outputs = Object.keys(selections).length > 0
+        const fileOutputs = Object.keys(selections).length > 0
             ? Object.entries(selections).map(([key]) => ({
                 name: key,
                 type: 'File[]',
@@ -110,6 +116,10 @@ const getToolIO = (nodeData) => {
                 extensions: [],
             }))
             : [{ name: 'data', type: 'File[]', label: 'data (no selections yet)', extensions: [] }];
+        const outputs = [
+            ...fileOutputs,
+            { name: 'bids_directory', type: 'Directory', label: 'Entire BIDS Directory', description: 'Used when bids_dir is accepted as input', extensions: [] },
+        ];
         return {
             outputs,
             inputs: [],
@@ -527,12 +537,14 @@ const EdgeMappingModal = ({
     const getMappingCompatibility = (outputName, inputName) => {
         const output = outputByName.get(outputName);
         const input = inputByName.get(inputName);
+        // BIDS bids_directory output does not carry scatter
+        const effectiveScattered = sourceIsScattered && !(sourceIO.isBIDS && outputName === 'bids_directory');
         return checkTypeCompatibility(
             output?.type,
             input?.type,
             output?.extensions,
             input?.acceptedExtensions,
-            sourceIsScattered
+            effectiveScattered
         );
     };
 
@@ -644,6 +656,9 @@ const EdgeMappingModal = ({
                                                 </span>
                                                 {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
+                                            {output.description && (
+                                                <div className="io-enum-values">{output.description}</div>
+                                            )}
                                             {output.enumSymbols?.length > 0 && (
                                                 <div className="io-enum-values">{output.enumSymbols.map(s => `'${s}'`).join(', ')}</div>
                                             )}

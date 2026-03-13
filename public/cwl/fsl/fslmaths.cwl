@@ -7,6 +7,9 @@ cwlVersion: v1.2
 class: CommandLineTool
 baseCommand: 'fslmaths'
 
+requirements:
+  ShellCommandRequirement: {}
+
 hints:
   DockerRequirement:
     dockerPull: brainlife/fsl:latest
@@ -338,6 +341,7 @@ inputs:
     inputBinding:
       prefix: -bptf
       position: 8
+      shellQuote: false
 
   # Output data type
   odt:

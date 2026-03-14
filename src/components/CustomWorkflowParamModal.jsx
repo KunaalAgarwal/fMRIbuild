@@ -6,6 +6,7 @@ import ExpressionEditor from './ExpressionEditor.jsx';
 import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import { topoSort } from '../utils/topoSort.js';
 import TagDropdown from './TagDropdown.jsx';
+import ParamControl from './ParamControl.jsx';
 import '../styles/workflowItem.css';
 
 const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, internalEdges, wiredInputs }) => {
@@ -335,134 +336,35 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         setScatterToggles(prev => ({ ...prev, [paramName]: !prev[paramName] }));
     };
 
-    const renderParamControl = (param) => {
-        const isFileType = param.type === 'File' || param.type === 'Directory';
+    // Build scatter button for a param (context-specific logic stays here)
+    const buildScatterButton = (param) => {
         const isFirstNode = currentIndex === firstNodeIndex;
         const isDownstreamScattered = !isFirstNode && (editedNodes[firstNodeIndex]?.scatterInputs?.length || 0) > 0;
         const isBIDSWired = bidsWiredInputs.has(param.name);
 
-        const scatterBtn = isBIDSWired ? (
-            <span
-                className="scatter-toggle active locked"
-                title="Scatter forced by BIDS input"
-            >{'\u21BB'}</span>
-        ) : isFirstNode ? (
-            <span
-                className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}`}
-                onClick={() => handleToggleScatter(param.name)}
-                title={scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
-            >{'\u21BB'}</span>
-        ) : isDownstreamScattered ? (
-            <span
-                className="scatter-toggle locked"
-                title={`Inherited from ${nonDummyNodes[firstNodeIndex]?.label || 'root'}`}
-            >{'\u21BB'}</span>
-        ) : null;
-
-        if (isFileType) {
+        if (isBIDSWired) {
             return (
-                <div className="param-control">
-                    {scatterBtn}
-                    <span
-                        className={`expression-toggle${expressionToggles[param.name] ? ' active' : ''}`}
-                        onClick={() => handleToggleFx(param.name)}
-                        title={expressionToggles[param.name] ? 'Switch to value mode' : 'Switch to expression mode'}
-                    >fx</span>
-                </div>
+                <span className="scatter-toggle active locked" title="Scatter forced by BIDS input">{'\u21BB'}</span>
             );
         }
-
-        // Record type: dropdown to select from mutually exclusive variants
-        if (param.type === 'record' && param.recordVariants) {
+        if (isFirstNode) {
             return (
-                <div className="param-control">
-                    <Form.Select
-                        size="sm"
-                        className={`param-select${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                        value={paramValues[param.name] ?? ''}
-                        onChange={(e) => updateParam(param.name, e.target.value || null)}
-                    >
-                        <option value="">-- none --</option>
-                        {param.recordVariants.map(v => (
-                            <option key={v.name} value={v.name}>
-                                {v.fields?.[v.name]?.label || v.name}
-                            </option>
-                        ))}
-                    </Form.Select>
-                </div>
+                <span
+                    className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}`}
+                    onClick={() => handleToggleScatter(param.name)}
+                    title={scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
+                >{'\u21BB'}</span>
             );
         }
-
-        const isExpressionMode = expressionToggles[param.name] || false;
-
-        if (isExpressionMode) {
+        if (isDownstreamScattered) {
             return (
-                <div className="param-control">
-                    {scatterBtn}
-                    <span className="expression-toggle active" onClick={() => handleToggleFx(param.name)} title="Switch to value mode">fx</span>
-                </div>
+                <span
+                    className="scatter-toggle locked"
+                    title={`Inherited from ${nonDummyNodes[firstNodeIndex]?.label || 'root'}`}
+                >{'\u21BB'}</span>
             );
         }
-
-        const control = param.type === 'boolean' ? (
-            <Form.Check
-                type="switch"
-                id={`cwp-param-${currentNode?.id}-${param.name}`}
-                checked={paramValues[param.name] === true}
-                onChange={(e) => updateParam(param.name, e.target.checked)}
-                className="param-switch"
-            />
-        ) : param.options ? (
-            <Form.Select
-                size="sm"
-                className={`param-select${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                value={paramValues[param.name] ?? ''}
-                onChange={(e) => updateParam(param.name, e.target.value || null)}
-            >
-                <option value="">-- default --</option>
-                {param.options.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                ))}
-            </Form.Select>
-        ) : (param.type === 'int' || param.type === 'double' || param.type === 'float' || param.type === 'long') ? (
-            <Form.Control
-                type="number"
-                size="sm"
-                className={`param-number${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                step={param.type === 'int' || param.type === 'long' ? 1 : 0.01}
-                min={param.bounds ? param.bounds[0] : undefined}
-                max={param.bounds ? param.bounds[1] : undefined}
-                placeholder={param.bounds ? `${param.bounds[0]}..${param.bounds[1]}` : ''}
-                value={paramValues[param.name] ?? ''}
-                onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '') {
-                        updateParam(param.name, null);
-                    } else {
-                        updateParam(param.name, param.type === 'int' || param.type === 'long' ? parseInt(val, 10) : parseFloat(val));
-                    }
-                }}
-                onBlur={() => clampToBounds(param.name, param)}
-            />
-        ) : (
-            <Form.Control
-                type="text"
-                size="sm"
-                className={`param-text${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                value={paramValues[param.name] ?? ''}
-                onChange={(e) => updateParam(param.name, e.target.value || null)}
-            />
-        );
-
-        return (
-            <div className="param-control">
-                <div className="expression-row">
-                    {scatterBtn}
-                    <span className="expression-toggle" onClick={() => handleToggleFx(param.name)} title="Switch to expression mode">fx</span>
-                    {control}
-                </div>
-            </div>
-        );
+        return null;
     };
 
     if (!currentNode) return null;
@@ -606,7 +508,16 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                                 <div className="param-card-header">
                                                     <span className="param-name">{param.name}</span>
                                                     <span className="param-type-badge">{param.type}</span>
-                                                    {renderParamControl(param)}
+                                                    <ParamControl
+                                                        param={param}
+                                                        paramValues={paramValues}
+                                                        updateParam={updateParam}
+                                                        clampToBounds={clampToBounds}
+                                                        expressionToggles={expressionToggles}
+                                                        handleToggleFx={handleToggleFx}
+                                                        scatterButton={buildScatterButton(param)}
+                                                        nodeId={currentNode?.id}
+                                                    />
                                                 </div>
                                                 {isFileType && wiredSources.length === 1 && (
                                                     <div className="input-source-single">

@@ -219,17 +219,12 @@ function getValidUserParam(nodeData, inputName) {
     return undefined;
 }
 
-/** Return a sensible default value for a CWL type. Prefers CWL-defined defaults. */
+/** Return a sensible default value for a CWL type. Prefers CWL-defined defaults.
+ *  Only called for optional (nullable) params. Returns null when no CWL default
+ *  exists — null means "not provided" and prevents CWL from emitting the flag. */
 function defaultForType(type, inputDef) {
     if (inputDef?.hasDefault) return inputDef.defaultValue;
-    switch (type) {
-        case 'boolean': return false;
-        case 'int':     return inputDef?.bounds ? inputDef.bounds[0] : 0;
-        case 'double':  return inputDef?.bounds ? inputDef.bounds[0] : 0.0;
-        case 'string':  return '';
-        case 'enum':    return inputDef?.enumSymbols?.[0] || null;
-        default:        return null;
-    }
+    return null;
 }
 
 /** Generate a workflow-level input name, skipping the step prefix for single-node workflows. */
@@ -744,7 +739,9 @@ export function buildCWLWorkflowObject(graph) {
         }
     }
     for (const selKey of consumedBidsSelections) {
-        wf.inputs[selKey] = { type: { type: 'array', items: 'File' } };
+        wf.inputs[selKey] = selKey === 'bids_directory'
+            ? { type: 'Directory' }
+            : { type: { type: 'array', items: 'File' } };
     }
 
     const conditionalStepIds = new Set();
@@ -901,10 +898,9 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
     const placeholderForType = (cwlType) => {
         if (cwlType == null) return null;
 
-        // Nullable / union: ['null', X] → placeholder for X
+        // Nullable / union: ['null', X] → null (meaning "not provided")
         if (Array.isArray(cwlType)) {
-            const nonNull = cwlType.find(t => t !== 'null');
-            return nonNull ? placeholderForType(nonNull) : null;
+            return null;
         }
 
         // Array: { type: 'array', items: T } → [placeholder(T)]

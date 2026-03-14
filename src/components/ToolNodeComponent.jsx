@@ -7,6 +7,7 @@ import { DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
 import ExpressionEditor from './ExpressionEditor.jsx';
 import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import TagDropdown from './TagDropdown.jsx';
+import ParamControl from './ParamControl.jsx';
 import { usePinnableTooltip } from '../hooks/usePinnableTooltip.js';
 import { labelFontSize } from './nodeUtils.js';
 
@@ -138,125 +139,17 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
         });
     };
 
-    // Shared renderer for param inline controls (used by both required and optional sections)
-    const renderParamControl = (param) => {
-        const isFileType = /^(File|Directory)(\[\])?$/.test(param.type);
+    // Build scatter button for a param (context-specific logic stays here)
+    const buildScatterButton = (param) => {
         const isScatterLocked = upstreamScatterInputs.has(param.name);
         const isGatherLocked = isGatherNode && param.type?.endsWith('[]') && (wiredInputs.get(param.name) || []).length > 0;
         const isLocked = isScatterLocked || isGatherLocked;
-
-        const scatterBtn = (
+        return (
             <span
                 className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}${isLocked ? ' locked' : ''}`}
                 onClick={isLocked ? undefined : () => handleToggleScatter(param.name)}
                 title={isGatherLocked ? 'This input gathers scattered outputs into an array' : isScatterLocked ? 'Inherited from upstream scatter' : scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
             >{'\u21BB'}</span>
-        );
-
-        if (isFileType) {
-            return (
-                <div className="param-control">
-                    {scatterBtn}
-                    <span
-                        className={`expression-toggle${expressionToggles[param.name] ? ' active' : ''}`}
-                        onClick={() => handleToggleFx(param.name)}
-                        title={expressionToggles[param.name] ? 'Switch to value mode' : 'Switch to expression mode'}
-                    >fx</span>
-                </div>
-            );
-        }
-
-        // Record type: dropdown to select from mutually exclusive variants
-        if (param.type === 'record' && param.recordVariants) {
-            return (
-                <div className="param-control">
-                    <Form.Select
-                        size="sm"
-                        className={`param-select${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                        value={paramValues[param.name] ?? ''}
-                        onChange={(e) => updateParam(param.name, e.target.value || null)}
-                    >
-                        <option value="">-- none --</option>
-                        {param.recordVariants.map(v => (
-                            <option key={v.name} value={v.name}>
-                                {v.fields?.[v.name]?.label || v.name}
-                            </option>
-                        ))}
-                    </Form.Select>
-                </div>
-            );
-        }
-
-        const isExpressionMode = expressionToggles[param.name] || false;
-
-        if (isExpressionMode) {
-            return (
-                <div className="param-control">
-                    {scatterBtn}
-                    <span className="expression-toggle active" onClick={() => handleToggleFx(param.name)} title="Switch to value mode">fx</span>
-                </div>
-            );
-        }
-
-        // Value mode: normal scalar controls with fx toggle button
-        const control = param.type === 'boolean' ? (
-            <Form.Check
-                type="switch"
-                id={`param-${id}-${param.name}`}
-                checked={paramValues[param.name] === true}
-                onChange={(e) => updateParam(param.name, e.target.checked)}
-                className="param-switch"
-            />
-        ) : param.options ? (
-            <Form.Select
-                size="sm"
-                className={`param-select${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                value={paramValues[param.name] ?? ''}
-                onChange={(e) => updateParam(param.name, e.target.value || null)}
-            >
-                <option value="">-- default --</option>
-                {param.options.map((opt) => (
-                    <option key={opt} value={opt}>{opt}</option>
-                ))}
-            </Form.Select>
-        ) : (param.type === 'int' || param.type === 'double' || param.type === 'float' || param.type === 'long') ? (
-            <Form.Control
-                type="number"
-                size="sm"
-                className={`param-number${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                step={param.type === 'int' || param.type === 'long' ? 1 : 0.01}
-                min={param.bounds ? param.bounds[0] : undefined}
-                max={param.bounds ? param.bounds[1] : undefined}
-                placeholder={param.bounds ? `${param.bounds[0]}..${param.bounds[1]}` : ''}
-                value={paramValues[param.name] ?? ''}
-                onChange={(e) => {
-                    const val = e.target.value;
-                    if (val === '') {
-                        updateParam(param.name, null);
-                    } else {
-                        updateParam(param.name, param.type === 'int' || param.type === 'long' ? parseInt(val, 10) : parseFloat(val));
-                    }
-                }}
-                onBlur={() => clampToBounds(param.name, param)}
-            />
-        ) : (
-            <Form.Control
-                type="text"
-                size="sm"
-                className={`param-text${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
-                value={paramValues[param.name] ?? ''}
-                onChange={(e) => updateParam(param.name, e.target.value || null)}
-            />
-        );
-
-        return (
-            <div className="param-control">
-                <div className="expression-row">
-                    {scatterBtn}
-                    <span className="expression-toggle" onClick={() => handleToggleFx(param.name)} title="Switch to expression mode">fx</span>
-                    {control}
-                </div>
-            </div>
         );
     };
 
@@ -562,7 +455,16 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                                     <div className="param-card-header">
                                                         <span className="param-name">{param.name}</span>
                                                         <span className="param-type-badge" title={param.enumSymbols?.length ? param.enumSymbols.join(', ') : param.options?.length ? param.options.join(', ') : param.type}>{param.type}</span>
-                                                        {renderParamControl(param)}
+                                                        <ParamControl
+                                                            param={param}
+                                                            paramValues={paramValues}
+                                                            updateParam={updateParam}
+                                                            clampToBounds={clampToBounds}
+                                                            expressionToggles={expressionToggles}
+                                                            handleToggleFx={handleToggleFx}
+                                                            scatterButton={buildScatterButton(param)}
+                                                            nodeId={id}
+                                                        />
                                                     </div>
                                                     {isFileType && wiredSources.length === 1 && (
                                                         <div className="input-source-single">

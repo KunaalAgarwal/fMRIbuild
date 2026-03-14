@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useCallback, useMemo } from 'react';
 import { useDebouncedStorage } from './useDebouncedStorage.js';
 
 export function useCustomWorkflows() {
@@ -13,7 +13,7 @@ export function useCustomWorkflows() {
 
   useDebouncedStorage('customWorkflows', customWorkflows, 300);
 
-  const getNextDefaultName = () => {
+  const getNextDefaultName = useCallback(() => {
     const pattern = /^Custom Workflow (\d+)$/;
     const usedNumbers = customWorkflows
       .map(w => w.name.match(pattern))
@@ -21,9 +21,9 @@ export function useCustomWorkflows() {
       .map(m => parseInt(m[1], 10));
     const next = usedNumbers.length === 0 ? 1 : Math.max(...usedNumbers) + 1;
     return `Custom Workflow ${next}`;
-  };
+  }, [customWorkflows]);
 
-  const saveWorkflow = (workflowData) => {
+  const saveWorkflow = useCallback((workflowData) => {
     // Snapshot for return value (best-effort at call time)
     const existingIndex = customWorkflows.findIndex(w => w.name === workflowData.name);
     if (existingIndex >= 0) {
@@ -53,23 +53,23 @@ export function useCustomWorkflows() {
       updatedAt: Date.now()
     }]);
     return { result: 'created', id: newId };
-  };
+  }, [customWorkflows]);
 
-  const updateWorkflow = (id, updates) => {
+  const updateWorkflow = useCallback((id, updates) => {
     setCustomWorkflows(prev => prev.map(w =>
       w.id === id ? { ...w, ...updates, updatedAt: Date.now() } : w
     ));
-  };
+  }, []);
 
-  const deleteWorkflow = (id) => {
+  const deleteWorkflow = useCallback((id) => {
     setCustomWorkflows(prev => prev.filter(w => w.id !== id));
-  };
+  }, []);
 
-  return {
+  return useMemo(() => ({
     customWorkflows,
     saveWorkflow,
     updateWorkflow,
     deleteWorkflow,
     getNextDefaultName
-  };
+  }), [customWorkflows, saveWorkflow, updateWorkflow, deleteWorkflow, getNextDefaultName]);
 }

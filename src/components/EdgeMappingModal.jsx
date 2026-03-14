@@ -654,7 +654,6 @@ const EdgeMappingModal = ({
                                                 <span className="io-type" title={output.type + (output.extensions?.length ? ' (' + output.extensions.join(', ') + ')' : '') + (output.enumSymbols?.length ? ' (' + output.enumSymbols.join(', ') + ')' : '')}>
                                                     {formatTypeHint(output.type, output.extensions)}
                                                 </span>
-                                                {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
                                             {output.description && (
                                                 <div className="io-enum-values">{output.description}</div>
@@ -824,7 +823,6 @@ const EdgeMappingModal = ({
                                                 <span className="io-type" title={input.type + (input.acceptedExtensions?.length ? ' (' + input.acceptedExtensions.join(', ') + ')' : '') + (input.enumSymbols?.length ? ' (' + input.enumSymbols.join(', ') + ')' : '')}>
                                                     {formatTypeHint(input.type, input.acceptedExtensions)}
                                                 </span>
-                                                {!compatibility.compatible && <span className="warning-icon" title={compatibility.reason}>⚠️</span>}
                                             </div>
                                             {input.label && input.label !== input.name && (
                                                 <div className="io-label">{input.label}</div>

@@ -106,9 +106,9 @@ function CWLPreviewPanel({ getWorkflowData }) {
         }).catch(() => showWarning('Copy to clipboard failed'));
     }, [activeContent]);
 
-    const highlightedHtml = useMemo(() => activeContent ? highlightYaml(activeContent) : '', [activeContent]);
     const highlightedCwl = useMemo(() => cwlOutput ? highlightYaml(cwlOutput) : '', [cwlOutput]);
     const highlightedJob = useMemo(() => jobOutput ? highlightYaml(jobOutput) : '', [jobOutput]);
+    const highlightedHtml = activeTab === 'workflow' ? highlightedCwl : highlightedJob;
 
     const handleCopyPane = useCallback((content, pane) => {
         navigator.clipboard.writeText(content).then(() => {

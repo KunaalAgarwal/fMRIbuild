@@ -1,14 +1,5 @@
 # niBuild
 
-**Visual workflow builder for reproducible neuroimaging analysis**
-
-[![Live Demo](https://img.shields.io/badge/Live_Demo-niBuild-4a90e2?style=for-the-badge)](https://kunaalagarwal.github.io/niBuild/)
-
-<!-- TODO: Add screenshot here once a canonical screenshot is committed -->
-<!-- ![niBuild Screenshot](docs/screenshot.png) -->
-
-## Why niBuild?
-
 Neuroimaging analysis suffers from a reproducibility crisis. The same dataset analyzed by different teams produces divergent results due to software versions, parameter choices, and undocumented processing steps ([Eklund et al., 2016](https://doi.org/10.1073/pnas.1602413113); [Botvinik-Nezer et al., 2020](https://doi.org/10.1038/s41586-020-2314-9)). Manual pipeline scripting is error-prone, hard to share, and rarely portable across computing environments.
 
 niBuild addresses this by providing a **no-code, browser-based GUI** where researchers visually design analysis workflows from **100+ neuroimaging tools across 9 libraries**, then export a self-contained [Workflow RO-Crate](https://w3id.org/workflowhub/workflow-ro-crate/1.0) bundle with [CWL](https://www.commonwl.org/) workflows, Docker/Singularity containers, and FAIR-compliant metadata — all without installing anything.

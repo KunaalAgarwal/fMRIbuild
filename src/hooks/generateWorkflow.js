@@ -16,6 +16,43 @@ import {
 } from '../utils/workflowTemplates.js';
 
 /* ====================================================================
+ *  Operation order helpers (fslmaths etc.)
+ * ==================================================================== */
+
+const FIXED_POSITION_PARAMS = new Set(['input', 'output', 'odt']);
+
+/**
+ * Rewrite inputBinding.position values in a parsed CWL document
+ * according to the user's desired operation order.
+ */
+function rewriteInputPositions(cwlDoc, operationOrder) {
+    if (!cwlDoc.inputs || !operationOrder.length) return;
+
+    let pos = 2; // Start after input (position 1)
+    for (const paramName of operationOrder) {
+        if (FIXED_POSITION_PARAMS.has(paramName)) continue;
+        const input = cwlDoc.inputs[paramName];
+        if (!input?.inputBinding) continue;
+        input.inputBinding.position = pos;
+        // Keep kernel_size adjacent to kernel_type
+        if (paramName === 'kernel_type' && cwlDoc.inputs.kernel_size?.inputBinding) {
+            cwlDoc.inputs.kernel_size.inputBinding.position = pos + 1;
+            pos += 2;
+        } else {
+            pos++;
+        }
+    }
+    // Assign remaining non-fixed, non-ordered params after the ordered ones
+    for (const [name, input] of Object.entries(cwlDoc.inputs)) {
+        if (FIXED_POSITION_PARAMS.has(name)) continue;
+        if (name === 'kernel_size') continue; // handled with kernel_type
+        if (operationOrder.includes(name)) continue;
+        if (!input?.inputBinding) continue;
+        input.inputBinding.position = pos++;
+    }
+}
+
+/* ====================================================================
  *  Docker export helpers
  * ==================================================================== */
 
@@ -125,9 +162,11 @@ export function useGenerateWorkflow() {
         let mainCWL;
         let jobYml;
         let runtimeInputs;
+        let positionOverrides = [];
         try {
             const result = buildCWLWorkflowObject(graph);
             const { wf, jobDefaults, cwlDefaultKeys } = result;
+            positionOverrides = result.positionOverrides || [];
             mainCWL = YAML.dump(wf, { noRefs: true });
             jobYml = buildJobTemplate(wf, jobDefaults, cwlDefaultKeys);
             runtimeInputs = extractRuntimeFileInputs(wf, jobDefaults);
@@ -228,6 +267,32 @@ export function useGenerateWorkflow() {
             }
 
             zip.file(p, cwlContent);
+        }
+
+        /* ---------- generate per-node CWL variants for order-sensitive tools ---------- */
+        const fetchedCWLMap = new Map(
+            results.filter(r => r.status === 'fulfilled').map(r => [r.value.path, r.value.text])
+        );
+        for (const override of positionOverrides) {
+            const baseText = fetchedCWLMap.get(override.cwlPath);
+            if (!baseText) continue;
+            try {
+                const cwlDoc = YAML.load(baseText);
+                rewriteInputPositions(cwlDoc, override.operationOrder);
+                // Also inject Docker version
+                const dockerInfo = dockerVersionMap[override.cwlPath];
+                if (dockerInfo) {
+                    if (!cwlDoc.hints) cwlDoc.hints = {};
+                    cwlDoc.hints.DockerRequirement = {
+                        dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`
+                    };
+                }
+                const hasShebang = baseText.startsWith('#!/');
+                const shebangLine = hasShebang ? baseText.split('\n')[0] + '\n\n' : '';
+                zip.file(override.customCwlPath, shebangLine + YAML.dump(cwlDoc, { noRefs: true, lineWidth: -1 }));
+            } catch (parseErr) {
+                showWarning(`Could not generate CWL variant for ${override.customCwlPath}: ${parseErr.message}`);
+            }
         }
 
         /* ---------- detect BIDS nodes ---------- */

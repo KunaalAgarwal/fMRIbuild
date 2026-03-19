@@ -159,6 +159,7 @@ function parseInput(name, def) {
         name,
         label,
         flag,
+        position: def.inputBinding?.position ?? null,
         hasDefault,
         defaultValue: hasDefault ? def.default : undefined,
         ...typeInfo,

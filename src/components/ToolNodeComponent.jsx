@@ -8,6 +8,7 @@ import ExpressionEditor from './ExpressionEditor.jsx';
 import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import TagDropdown from './TagDropdown.jsx';
 import ParamControl from './ParamControl.jsx';
+import OperationOrderPanel from './OperationOrderPanel.jsx';
 import { usePinnableTooltip } from '../hooks/usePinnableTooltip.js';
 import { labelFontSize } from './nodeUtils.js';
 
@@ -28,6 +29,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
     const [whenTouched, setWhenTouched] = useState(false);
     const [expressionValues, setExpressionValues] = useState(data.expressions || {});
     const [expressionToggles, setExpressionToggles] = useState({});
+    const [operationOrder, setOperationOrder] = useState(data.operationOrder || []);
 
     const infoTip = usePinnableTooltip();
 
@@ -153,6 +155,13 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
         );
     };
 
+    // Toggle a file parameter in/out of the operation order (for orderSensitive tools)
+    const toggleFileInOrder = (name) => {
+        setOperationOrder(prev =>
+            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+        );
+    };
+
     const handleOpenModal = () => {
         // Initialize scatter toggles from saved scatterInputs or auto-suggest from upstream
         const scatterInit = {};
@@ -187,6 +196,9 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
         });
         setExpressionValues(displayExpressions);
         setExpressionToggles(toggles);
+
+        // Initialize operationOrder from saved data
+        setOperationOrder(data.operationOrder || []);
 
         // Initialize paramValues from saved data (object or legacy JSON string)
         const existing = data.parameters;
@@ -236,6 +248,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                     ? `$(inputs.${whenParam} ${whenCondition.trim()})`
                     : '',
                 expressions: cleanedExpressions,
+                operationOrder: tool?.orderSensitive ? operationOrder : undefined,
             });
         }
 
@@ -410,6 +423,17 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                             </div>
                         </Form.Group>
 
+                        {/* Operation ordering for tools like fslmaths */}
+                        {tool?.orderSensitive && (
+                            <OperationOrderPanel
+                                allParams={[...allParams.required, ...allParams.optional]}
+                                paramValues={paramValues}
+                                wiredInputs={wiredInputs}
+                                operationOrder={operationOrder}
+                                onOrderChange={setOperationOrder}
+                            />
+                        )}
+
                         {/* Scatter Method (visible only when 2+ scatter inputs active) */}
                         {(() => {
                             const activeScatterCount = Object.values(scatterToggles).filter(Boolean).length;
@@ -465,6 +489,15 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                                             scatterButton={buildScatterButton(param)}
                                                             nodeId={id}
                                                         />
+                                                        {tool?.orderSensitive && isFileType && wiredSources.length === 0 && (
+                                                            <span
+                                                                className={`operation-order-toggle ${operationOrder.includes(param.name) ? 'active' : ''}`}
+                                                                onClick={() => toggleFileInOrder(param.name)}
+                                                                title={operationOrder.includes(param.name) ? 'Remove from operation order' : 'Add to operation order'}
+                                                            >
+                                                                {operationOrder.includes(param.name) ? '\u2212' : '+'}
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     {isFileType && wiredSources.length === 1 && (
                                                         <div className="input-source-single">
@@ -536,6 +569,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                     </div>
                                 </div>
                             )}
+
                         </div>
 
                     </Form>

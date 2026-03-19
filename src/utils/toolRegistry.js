@@ -79,6 +79,7 @@ function mergeToolData(toolName, parsed, annotation) {
             type,
             label: inputDef.label,
             flag: inputDef.flag || null,
+            position: inputDef.position ?? null,
             hasDefault: inputDef.hasDefault || false,
             defaultValue: inputDef.defaultValue,
         };
@@ -144,6 +145,7 @@ function mergeToolData(toolName, parsed, annotation) {
         keyPoints: annotation.keyPoints,
         typicalUse: annotation.typicalUse,
         docUrl: annotation.docUrl,
+        orderSensitive: annotation.orderSensitive || false,
     };
 }
 

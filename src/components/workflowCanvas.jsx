@@ -437,6 +437,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     linkMergeOverrides: u.linkMergeOverrides || d.linkMergeOverrides || {},
     whenExpression: u.whenExpression !== undefined ? u.whenExpression : (d.whenExpression || ''),
     expressions: u.expressions || d.expressions || {},
+    operationOrder: u.operationOrder || d.operationOrder || [],
     notes: u.notes ?? d.notes ?? '',
   }));
 
@@ -677,17 +678,10 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     });
   }, [nodes, edges, reactFlowInstance, markForSync]);
 
-  // --- Global Key Listener for "Delete" Key + Auto-Layout Shortcut ---
+  // --- Global Key Listener for Auto-Layout Shortcut ---
+  // Note: Delete key is handled natively by ReactFlow via onNodesDelete.
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'Delete') {
-        if (reactFlowInstance) {
-          const selectedNodes = reactFlowInstance.getNodes().filter((node) => node.selected);
-          if (selectedNodes.length > 0) {
-            onNodesDelete(selectedNodes);
-          }
-        }
-      }
       if (e.ctrlKey && e.shiftKey && e.key === 'L') {
         e.preventDefault();
         handleAutoLayout();
@@ -696,7 +690,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [reactFlowInstance, onNodesDelete, handleAutoLayout]);
+  }, [handleAutoLayout]);
 
   // Provide complete workflow data for exporting.
   const getWorkflowData = () => ({

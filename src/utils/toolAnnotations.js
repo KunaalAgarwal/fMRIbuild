@@ -410,6 +410,7 @@ export const TOOL_ANNOTATIONS = {
     },
     "fslmaths": {
         "cwlPath": "cwl/fsl/fslmaths.cwl",
+        "orderSensitive": true,
         "fullName": "FSL Mathematical Image Operations (fslmaths)",
         "function": "Performs a wide range of voxelwise mathematical operations on NIfTI images including arithmetic, filtering, thresholding, and morphological operations.",
         "modality": "3D or 4D NIfTI volume(s).",

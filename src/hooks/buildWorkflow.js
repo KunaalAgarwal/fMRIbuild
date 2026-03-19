@@ -745,6 +745,7 @@ export function buildCWLWorkflowObject(graph) {
     }
 
     const conditionalStepIds = new Set();
+    const positionOverrides = [];
     const jobDefaults = {};
     const cwlDefaultKeys = new Set();
 
@@ -821,12 +822,25 @@ export function buildCWLWorkflowObject(graph) {
         const stepId = getStepId(nodeId);
         const isSingleNode = nodes.length === 1;
 
-        // Step skeleton
+        // Step skeleton — use per-node CWL variant if operation order is customized
+        const hasCustomOrder = effectiveTool.orderSensitive
+            && Array.isArray(node.data.operationOrder)
+            && node.data.operationOrder.length > 0;
+        const customCwlPath = hasCustomOrder
+            ? effectiveTool.cwlPath.replace(/\.cwl$/, `_${stepId}.cwl`)
+            : null;
         const step = {
-            run: `../${effectiveTool.cwlPath}`,
+            run: `../${customCwlPath || effectiveTool.cwlPath}`,
             in: {},
             out: Object.keys(effectiveTool.outputs)
         };
+        if (hasCustomOrder) {
+            positionOverrides.push({
+                cwlPath: effectiveTool.cwlPath,
+                customCwlPath,
+                operationOrder: node.data.operationOrder,
+            });
+        }
 
         // Populate step.in and workflow inputs
         buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingleNode);
@@ -885,7 +899,7 @@ export function buildCWLWorkflowObject(graph) {
     if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
     if (Object.keys(requirements).length > 0) wf.requirements = requirements;
 
-    return { wf, jobDefaults, cwlDefaultKeys };
+    return { wf, jobDefaults, cwlDefaultKeys, positionOverrides };
 }
 
 

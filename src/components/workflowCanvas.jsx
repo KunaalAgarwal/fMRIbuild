@@ -16,12 +16,12 @@ import NodeComponent from './NodeComponent';
 import EdgeMappingModal from './EdgeMappingModal';
 import BIDSDataModal from './BIDSDataModal';
 import { useNodeLookup } from '../hooks/useNodeLookup.js';
+import { useBIDSHandler } from '../hooks/useBIDSHandler.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
-import { parseBIDSDirectory } from '../utils/bidsParser.js';
 import { useToast } from '../context/ToastContext.jsx';
 import { layoutGraph } from '../utils/layoutGraph.js';
 
@@ -294,13 +294,17 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
   const [editingEdge, setEditingEdge] = useState(null);
   const [edgeModalData, setEdgeModalData] = useState(null);
 
-  // BIDS modal state
-  const [showBIDSModal, setShowBIDSModal] = useState(false);
-  const [bidsModalNodeId, setBidsModalNodeId] = useState(null);
   const [toolsHidden, setToolsHidden] = useState(false);
-  const bidsFileInputRef = useRef(null);
-  const bidsPickerTargetRef = useRef(null);
   const { showError, showWarning, showInfo } = useToast();
+
+  // BIDS node state and handlers
+  const {
+    showBIDSModal, bidsModalNodeId,
+    bidsFileInputRef, bidsPickerTargetRef,
+    handleBIDSNodeUpdate, handleInternalBIDSUpdate,
+    triggerBIDSDirectoryPicker,
+    handleBIDSDirectorySelected, handleBIDSModalClose,
+  } = useBIDSHandler({ setNodes, markForSync, showError, showWarning, showInfo });
 
   // --- INITIALIZATION & Synchronization ---
   // This effect watches for changes in the persistent workspace.
@@ -416,207 +420,37 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     };
   }, [reactFlowInstance]);
 
-  // Update a node's parameters and dockerVersion.
-  const handleNodeUpdate = (nodeId, updatedData) => {
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-          node.id === nodeId
-              ? {
-                  ...node,
-                  data: {
-                    ...node.data,
-                    parameters: updatedData.params || updatedData,
-                    dockerVersion: updatedData.dockerVersion || node.data.dockerVersion || 'latest',
-                    scatterInputs: updatedData.scatterInputs || node.data.scatterInputs || [],
-                    scatterMethod: updatedData.scatterMethod !== undefined
-                        ? updatedData.scatterMethod
-                        : node.data.scatterMethod,
-                    linkMergeOverrides: updatedData.linkMergeOverrides || node.data.linkMergeOverrides || {},
-                    whenExpression: updatedData.whenExpression !== undefined
-                        ? updatedData.whenExpression
-                        : (node.data.whenExpression || ''),
-                    expressions: updatedData.expressions || node.data.expressions || {},
-                    notes: updatedData.notes ?? node.data.notes ?? '',
-                  }
-                }
-              : node
-      )
-    );
+  // Generic node data updater — applies a transform function to a single node's data.
+  const updateNodeData = (nodeId, transform) => {
+    setNodes(prev => prev.map(n =>
+      n.id === nodeId ? { ...n, data: transform(n.data) } : n
+    ));
     markForSync();
   };
 
-  // Update a custom workflow node's internal nodes (parameter edits).
-  const handleCustomNodeUpdate = (nodeId, updatedData) => {
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                internalNodes: updatedData.internalNodes || node.data.internalNodes,
-                notes: updatedData.notes ?? node.data.notes ?? '',
-              }
-            }
-          : node
-      )
-    );
-    markForSync();
-  };
+  const handleNodeUpdate = (nodeId, u) => updateNodeData(nodeId, d => ({
+    ...d,
+    parameters: u.params || u,
+    dockerVersion: u.dockerVersion || d.dockerVersion || 'latest',
+    scatterInputs: u.scatterInputs || d.scatterInputs || [],
+    scatterMethod: u.scatterMethod !== undefined ? u.scatterMethod : d.scatterMethod,
+    linkMergeOverrides: u.linkMergeOverrides || d.linkMergeOverrides || {},
+    whenExpression: u.whenExpression !== undefined ? u.whenExpression : (d.whenExpression || ''),
+    expressions: u.expressions || d.expressions || {},
+    notes: u.notes ?? d.notes ?? '',
+  }));
 
-  // Update an I/O (dummy) node's label and notes.
-  const handleIONodeUpdate = (nodeId, updatedData) => {
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                label: updatedData.label ?? node.data.label,
-                notes: updatedData.notes ?? node.data.notes ?? '',
-              }
-            }
-          : node
-      )
-    );
-    markForSync();
-  };
+  const handleCustomNodeUpdate = (nodeId, u) => updateNodeData(nodeId, d => ({
+    ...d, internalNodes: u.internalNodes || d.internalNodes, notes: u.notes ?? d.notes ?? '',
+  }));
 
-  // Update an Output node's selected outputs configuration.
-  const handleOutputNodeUpdate = (nodeId, updatedData) => {
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-        node.id === nodeId
-          ? {
-              ...node,
-              data: {
-                ...node.data,
-                selectedOutputs: updatedData.selectedOutputs,
-              }
-            }
-          : node
-      )
-    );
-    markForSync();
-  };
+  const handleIONodeUpdate = (nodeId, u) => updateNodeData(nodeId, d => ({
+    ...d, label: u.label ?? d.label, notes: u.notes ?? d.notes ?? '',
+  }));
 
-  // --- BIDS node handlers ---
-  const handleBIDSNodeUpdate = (nodeId, updates) => {
-    // Handle signal actions from NodeComponent
-    if (updates._openModal) {
-      bidsPickerTargetRef.current = nodeId;
-      setBidsModalNodeId(nodeId);
-      setShowBIDSModal(true);
-      return;
-    }
-    if (updates._pickDirectory) {
-      bidsPickerTargetRef.current = nodeId;
-      bidsFileInputRef.current?.click();
-      return;
-    }
-    // Normal data update
-    setNodes((prevNodes) =>
-      prevNodes.map((node) =>
-        node.id === nodeId
-          ? { ...node, data: { ...node.data, ...updates } }
-          : node
-      )
-    );
-    markForSync();
-  };
-
-  // Update an internal BIDS node within a custom workflow node
-  const updateInternalBIDSNode = (cwNodeId, updates) => {
-    setNodes((prevNodes) =>
-      prevNodes.map((node) => {
-        if (node.id !== cwNodeId) return node;
-        const updatedInternalNodes = (node.data.internalNodes || []).map(n =>
-          n.isBIDS ? { ...n, ...updates } : n
-        );
-        return {
-          ...node,
-          data: { ...node.data, internalNodes: updatedInternalNodes }
-        };
-      })
-    );
-    markForSync();
-  };
-
-  // Handle BIDS actions for internal BIDS nodes within custom workflows
-  const handleInternalBIDSUpdate = (cwNodeId, updates) => {
-    if (updates._openModal) {
-      bidsPickerTargetRef.current = { cwNodeId };
-      setBidsModalNodeId(cwNodeId);
-      setShowBIDSModal(true);
-      return;
-    }
-    if (updates._pickDirectory) {
-      bidsPickerTargetRef.current = { cwNodeId };
-      bidsFileInputRef.current?.click();
-      return;
-    }
-  };
-
-  const triggerBIDSDirectoryPicker = (nodeId) => {
-    bidsPickerTargetRef.current = nodeId;
-    bidsFileInputRef.current?.click();
-  };
-
-  const handleBIDSDirectorySelected = async (event) => {
-    const files = event.target.files;
-    if (!files || files.length === 0) return;
-
-    const target = bidsPickerTargetRef.current;
-    if (!target) return;
-
-    const result = await parseBIDSDirectory(files);
-
-    if (result.errors.length > 0) {
-      result.errors.forEach(e => showError(e, 6000));
-      // Reset file input
-      event.target.value = '';
-      return;
-    }
-
-    if (result.warnings.length > 0) {
-      result.warnings.forEach(w => showWarning(w, 5000));
-    }
-
-    if (result.info.length > 0) {
-      showInfo(result.info.join(' '));
-    }
-
-    // Store structure and open modal — route to internal or regular BIDS node
-    if (target !== null && typeof target === 'object' && target.cwNodeId) {
-      updateInternalBIDSNode(target.cwNodeId, { bidsStructure: result.bidsStructure });
-      setBidsModalNodeId(target.cwNodeId);
-    } else {
-      handleBIDSNodeUpdate(target, { bidsStructure: result.bidsStructure });
-      setBidsModalNodeId(target);
-    }
-    setShowBIDSModal(true);
-
-    // Reset file input so same directory can be re-selected
-    event.target.value = '';
-  };
-
-  const handleBIDSModalClose = (bidsSelections) => {
-    if (bidsSelections && bidsModalNodeId) {
-      const target = bidsPickerTargetRef.current;
-      if (target !== null && typeof target === 'object' && target.cwNodeId) {
-        // Internal BIDS node within a custom workflow
-        updateInternalBIDSNode(target.cwNodeId, { bidsSelections });
-      } else {
-        // Regular BIDS node
-        handleBIDSNodeUpdate(bidsModalNodeId, {
-          bidsSelections,
-        });
-      }
-    }
-    setShowBIDSModal(false);
-    setBidsModalNodeId(null);
-  };
+  const handleOutputNodeUpdate = (nodeId, u) => updateNodeData(nodeId, d => ({
+    ...d, selectedOutputs: u.selectedOutputs,
+  }));
 
   // Build a flat node-info object for the EdgeMappingModal from a ReactFlow node.
   const buildEdgeModalNode = useCallback((node) => ({

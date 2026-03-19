@@ -717,6 +717,7 @@
   justify-content: space-between;
   padding: 2px 0;
   overflow: hidden;
+  height: 24px;
 }
 
 .node-content .handle-label {

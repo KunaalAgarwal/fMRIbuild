@@ -77,7 +77,13 @@ const ParamControl = ({
             size="sm"
             className={`param-select${paramValues[param.name] != null && paramValues[param.name] !== '' ? ' filled' : ''}`}
             value={paramValues[param.name] ?? ''}
-            onChange={(e) => updateParam(param.name, e.target.value || null)}
+            onChange={(e) => {
+                const raw = e.target.value;
+                if (!raw) { updateParam(param.name, null); return; }
+                if (param.type === 'int' || param.type === 'long') { updateParam(param.name, parseInt(raw, 10)); return; }
+                if (param.type === 'float' || param.type === 'double') { updateParam(param.name, parseFloat(raw)); return; }
+                updateParam(param.name, raw);
+            }}
         >
             <option value="">-- default --</option>
             {param.options.map((opt) => (

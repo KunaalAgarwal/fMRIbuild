@@ -955,12 +955,29 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
         return { base: cwlType, isArray: false };
     };
 
+    // Coerce a value to match its declared CWL type so that js-yaml
+    // serialises it correctly (e.g. 1 instead of '1' for int params).
+    const coerceToType = (value, cwlType) => {
+        if (value === null || value === undefined) return value;
+        const { base } = extractBaseType(cwlType);
+        switch (base) {
+            case 'int': case 'long':
+                return typeof value === 'number' ? value : parseInt(value, 10);
+            case 'float': case 'double':
+                return typeof value === 'number' ? value : parseFloat(value);
+            case 'boolean':
+                return typeof value === 'boolean' ? value : (value === 'true' || value === true);
+            default:
+                return value;
+        }
+    };
+
     const template = {};
     const defaultKeys = new Set(cwlDefaultKeys);
     const filePlaceholderKeys = new Map();
     for (const [name, def] of Object.entries(wf.inputs)) {
         if (jobDefaults[name] !== undefined) {
-            template[name] = jobDefaults[name];
+            template[name] = coerceToType(jobDefaults[name], def.type);
         } else if (def.default !== undefined) {
             template[name] = def.default;
             defaultKeys.add(name);

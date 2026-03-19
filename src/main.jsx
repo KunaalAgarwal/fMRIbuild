@@ -18,7 +18,7 @@ import { TOOL_ANNOTATIONS } from './utils/toolAnnotations.js';
 import { preloadAllCWL } from './utils/cwlParser.js';
 import { invalidateMergeCache } from './utils/toolRegistry.js';
 import { topoSort } from './utils/topoSort.js';
-import { serializeNodes, serializeEdges, hasUnsavedChanges, computeWorkflowDiff } from './utils/workflowDiff.js';
+import { serializeNodes, serializeEdges, deserializeNode, hasUnsavedChanges, computeWorkflowDiff } from './utils/workflowDiff.js';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
@@ -202,27 +202,7 @@ function App() {
         }
 
         // Convert serialized nodes back to canvas format
-        const nodes = workflow.nodes.map(n => ({
-            id: n.id,
-            type: 'default',
-            data: {
-                label: n.label,
-                isDummy: n.isDummy,
-                isBIDS: n.isBIDS || false,
-                bidsStructure: n.bidsStructure || null,
-                bidsSelections: n.bidsSelections || null,
-                notes: n.notes || '',
-                parameters: n.parameters || {},
-                dockerVersion: n.dockerVersion || 'latest',
-                scatterInputs: n.scatterInputs,
-                scatterMethod: n.scatterMethod,
-                linkMergeOverrides: n.linkMergeOverrides || {},
-                whenExpression: n.whenExpression || '',
-                expressions: n.expressions || {},
-            },
-            position: n.position || { x: 0, y: 0 },
-        }));
-
+        const nodes = workflow.nodes.map(deserializeNode);
         const edges = workflow.edges.map(e => ({
             id: e.id,
             source: e.source,
@@ -266,27 +246,7 @@ function App() {
         const workflow = customWorkflows.find(w => w.id === savedWorkflowId);
         if (!workflow) return;
 
-        const nodes = workflow.nodes.map(n => ({
-            id: n.id,
-            type: 'default',
-            data: {
-                label: n.label,
-                isDummy: n.isDummy,
-                isBIDS: n.isBIDS || false,
-                bidsStructure: n.bidsStructure || null,
-                bidsSelections: n.bidsSelections || null,
-                notes: n.notes || '',
-                parameters: n.parameters || {},
-                dockerVersion: n.dockerVersion || 'latest',
-                scatterInputs: n.scatterInputs,
-                scatterMethod: n.scatterMethod,
-                linkMergeOverrides: n.linkMergeOverrides || {},
-                whenExpression: n.whenExpression || '',
-                expressions: n.expressions || {},
-            },
-            position: n.position || { x: 0, y: 0 },
-        }));
-
+        const nodes = workflow.nodes.map(deserializeNode);
         const edges = workflow.edges.map(e => ({
             id: e.id,
             source: e.source,

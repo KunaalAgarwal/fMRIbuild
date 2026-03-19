@@ -25,8 +25,37 @@ export function serializeNodes(nodes) {
         linkMergeOverrides: n.data?.linkMergeOverrides || {},
         whenExpression: n.data?.whenExpression || '',
         expressions: n.data?.expressions || {},
+        operationOrder: n.data?.operationOrder || n.operationOrder || [],
         position: n.position || { x: 0, y: 0 }
     }));
+}
+
+/**
+ * Convert a serialized (flat) node back into ReactFlow canvas format.
+ * Single source of truth for deserialization — used by main.jsx and buildWorkflow.js.
+ */
+export function deserializeNode(n) {
+    return {
+        id: n.id,
+        type: 'default',
+        data: {
+            label: n.label,
+            isDummy: n.isDummy || false,
+            isBIDS: n.isBIDS || false,
+            bidsStructure: n.bidsStructure || null,
+            bidsSelections: n.bidsSelections || null,
+            notes: n.notes || '',
+            parameters: n.parameters || {},
+            dockerVersion: n.dockerVersion || 'latest',
+            scatterInputs: n.scatterInputs,
+            scatterMethod: n.scatterMethod,
+            linkMergeOverrides: n.linkMergeOverrides || {},
+            whenExpression: n.whenExpression || '',
+            expressions: n.expressions || {},
+            operationOrder: n.operationOrder || [],
+        },
+        position: n.position || { x: 0, y: 0 },
+    };
 }
 
 export function serializeEdges(edges) {

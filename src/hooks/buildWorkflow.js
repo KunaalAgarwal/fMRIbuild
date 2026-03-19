@@ -2,6 +2,7 @@ import YAML from 'js-yaml';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { computeScatteredNodes } from '../utils/scatterPropagation.js';
 import { topoSort } from '../utils/topoSort.js';
+import { deserializeNode } from '../utils/workflowDiff.js';
 
 /**
  * Expand custom workflow nodes into their internal nodes/edges.
@@ -24,26 +25,9 @@ function expandCustomWorkflowNodes(graph) {
         const { internalNodes = [], internalEdges = [] } = customNode.data;
 
         for (const iNode of internalNodes) {
-            expandedNodes.push({
-                id: `${customNode.id}__${iNode.id}`,
-                type: 'default',
-                data: {
-                    label: iNode.label,
-                    isDummy: iNode.isDummy || false,
-                    isBIDS: iNode.isBIDS || false,
-                    bidsStructure: iNode.bidsStructure || null,
-                    bidsSelections: iNode.bidsSelections || null,
-                    notes: iNode.notes || '',
-                    parameters: iNode.parameters || {},
-                    dockerVersion: iNode.dockerVersion || 'latest',
-                    scatterInputs: iNode.scatterInputs,
-                    scatterMethod: iNode.scatterMethod,
-                    linkMergeOverrides: iNode.linkMergeOverrides || {},
-                    whenExpression: iNode.whenExpression || '',
-                    expressions: iNode.expressions || {},
-                },
-                position: iNode.position || { x: 0, y: 0 },
-            });
+            const deserialized = deserializeNode(iNode);
+            deserialized.id = `${customNode.id}__${iNode.id}`;
+            expandedNodes.push(deserialized);
         }
 
         for (const iEdge of internalEdges) {

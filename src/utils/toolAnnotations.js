@@ -3492,6 +3492,9 @@ export const modalityDescriptions = {
     "Pipelines": "Complete multi-step analysis pipelines that chain several operations internally. Each tool orchestrates preprocessing, registration, segmentation, or analysis stages as a single command."
 };
 
+/** Parameters whose CLI position is fixed and should not be reordered by operation-order. */
+export const FIXED_POSITION_PARAMS = new Set(['input', 'output', 'odt', 'kernel_size']);
+
 export const MODALITY_ASSIGNMENTS = {
   'Structural MRI': {
     FSL: {

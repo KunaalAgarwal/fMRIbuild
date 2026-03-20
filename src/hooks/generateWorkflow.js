@@ -3,6 +3,7 @@ import { saveAs } from 'file-saver';
 import YAML from 'js-yaml';
 import { buildCWLWorkflowObject, buildJobTemplate } from './buildWorkflow.js';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
+import { FIXED_POSITION_PARAMS } from '../utils/toolAnnotations.js';
 import { buildROCrateMetadata } from '../utils/buildROCrateMetadata.js';
 import { useToast } from '../context/ToastContext.jsx';
 import {
@@ -18,8 +19,6 @@ import {
 /* ====================================================================
  *  Operation order helpers (fslmaths etc.)
  * ==================================================================== */
-
-const FIXED_POSITION_PARAMS = new Set(['input', 'output', 'odt']);
 
 /**
  * Rewrite inputBinding.position values in a parsed CWL document
@@ -45,7 +44,6 @@ function rewriteInputPositions(cwlDoc, operationOrder) {
     // Assign remaining non-fixed, non-ordered params after the ordered ones
     for (const [name, input] of Object.entries(cwlDoc.inputs)) {
         if (FIXED_POSITION_PARAMS.has(name)) continue;
-        if (name === 'kernel_size') continue; // handled with kernel_type
         if (operationOrder.includes(name)) continue;
         if (!input?.inputBinding) continue;
         input.inputBinding.position = pos++;

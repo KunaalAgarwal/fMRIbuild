@@ -2,8 +2,7 @@
  * Workflow serialization and diff utilities.
  * Moved from main.jsx and extended with structured diff computation.
  */
-import { computeScatteredNodes } from './scatterPropagation.js';
-import { getToolConfigSync } from './toolRegistry.js';
+import { computeScatteredNodes, buildArrayTypedInputs } from './scatterPropagation.js';
 
 /**
  * Serialize workspace nodes for saving as a custom workflow.
@@ -14,17 +13,17 @@ export function serializeNodes(nodes) {
         id: n.id,
         label: n.data?.label || n.label || '',
         isDummy: n.data?.isDummy || n.isDummy || false,
-        isBIDS: n.data?.isBIDS || false,
-        bidsStructure: n.data?.bidsStructure || null,
-        bidsSelections: n.data?.bidsSelections || null,
-        notes: n.data?.notes || '',
-        parameters: n.data?.parameters || {},
-        dockerVersion: n.data?.dockerVersion || 'latest',
-        scatterInputs: n.data?.scatterInputs,
+        isBIDS: n.data?.isBIDS || n.isBIDS || false,
+        bidsStructure: n.data?.bidsStructure || n.bidsStructure || null,
+        bidsSelections: n.data?.bidsSelections || n.bidsSelections || null,
+        notes: n.data?.notes || n.notes || '',
+        parameters: n.data?.parameters || n.parameters || {},
+        dockerVersion: n.data?.dockerVersion || n.dockerVersion || 'latest',
+        scatterInputs: n.data?.scatterInputs ?? n.scatterInputs,
         scatterMethod: n.data?.scatterMethod || n.scatterMethod,
-        linkMergeOverrides: n.data?.linkMergeOverrides || {},
-        whenExpression: n.data?.whenExpression || '',
-        expressions: n.data?.expressions || {},
+        linkMergeOverrides: n.data?.linkMergeOverrides || n.linkMergeOverrides || {},
+        whenExpression: n.data?.whenExpression || n.whenExpression || '',
+        expressions: n.data?.expressions || n.expressions || {},
         operationOrder: n.data?.operationOrder || n.operationOrder || [],
         position: n.position || { x: 0, y: 0 }
     }));
@@ -78,7 +77,7 @@ export function hasUnsavedChanges(workspace, savedWorkflow) {
     if ((workspace.name || '') !== (savedWorkflow.outputName || '')) return true;
 
     const wsNodes = serializeNodes(workspace.nodes || []).map(({ position, ...rest }) => rest);
-    const savedNodes = savedWorkflow.nodes.map(({ position, ...rest }) => rest);
+    const savedNodes = serializeNodes(savedWorkflow.nodes || []).map(({ position, ...rest }) => rest);
 
     const wsEdges = serializeEdges(workspace.edges || []);
     const savedEdges = serializeEdges(savedWorkflow.edges || []);
@@ -103,6 +102,7 @@ const DISPLAY_NAMES = {
     isBIDS: 'BIDS Node',
     bidsStructure: 'BIDS Structure',
     bidsSelections: 'BIDS Selections',
+    operationOrder: 'Operation Order',
 };
 
 /** Properties compared per-node, by node type. */
@@ -110,7 +110,7 @@ const IO_NODE_PROPS = ['label', 'notes'];
 const BIDS_NODE_PROPS = ['label', 'notes', 'bidsSelections'];
 const OPERATIONAL_NODE_PROPS = [
     'label', 'parameters', 'dockerVersion', 'whenExpression', 'expressions',
-    'scatterInputs', 'scatterMethod', 'linkMergeOverrides', 'notes',
+    'scatterInputs', 'scatterMethod', 'linkMergeOverrides', 'operationOrder', 'notes',
 ];
 
 function getCompareProps(node) {
@@ -231,28 +231,6 @@ function isScatterSource(flatNode) {
     if (flatNode.scatterInputs?.length > 0) return true;
     if (flatNode.isBIDS && flatNode.bidsSelections) return true;
     return false;
-}
-
-/**
- * Build Map<nodeId, Set<inputName>> of array-typed inputs for gather detection.
- * Mirrors workflowCanvas.jsx lines 72-86.
- */
-function buildArrayTypedInputs(flatNodes) {
-    const arrayTypedInputs = new Map();
-    for (const node of flatNodes) {
-        if (node.isDummy || node.isBIDS) continue;
-        const tool = getToolConfigSync(node.label);
-        if (!tool) continue;
-        const arrayInputs = new Set();
-        const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
-        for (const [name, def] of Object.entries(allInputs)) {
-            if (def.type && def.type.endsWith('[]')) {
-                arrayInputs.add(name);
-            }
-        }
-        if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
-    }
-    return arrayTypedInputs;
 }
 
 /**

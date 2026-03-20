@@ -1,3 +1,30 @@
+import { getToolConfigSync } from './toolRegistry.js';
+
+/**
+ * Build Map<nodeId, Set<inputName>> of inputs whose CWL type is an array.
+ * Used for gather detection — array inputs naturally consume scattered output.
+ * Accepts both ReactFlow nodes ({ data: { label } }) and flat nodes ({ label }).
+ */
+export function buildArrayTypedInputs(nodes) {
+    const arrayTypedInputs = new Map();
+    for (const node of nodes) {
+        const label = node.data?.label || node.label;
+        const isDummy = node.data?.isDummy || node.isDummy;
+        if (isDummy) continue;
+        const tool = getToolConfigSync(label);
+        if (!tool) continue;
+        const arrayInputs = new Set();
+        const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
+        for (const [name, def] of Object.entries(allInputs)) {
+            if (def.type && def.type.endsWith('[]')) {
+                arrayInputs.add(name);
+            }
+        }
+        if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
+    }
+    return arrayTypedInputs;
+}
+
 /**
  * Compute which nodes are scattered, which are gather nodes, and provide
  * per-node auto-suggest data.

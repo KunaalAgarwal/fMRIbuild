@@ -1,6 +1,6 @@
 import YAML from 'js-yaml';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
-import { computeScatteredNodes } from '../utils/scatterPropagation.js';
+import { computeScatteredNodes, buildArrayTypedInputs } from '../utils/scatterPropagation.js';
 import { topoSort } from '../utils/topoSort.js';
 import { deserializeNode } from '../utils/workflowDiff.js';
 
@@ -688,20 +688,7 @@ export function buildCWLWorkflowObject(graph) {
     const scatterNodes = [...nodes, ...bidsNodes];
     const scatterEdges = [...edges, ...bidsEdges];
 
-    // Build array-typed inputs map for gather detection
-    const arrayTypedInputs = new Map();
-    for (const node of nodes) {
-        const tool = getToolConfigSync(node.data.label);
-        if (!tool) continue;
-        const arrayInputs = new Set();
-        const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
-        for (const [name, def] of Object.entries(allInputs)) {
-            if (def.type && def.type.endsWith('[]')) {
-                arrayInputs.add(name);
-            }
-        }
-        if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
-    }
+    const arrayTypedInputs = buildArrayTypedInputs(nodes);
 
     const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges, arrayTypedInputs);
 

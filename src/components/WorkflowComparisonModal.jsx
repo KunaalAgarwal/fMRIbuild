@@ -112,6 +112,7 @@ const OPERATIONAL_DISPLAY_PROPS = [
     { key: 'scatterInputs', label: 'Scatter' },
     { key: 'scatterMethod', label: 'Scatter Method' },
     { key: 'linkMergeOverrides', label: 'Multiple Input', isObject: true },
+    { key: 'operationOrder', label: 'Operation Order' },
     { key: 'notes', label: 'Notes' },
 ];
 

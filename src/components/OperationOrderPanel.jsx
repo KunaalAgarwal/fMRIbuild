@@ -1,7 +1,6 @@
 import { useMemo } from 'react';
 import { Form } from 'react-bootstrap';
-
-const FIXED_PARAMS = new Set(['input', 'output', 'odt', 'kernel_size']);
+import { FIXED_POSITION_PARAMS } from '../utils/toolAnnotations.js';
 
 /**
  * Compact reorderable list of enabled fslmaths operations.
@@ -11,7 +10,7 @@ const OperationOrderPanel = ({ allParams, paramValues, wiredInputs, operationOrd
     // Determine which operations are "active"
     const activeOps = useMemo(() => {
         const active = allParams.filter(p => {
-            if (FIXED_PARAMS.has(p.name)) return false;
+            if (FIXED_POSITION_PARAMS.has(p.name)) return false;
             if (!p.flag) return false; // no CLI flag = not a reorderable operation
             // Wired file inputs are automatically active
             const wiredSources = wiredInputs?.get(p.name) || [];

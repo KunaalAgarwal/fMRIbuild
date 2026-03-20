@@ -19,7 +19,7 @@ import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { useBIDSHandler } from '../hooks/useBIDSHandler.js';
 import { ScatterPropagationContext } from '../context/ScatterPropagationContext.jsx';
 import { WiredInputsContext } from '../context/WiredInputsContext.jsx';
-import { computeScatteredNodes } from '../utils/scatterPropagation.js';
+import { computeScatteredNodes, buildArrayTypedInputs } from '../utils/scatterPropagation.js';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
 import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
@@ -69,21 +69,7 @@ function WorkflowCanvas({ workflowItems, updateCurrentWorkspaceItems, onSetWorkf
     const realNodes = nodes.filter(n => !n.data?.isDummy || n.data?.isBIDS);
     const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
 
-    // Build map of array-typed inputs per node for gather detection
-    const arrayTypedInputs = new Map();
-    for (const node of realNodes) {
-      if (node.data?.isDummy) continue;
-      const tool = getToolConfigSync(node.data?.label);
-      if (!tool) continue;
-      const arrayInputs = new Set();
-      const allInputs = { ...tool.requiredInputs, ...tool.optionalInputs };
-      for (const [name, def] of Object.entries(allInputs)) {
-        if (def.type && def.type.endsWith('[]')) {
-          arrayInputs.add(name);
-        }
-      }
-      if (arrayInputs.size > 0) arrayTypedInputs.set(node.id, arrayInputs);
-    }
+    const arrayTypedInputs = buildArrayTypedInputs(realNodes);
 
     const { scatteredNodeIds, sourceNodeIds, scatteredUpstreamInputs, gatherNodeIds } =
       computeScatteredNodes(realNodes, realEdges, arrayTypedInputs);

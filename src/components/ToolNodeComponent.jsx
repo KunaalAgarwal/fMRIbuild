@@ -3,7 +3,7 @@ import { createPortal } from 'react-dom';
 import { Handle, Position } from 'reactflow';
 import { Modal, Form } from 'react-bootstrap';
 import { getToolConfigSync } from '../utils/toolRegistry.js';
-import { DOCKER_TAGS, annotationByName } from '../utils/toolAnnotations.js';
+import { DOCKER_TAGS, FIXED_POSITION_PARAMS, annotationByName } from '../utils/toolAnnotations.js';
 import ExpressionEditor from './ExpressionEditor.jsx';
 import { VALID_OPERATORS, getLibraryFromDockerImage } from '../utils/cwlConstants.js';
 import TagDropdown from './TagDropdown.jsx';
@@ -20,10 +20,10 @@ const ToolNodeComponent = ({
     id,
     isScatterInherited,
     isGatherNode,
-    isSourceNode,
+    isSourceNode: _isSourceNode,
     upstreamScatterInputs,
     wiredInputs,
-    propagatedIds,
+    propagatedIds: _propagatedIds,
 }) => {
     const [showModal, setShowModal] = useState(false);
     const [paramValues, setParamValues] = useState({});
@@ -53,6 +53,29 @@ const ToolNodeComponent = ({
         const optional = Object.entries(tool.optionalInputs || {}).map(([name, def]) => ({ name, ...def }));
         return { required, optional };
     }, [tool]);
+
+    // Count active operations for orderSensitive tools (mirrors OperationOrderPanel logic).
+    // Used to disable the "+" toggle buttons when the panel wouldn't be visible (< 2 active ops).
+    const orderPanelVisible = useMemo(() => {
+        if (!tool?.orderSensitive) return false;
+        const all = [...allParams.required, ...allParams.optional];
+        let count = 0;
+        for (const p of all) {
+            if (FIXED_POSITION_PARAMS.has(p.name) || !p.flag) continue;
+            const ws = wiredInputs?.get(p.name) || [];
+            if (ws.length > 0) {
+                count++;
+                continue;
+            }
+            if (/^(File|Directory)/.test(p.type) && operationOrder.includes(p.name)) {
+                count++;
+                continue;
+            }
+            const val = paramValues[p.name];
+            if (val !== undefined && val !== null && val !== '' && val !== false) count++;
+        }
+        return count >= 2;
+    }, [tool, allParams, paramValues, wiredInputs, operationOrder]);
 
     // Validate conditional (when) expression
     const whenWarning = useMemo(() => {
@@ -538,12 +561,20 @@ const ToolNodeComponent = ({
                                                                 isFileType &&
                                                                 wiredSources.length === 0 && (
                                                                     <span
-                                                                        className={`operation-order-toggle ${operationOrder.includes(param.name) ? 'active' : ''}`}
-                                                                        onClick={() => toggleFileInOrder(param.name)}
+                                                                        className={`operation-order-toggle ${operationOrder.includes(param.name) ? 'active' : ''}${!orderPanelVisible && !operationOrder.includes(param.name) ? ' disabled' : ''}`}
+                                                                        onClick={
+                                                                            !orderPanelVisible &&
+                                                                            !operationOrder.includes(param.name)
+                                                                                ? undefined
+                                                                                : () => toggleFileInOrder(param.name)
+                                                                        }
                                                                         title={
-                                                                            operationOrder.includes(param.name)
-                                                                                ? 'Remove from operation order'
-                                                                                : 'Add to operation order'
+                                                                            !orderPanelVisible &&
+                                                                            !operationOrder.includes(param.name)
+                                                                                ? 'Set at least 2 operations before adding file inputs to the order'
+                                                                                : operationOrder.includes(param.name)
+                                                                                  ? 'Remove from operation order'
+                                                                                  : 'Add to operation order'
                                                                         }
                                                                     >
                                                                         {operationOrder.includes(param.name)

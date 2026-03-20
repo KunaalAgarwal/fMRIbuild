@@ -15,7 +15,11 @@ const root = path.resolve(__dirname, '..');
 // 1. Parse adjacency matrix → sparse edge list
 const csvPath = path.join(root, 'utils/consensus_connects/consensus_tool_adjacency_matrix.csv');
 const csv = fs.readFileSync(csvPath, 'utf8');
-const rows = csv.replace(/\r/g, '').trim().split('\n').map(r => r.split(','));
+const rows = csv
+    .replace(/\r/g, '')
+    .trim()
+    .split('\n')
+    .map((r) => r.split(','));
 const header = rows[0].slice(1);
 
 const edges = {};
@@ -54,15 +58,19 @@ for (const f of mapFiles) {
 }
 
 // 3. Build JS source
-const edgeLines = Object.entries(edges).sort().map(([src, targets]) => {
-    const t = targets.map(x => JSON.stringify(x)).join(', ');
-    return `    ${JSON.stringify(src)}: [${t}]`;
-});
+const edgeLines = Object.entries(edges)
+    .sort()
+    .map(([src, targets]) => {
+        const t = targets.map((x) => JSON.stringify(x)).join(', ');
+        return `    ${JSON.stringify(src)}: [${t}]`;
+    });
 
-const metaLines = Object.entries(toolMeta).sort().map(([tool, info]) => {
-    const mod = info.modality2 ? `${info.modality}/${info.modality2}` : info.modality;
-    return `    ${JSON.stringify(tool)}: [${JSON.stringify(mod)}, ${JSON.stringify(info.subsection)}]`;
-});
+const metaLines = Object.entries(toolMeta)
+    .sort()
+    .map(([tool, info]) => {
+        const mod = info.modality2 ? `${info.modality}/${info.modality2}` : info.modality;
+        return `    ${JSON.stringify(tool)}: [${JSON.stringify(mod)}, ${JSON.stringify(info.subsection)}]`;
+    });
 
 const output = `/**
  * Edge validation using the consensus tool adjacency matrix.

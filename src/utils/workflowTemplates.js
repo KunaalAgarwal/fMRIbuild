@@ -8,12 +8,12 @@
  * ==================================================================== */
 
 export const generateDockerfile = (safeWorkflowName, hasBIDS = false) => {
-  const bidsFiles = hasBIDS
-    ? `COPY bids_query.json .
+    const bidsFiles = hasBIDS
+        ? `COPY bids_query.json .
 COPY resolve_bids.py .
 `
-    : '';
-  return `FROM python:3.11-slim
+        : '';
+    return `FROM python:3.11-slim
 
 # Install cwltool (pinned for reproducibility)
 RUN pip install --no-cache-dir cwltool==3.1.20240508115724
@@ -36,15 +36,16 @@ ENTRYPOINT ["./run.sh"]
 };
 
 export const generateRunSh = (safeWorkflowName, runtimeInputs, hasBIDS = false) => {
-    const inputSection = runtimeInputs.length > 0
-        ? [
-            '  echo "File inputs (edit job.yml before running):"',
-            ...runtimeInputs.map(({ name, type, isArray }) => {
-                const typeLabel = isArray ? `${type}[]` : type;
-                return `  echo "  ${name}  (${typeLabel})"`;
-            }),
-        ].join('\n')
-        : '  echo "All inputs are pre-configured. No file arguments needed."';
+    const inputSection =
+        runtimeInputs.length > 0
+            ? [
+                  '  echo "File inputs (edit job.yml before running):"',
+                  ...runtimeInputs.map(({ name, type, isArray }) => {
+                      const typeLabel = isArray ? `${type}[]` : type;
+                      return `  echo "  ${name}  (${typeLabel})"`;
+                  }),
+              ].join('\n')
+            : '  echo "All inputs are pre-configured. No file arguments needed."';
 
     const bidsSection = hasBIDS
         ? `
@@ -56,14 +57,14 @@ if [ "\${1:-}" = "--bids" ]; then
     exit 1
   fi
   shift 2
-  echo "Resolving BIDS inputs from: \$BIDS_DIR"
+  echo "Resolving BIDS inputs from: $BIDS_DIR"
   python3 resolve_bids.py \\
-    --bids-dir "\$BIDS_DIR" \\
+    --bids-dir "$BIDS_DIR" \\
     --query bids_query.json \\
     --job job.yml \\
     --output job.yml \\
     --relative-to .
-  cwltool --outdir /output "\$@" \\
+  cwltool --outdir /output "$@" \\
     workflows/${safeWorkflowName}.cwl \\
     job.yml
   exit 0
@@ -83,10 +84,14 @@ if [ "\${1:-}" = "--help" ] || [ "\${1:-}" = "-h" ]; then
 ${inputSection}
   echo ""
   echo "All scalar parameters are pre-configured in job.yml."
-  echo "Edit job.yml to set file paths before running."${hasBIDS ? `
+  echo "Edit job.yml to set file paths before running."${
+      hasBIDS
+          ? `
   echo ""
   echo "BIDS mode: ./run.sh --bids /absolute/path/to/bids/dataset"
-  echo "  (the BIDS path must be absolute)"` : ''}
+  echo "  (the BIDS path must be absolute)"`
+          : ''
+  }
   echo ""
   echo "Extra arguments are passed to cwltool (e.g. --verbose, --cachedir /cache)."
   exit 0
@@ -99,7 +104,7 @@ cwltool --outdir /output "$@" \\
 };
 
 export const generatePrefetchSh = (dockerImages) => {
-    const pullLines = dockerImages.map(img => `docker pull \$PLATFORM_FLAG ${img}`).join('\n');
+    const pullLines = dockerImages.map((img) => `docker pull $PLATFORM_FLAG ${img}`).join('\n');
     return `#!/usr/bin/env bash
 set -euo pipefail
 # Pre-download all tool container images used by this workflow.
@@ -122,7 +127,7 @@ echo "All images pulled successfully."
  * ==================================================================== */
 
 export const generateSingularityDef = (safeWorkflowName) =>
-`Bootstrap: docker
+    `Bootstrap: docker
 From: python:3.11-slim
 
 %labels
@@ -145,15 +150,16 @@ From: python:3.11-slim
 `;
 
 export const generateRunSingularitySh = (safeWorkflowName, runtimeInputs) => {
-    const inputSection = runtimeInputs.length > 0
-        ? [
-            '  echo "File inputs (edit job.yml before running):"',
-            ...runtimeInputs.map(({ name, type, isArray }) => {
-                const typeLabel = isArray ? `${type}[]` : type;
-                return `  echo "  ${name}  (${typeLabel})"`;
-            }),
-        ].join('\n')
-        : '  echo "All inputs are pre-configured. No file arguments needed."';
+    const inputSection =
+        runtimeInputs.length > 0
+            ? [
+                  '  echo "File inputs (edit job.yml before running):"',
+                  ...runtimeInputs.map(({ name, type, isArray }) => {
+                      const typeLabel = isArray ? `${type}[]` : type;
+                      return `  echo "  ${name}  (${typeLabel})"`;
+                  }),
+              ].join('\n')
+            : '  echo "All inputs are pre-configured. No file arguments needed."';
 
     return `#!/usr/bin/env bash
 set -euo pipefail
@@ -182,10 +188,12 @@ cwltool --singularity --outdir /output "$@" \\
 };
 
 export const generatePrefetchSingularitySh = (dockerImages) => {
-    const pullLines = dockerImages.map(img => {
-        const safeName = img.replace(/[/:]/g, '_') + '.sif';
-        return `singularity pull --force ${safeName} docker://${img}`;
-    }).join('\n');
+    const pullLines = dockerImages
+        .map((img) => {
+            const safeName = img.replace(/[/:]/g, '_') + '.sif';
+            return `singularity pull --force ${safeName} docker://${img}`;
+        })
+        .join('\n');
     return `#!/usr/bin/env bash
 # Pre-download all tool container images as Singularity SIF files.
 # Run this before executing the workflow to avoid download delays.
@@ -205,14 +213,17 @@ echo "Pre-pulling is recommended on HPC nodes with limited internet access."
  * ==================================================================== */
 
 export const generateReadme = (safeWorkflowName, runtimeInputs, dockerImages, hasBIDS = false) => {
-    const inputListMd = runtimeInputs.length > 0
-        ? runtimeInputs.map(({ name, type, isArray }) => {
-            const typeLabel = isArray ? `${type}[]` : type;
-            return `- \`${name}\` — ${typeLabel}`;
-        }).join('\n')
-        : '- *(No runtime file inputs — all inputs are scalar parameters)*';
+    const inputListMd =
+        runtimeInputs.length > 0
+            ? runtimeInputs
+                  .map(({ name, type, isArray }) => {
+                      const typeLabel = isArray ? `${type}[]` : type;
+                      return `- \`${name}\` — ${typeLabel}`;
+                  })
+                  .join('\n')
+            : '- *(No runtime file inputs — all inputs are scalar parameters)*';
 
-    const imageListMd = dockerImages.map(img => `docker pull ${img}`).join('\n');
+    const imageListMd = dockerImages.map((img) => `docker pull ${img}`).join('\n');
 
     return `# niBuild Workflow Bundle
 
@@ -465,7 +476,9 @@ This bundle conforms to the [Workflow RO-Crate 1.0](https://w3id.org/workflowhub
 The \`ro-crate-metadata.json\` file at the bundle root describes all workflow components
 in JSON-LD format, enabling discovery and reuse through platforms like [WorkflowHub](https://workflowhub.eu/).
 
-${hasBIDS ? `## Running with a BIDS Dataset
+${
+    hasBIDS
+        ? `## Running with a BIDS Dataset
 
 This workflow supports automatic input resolution from BIDS-formatted datasets.
 The resolver script reads your existing \`job.yml\` (which contains pre-configured scalar
@@ -502,7 +515,9 @@ scalar parameters. The \`--output\` flag specifies where to write the merged res
 You can edit \`workflows/${safeWorkflowName}_job.yml\` directly to specify custom file paths
 without using the BIDS resolver.
 
-` : ''}## Resources
+`
+        : ''
+}## Resources
 
 - [CWL User Guide](https://www.commonwl.org/user_guide/)
 - [cwltool Documentation](https://github.com/common-workflow-language/cwltool)

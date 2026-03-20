@@ -3,99 +3,105 @@ import { createPortal } from 'react-dom';
 import '../styles/workflowMenuItem.css';
 
 function WorkflowMenuItem({ name, toolInfo, onDragStart, warningIcon }) {
-  const [isHovered, setIsHovered] = useState(false);
-  const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
-  const itemRef = useRef(null);
+    const [isHovered, setIsHovered] = useState(false);
+    const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
+    const itemRef = useRef(null);
 
-  const getFontSizeClass = (name) => {
-    if (name.length > 18) return 'font-smaller';
-    if (name.length > 10) return 'font-small';
-    return '';
-  };
+    const getFontSizeClass = (name) => {
+        if (name.length > 18) return 'font-smaller';
+        if (name.length > 10) return 'font-small';
+        return '';
+    };
 
-  const handleMouseEnter = () => {
-    if (itemRef.current) {
-      const rect = itemRef.current.getBoundingClientRect();
-      setTooltipPos({
-        top: rect.top + rect.height / 2,
-        left: rect.right + 10
-      });
-    }
-    setIsHovered(true);
-  };
+    const handleMouseEnter = () => {
+        if (itemRef.current) {
+            const rect = itemRef.current.getBoundingClientRect();
+            setTooltipPos({
+                top: rect.top + rect.height / 2,
+                left: rect.right + 10,
+            });
+        }
+        setIsHovered(true);
+    };
 
-  const handleMouseLeave = () => {
-    setIsHovered(false);
-  };
+    const handleMouseLeave = () => {
+        setIsHovered(false);
+    };
 
-  const handleDoubleClick = () => {
-    if (toolInfo?.docUrl) {
-      window.open(toolInfo.docUrl, '_blank', 'noopener,noreferrer');
-    }
-  };
+    const handleDoubleClick = () => {
+        if (toolInfo?.docUrl) {
+            window.open(toolInfo.docUrl, '_blank', 'noopener,noreferrer');
+        }
+    };
 
-  const fontSizeClass = getFontSizeClass(name);
+    const fontSizeClass = getFontSizeClass(name);
 
-  return (
-    <div
-      ref={itemRef}
-      className={`workflow-menu-item ${fontSizeClass}`}
-      draggable
-      onDragStart={(event) => onDragStart(event, name)}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
-      onDoubleClick={handleDoubleClick}
-    >
-      <span className="tool-name">
-        {warningIcon && <span className="menu-item-warning" title="Workflow has validation warnings">! </span>}
-        {name}
-      </span>
-
-      {toolInfo && isHovered && createPortal(
+    return (
         <div
-          className="workflow-tooltip"
-          style={{
-            top: tooltipPos.top,
-            left: tooltipPos.left,
-            transform: 'translateY(-50%)'
-          }}
+            ref={itemRef}
+            className={`workflow-menu-item ${fontSizeClass}`}
+            draggable
+            onDragStart={(event) => onDragStart(event, name)}
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+            onDoubleClick={handleDoubleClick}
         >
-          {toolInfo.fullName && (
-            <div className="tooltip-section tooltip-fullname">
-              <span className="tooltip-text">{toolInfo.fullName}</span>
-            </div>
-          )}
-          <div className="tooltip-section">
-            <span className="tooltip-label">Function:</span>
-            <span className="tooltip-text">{toolInfo.function}</span>
-          </div>
-          {toolInfo.modality && (
-            <div className="tooltip-section">
-              <span className="tooltip-label">Expected Input:</span>
-              <span className="tooltip-text">{toolInfo.modality}</span>
-            </div>
-          )}
-          {toolInfo.keyParameters && (
-            <div className="tooltip-section">
-              <span className="tooltip-label">Key Parameters:</span>
-              <span className="tooltip-text">{toolInfo.keyParameters}</span>
-            </div>
-          )}
-          {toolInfo.keyPoints && (
-            <div className="tooltip-section">
-              <span className="tooltip-label">Key Points:</span>
-              <span className="tooltip-text">{toolInfo.keyPoints}</span>
-            </div>
-          )}
-          <div className="tooltip-section">
-            <span className="tooltip-label">Typical Use:</span>
-            <span className="tooltip-text">{toolInfo.typicalUse}</span>
-          </div>
-        </div>,
-        document.body
-      )}
-    </div>
-  );
+            <span className="tool-name">
+                {warningIcon && (
+                    <span className="menu-item-warning" title="Workflow has validation warnings">
+                        !{' '}
+                    </span>
+                )}
+                {name}
+            </span>
+
+            {toolInfo &&
+                isHovered &&
+                createPortal(
+                    <div
+                        className="workflow-tooltip"
+                        style={{
+                            top: tooltipPos.top,
+                            left: tooltipPos.left,
+                            transform: 'translateY(-50%)',
+                        }}
+                    >
+                        {toolInfo.fullName && (
+                            <div className="tooltip-section tooltip-fullname">
+                                <span className="tooltip-text">{toolInfo.fullName}</span>
+                            </div>
+                        )}
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">Function:</span>
+                            <span className="tooltip-text">{toolInfo.function}</span>
+                        </div>
+                        {toolInfo.modality && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Expected Input:</span>
+                                <span className="tooltip-text">{toolInfo.modality}</span>
+                            </div>
+                        )}
+                        {toolInfo.keyParameters && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Key Parameters:</span>
+                                <span className="tooltip-text">{toolInfo.keyParameters}</span>
+                            </div>
+                        )}
+                        {toolInfo.keyPoints && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Key Points:</span>
+                                <span className="tooltip-text">{toolInfo.keyPoints}</span>
+                            </div>
+                        )}
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">Typical Use:</span>
+                            <span className="tooltip-text">{toolInfo.typicalUse}</span>
+                        </div>
+                    </div>,
+                    document.body,
+                )}
+        </div>
+    );
 }
 
 export default WorkflowMenuItem;

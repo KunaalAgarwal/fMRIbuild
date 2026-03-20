@@ -8,22 +8,29 @@ import '../styles/cwlPreviewPanel.css';
 const SHEBANG = '#!/usr/bin/env cwl-runner\n\n';
 
 const escapeHtml = (str) =>
-    str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-       .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+    str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
 
 const highlightYaml = (yaml) => {
-    return yaml.split('\n').map((line) => {
-        if (line.trimStart().startsWith('#')) {
-            return `<span class="cwl-comment">${escapeHtml(line)}</span>`;
-        }
-        let hl = escapeHtml(line);
-        hl = hl.replace(/^(\s*)([\w][\w-]*)(:)/, '$1<span class="cwl-key">$2</span>$3');
-        hl = hl.replace(/&#39;(.*?)&#39;/g, '<span class="cwl-string">$&</span>');
-        hl = hl.replace(/&quot;(.*?)&quot;/g, '<span class="cwl-string">$&</span>');
-        hl = hl.replace(/\b(true|false|null)\b/g, '<span class="cwl-bool">$1</span>');
-        hl = hl.replace(/(\s#.*)$/, '<span class="cwl-comment">$1</span>');
-        return hl;
-    }).join('\n');
+    return yaml
+        .split('\n')
+        .map((line) => {
+            if (line.trimStart().startsWith('#')) {
+                return `<span class="cwl-comment">${escapeHtml(line)}</span>`;
+            }
+            let hl = escapeHtml(line);
+            hl = hl.replace(/^(\s*)([\w][\w-]*)(:)/, '$1<span class="cwl-key">$2</span>$3');
+            hl = hl.replace(/&#39;(.*?)&#39;/g, '<span class="cwl-string">$&</span>');
+            hl = hl.replace(/&quot;(.*?)&quot;/g, '<span class="cwl-string">$&</span>');
+            hl = hl.replace(/\b(true|false|null)\b/g, '<span class="cwl-bool">$1</span>');
+            hl = hl.replace(/(\s#.*)$/, '<span class="cwl-comment">$1</span>');
+            return hl;
+        })
+        .join('\n');
 };
 
 function CWLPreviewPanel({ getWorkflowData }) {
@@ -50,9 +57,13 @@ function CWLPreviewPanel({ getWorkflowData }) {
     });
 
     const toggleCollapse = useCallback(() => {
-        setIsCollapsed(prev => {
+        setIsCollapsed((prev) => {
             const next = !prev;
-            try { localStorage.setItem('cwlPanelCollapsed', JSON.stringify(next)); } catch { /* private browsing */ }
+            try {
+                localStorage.setItem('cwlPanelCollapsed', JSON.stringify(next));
+            } catch {
+                /* private browsing */
+            }
             return next;
         });
     }, []);
@@ -67,8 +78,8 @@ function CWLPreviewPanel({ getWorkflowData }) {
             }
             try {
                 const graph = getWorkflowData();
-                const realNodeCount = (graph?.nodes || []).filter(n => !n.data?.isDummy).length;
-                const hasCustomWorkflow = (graph?.nodes || []).some(n => n.data?.isCustomWorkflow);
+                const realNodeCount = (graph?.nodes || []).filter((n) => !n.data?.isDummy).length;
+                const hasCustomWorkflow = (graph?.nodes || []).some((n) => n.data?.isCustomWorkflow);
                 if (!graph || !graph.nodes || (!hasCustomWorkflow && realNodeCount < 1)) {
                     setCwlOutput('');
                     setJobOutput('');
@@ -87,35 +98,46 @@ function CWLPreviewPanel({ getWorkflowData }) {
             }
         }, 300);
 
-        return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
+        return () => {
+            if (debounceRef.current) clearTimeout(debounceRef.current);
+        };
     }, [getWorkflowData]);
 
     const activeContent = activeTab === 'workflow' ? cwlOutput : jobOutput;
 
     // Clean up copied-reset timers on unmount
-    useEffect(() => () => {
-        if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-        if (copiedPaneTimerRef.current) clearTimeout(copiedPaneTimerRef.current);
-    }, []);
+    useEffect(
+        () => () => {
+            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+            if (copiedPaneTimerRef.current) clearTimeout(copiedPaneTimerRef.current);
+        },
+        [],
+    );
 
     const handleCopy = useCallback(() => {
-        navigator.clipboard.writeText(activeContent).then(() => {
-            setCopied(true);
-            if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
-            copiedTimerRef.current = setTimeout(() => setCopied(false), 1500);
-        }).catch(() => showWarning('Copy to clipboard failed'));
+        navigator.clipboard
+            .writeText(activeContent)
+            .then(() => {
+                setCopied(true);
+                if (copiedTimerRef.current) clearTimeout(copiedTimerRef.current);
+                copiedTimerRef.current = setTimeout(() => setCopied(false), 1500);
+            })
+            .catch(() => showWarning('Copy to clipboard failed'));
     }, [activeContent]);
 
-    const highlightedCwl = useMemo(() => cwlOutput ? highlightYaml(cwlOutput) : '', [cwlOutput]);
-    const highlightedJob = useMemo(() => jobOutput ? highlightYaml(jobOutput) : '', [jobOutput]);
+    const highlightedCwl = useMemo(() => (cwlOutput ? highlightYaml(cwlOutput) : ''), [cwlOutput]);
+    const highlightedJob = useMemo(() => (jobOutput ? highlightYaml(jobOutput) : ''), [jobOutput]);
     const highlightedHtml = activeTab === 'workflow' ? highlightedCwl : highlightedJob;
 
     const handleCopyPane = useCallback((content, pane) => {
-        navigator.clipboard.writeText(content).then(() => {
-            setCopiedPane(pane);
-            if (copiedPaneTimerRef.current) clearTimeout(copiedPaneTimerRef.current);
-            copiedPaneTimerRef.current = setTimeout(() => setCopiedPane(null), 1500);
-        }).catch(() => showWarning('Copy to clipboard failed'));
+        navigator.clipboard
+            .writeText(content)
+            .then(() => {
+                setCopiedPane(pane);
+                if (copiedPaneTimerRef.current) clearTimeout(copiedPaneTimerRef.current);
+                copiedPaneTimerRef.current = setTimeout(() => setCopiedPane(null), 1500);
+            })
+            .catch(() => showWarning('Copy to clipboard failed'));
     }, []);
 
     return (
@@ -159,11 +181,7 @@ function CWLPreviewPanel({ getWorkflowData }) {
                                 >
                                     Expand
                                 </button>
-                                <button
-                                    className="cwl-action-btn"
-                                    onClick={toggleCollapse}
-                                    title="Collapse panel"
-                                >
+                                <button className="cwl-action-btn" onClick={toggleCollapse} title="Collapse panel">
                                     &raquo;
                                 </button>
                             </div>
@@ -182,10 +200,7 @@ function CWLPreviewPanel({ getWorkflowData }) {
                                 </div>
                             )}
                             {activeContent && (
-                                <pre
-                                    className="cwl-code"
-                                    dangerouslySetInnerHTML={{ __html: highlightedHtml }}
-                                />
+                                <pre className="cwl-code" dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
                             )}
                         </div>
                     </>

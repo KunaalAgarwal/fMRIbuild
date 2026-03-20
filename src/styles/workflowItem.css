@@ -3,288 +3,305 @@
 }
 
 .custom-modal .modal-content {
-  border-radius: 6px;
-  background-color: var(--bg-tertiary);
-  color: var(--text-light);
-  border: 1px solid var(--border-medium);
-  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
-  padding: 8px;
-  font-family: 'Inter', sans-serif;
+    border-radius: 6px;
+    background-color: var(--bg-tertiary);
+    color: var(--text-light);
+    border: 1px solid var(--border-medium);
+    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.4);
+    padding: 8px;
+    font-family: 'Inter', sans-serif;
 }
 
 .modal-label {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  color: var(--text-light);
-  font-size: 1.0rem;
-  display: block;
-  margin-bottom: 6px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    color: var(--text-light);
+    font-size: 1rem;
+    display: block;
+    margin-bottom: 6px;
 }
 
 /* ============================================
    UNIFIED PARAMETER PANE
    ============================================ */
 .params-scroll {
-  max-height: 50vh;
-  overflow-y: auto;
+    max-height: 50vh;
+    overflow-y: auto;
 }
 
 .param-section {
-  margin-bottom: 16px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .param-section:last-child {
-  margin-bottom: 0;
-  padding-bottom: 0;
-  border-bottom: none;
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
 }
 
 .param-section-header {
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 500;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  padding-bottom: 8px;
-  margin-bottom: 6px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    padding-bottom: 8px;
+    margin-bottom: 6px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .param-card {
-  padding: 8px 10px;
-  background-color: var(--bg-tertiary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 5px;
-  margin-bottom: 6px;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+    padding: 8px 10px;
+    background-color: var(--bg-tertiary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    margin-bottom: 6px;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
 }
 
 .param-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  background-color: rgba(42, 42, 42, 0.9);
+    border-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(42, 42, 42, 0.9);
 }
 
 .param-card-header {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 6px 8px;
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px 8px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
 }
 
 .param-name {
-  font-weight: 600;
-  color: var(--text-medium);
-  flex-shrink: 0;
+    font-weight: 600;
+    color: var(--text-medium);
+    flex-shrink: 0;
 }
 
 .param-type-badge {
-  font-size: 0.7rem;
-  padding: 1px 6px;
-  border-radius: 3px;
-  background-color: rgba(255, 255, 255, 0.08);
-  color: var(--text-muted);
-  flex-shrink: 0;
+    font-size: 0.7rem;
+    padding: 1px 6px;
+    border-radius: 3px;
+    background-color: rgba(255, 255, 255, 0.08);
+    color: var(--text-muted);
+    flex-shrink: 0;
 }
 
 .param-control {
-  margin-left: auto;
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 4px;
+    margin-left: auto;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    gap: 4px;
 }
 
 .param-description {
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-  line-height: 1.3;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    line-height: 1.3;
 }
 
 .param-bounds {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin-top: 3px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 3px;
 }
 
 .param-default-hint {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--color-primary);
-  margin-top: 3px;
-  font-style: italic;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--color-primary);
+    margin-top: 3px;
+    font-style: italic;
 }
 
 /* Inline controls — switches */
 .param-switch .form-check-input,
 .scatter-switch .form-check-input {
-  width: 32px;
-  height: 16px;
-  cursor: pointer;
-  background-color: var(--bg-interactive);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23888'/%3e%3c/svg%3e");
-  transition: background-color 0.15s ease, border-color 0.15s ease, background-position 0.15s ease;
+    width: 32px;
+    height: 16px;
+    cursor: pointer;
+    background-color: var(--bg-interactive);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: 10px;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23888'/%3e%3c/svg%3e");
+    transition:
+        background-color 0.15s ease,
+        border-color 0.15s ease,
+        background-position 0.15s ease;
 }
 
 .param-switch .form-check-input:hover,
 .scatter-switch .form-check-input:hover {
-  background-color: var(--bg-hover);
-  border-color: rgba(255, 255, 255, 0.2);
+    background-color: var(--bg-hover);
+    border-color: rgba(255, 255, 255, 0.2);
 }
 
 .param-switch .form-check-input:checked,
 .scatter-switch .form-check-input:checked {
-  background-color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
+    background-color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='-4 -4 8 8'%3e%3ccircle r='3' fill='%23fff'/%3e%3c/svg%3e");
 }
 
 .param-switch .form-check-input:focus,
 .scatter-switch .form-check-input:focus {
-  box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: rgba(74, 144, 226, 0.5);
+    box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: rgba(74, 144, 226, 0.5);
 }
 
 .param-switch .form-check-input:disabled,
 .scatter-switch .form-check-input:disabled {
-  opacity: 0.35;
-  cursor: not-allowed;
+    opacity: 0.35;
+    cursor: not-allowed;
 }
 
 /* Inline controls — text & number inputs
    .custom-modal prefix wins specificity over Bootstrap .form-control */
 .custom-modal .param-number,
 .custom-modal .param-text {
-  font-family: 'Roboto Mono', monospace;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-left: 2px solid var(--border-subtle);
-  border-radius: 5px;
-  font-size: 0.9rem;
-  padding: 5px 10px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
-  -moz-appearance: textfield;
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--border-subtle);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    padding: 5px 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
+    -moz-appearance: textfield;
 }
 
 .custom-modal .param-number {
-  width: 100px;
-  min-width: 100px;
-  max-width: 100px;
-  text-align: right;
+    width: 100px;
+    min-width: 100px;
+    max-width: 100px;
+    text-align: right;
 }
 
 .custom-modal .param-text {
-  width: 140px;
-  max-width: 140px;
+    width: 140px;
+    max-width: 140px;
 }
 
 .param-number::-webkit-outer-spin-button,
 .param-number::-webkit-inner-spin-button {
-  -webkit-appearance: none;
-  margin: 0;
+    -webkit-appearance: none;
+    margin: 0;
 }
 
 .custom-modal .param-number:hover,
 .custom-modal .param-text:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  background-color: rgba(26, 26, 26, 0.85);
+    border-color: rgba(255, 255, 255, 0.22);
+    background-color: rgba(26, 26, 26, 0.85);
 }
 
 .custom-modal .param-number:focus,
 .custom-modal .param-text:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: var(--color-primary);
-  border-left-color: var(--color-primary);
-  color: var(--text-light);
-  background-color: rgba(26, 26, 26, 0.95);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    color: var(--text-light);
+    background-color: rgba(26, 26, 26, 0.95);
 }
 
 /* Filled state — accent left border when a value is entered */
 .custom-modal .param-number.filled,
 .custom-modal .param-text.filled {
-  border-left-color: var(--color-primary);
-  color: var(--text-light);
+    border-left-color: var(--color-primary);
+    color: var(--text-light);
 }
 
 .custom-modal .param-number::placeholder,
 .custom-modal .param-text::placeholder {
-  color: var(--text-secondary);
-  font-style: italic;
-  opacity: 0.7;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.7;
 }
 
 /* Inline controls — select dropdowns */
 .custom-modal .param-select {
-  font-family: 'Roboto Mono', monospace;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-left: 2px solid var(--border-subtle);
-  border-radius: 5px;
-  font-size: 0.9rem;
-  width: 150px;
-  padding: 5px 28px 5px 10px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  cursor: pointer;
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--border-subtle);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    width: 150px;
+    padding: 5px 28px 5px 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    cursor: pointer;
 }
 
 .custom-modal .param-select:hover {
-  border-color: rgba(255, 255, 255, 0.22);
-  background-color: rgba(26, 26, 26, 0.85);
+    border-color: rgba(255, 255, 255, 0.22);
+    background-color: rgba(26, 26, 26, 0.85);
 }
 
 .custom-modal .param-select:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: var(--color-primary);
-  border-left-color: var(--color-primary);
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234a90e2' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%234a90e2' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
 }
 
 /* Filled state for selects */
 .custom-modal .param-select.filled {
-  border-left-color: var(--color-primary);
-  color: var(--text-light);
+    border-left-color: var(--color-primary);
+    color: var(--text-light);
 }
 
 .custom-modal .modal-body {
-  padding: 12px;
+    padding: 12px;
 }
 
 /* Docker version input styles */
 .docker-version-group {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .docker-help-text {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
 }
 
 .docker-warning-text {
-  font-size: 0.75rem;
-  color: var(--color-danger);
-  margin-top: 4px;
+    font-size: 0.75rem;
+    color: var(--color-danger);
+    margin-top: 4px;
 }
 
 /* ============================================
@@ -292,456 +309,476 @@
    ============================================ */
 /* Conditional (when) expression */
 .when-expression-group {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .when-builder-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
 }
 
 .custom-modal .when-param-select {
-  font-family: 'Roboto Mono', monospace;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-left: 2px solid var(--border-subtle);
-  border-radius: 5px;
-  font-size: 0.9rem;
-  flex: 1;
-  max-width: 180px;
-  padding: 5px 28px 5px 10px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--border-subtle);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    flex: 1;
+    max-width: 180px;
+    padding: 5px 28px 5px 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
 }
 
 .custom-modal .when-param-select:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .custom-modal .when-param-select:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: var(--color-primary);
-  border-left-color: var(--color-primary);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: var(--color-primary);
+    border-left-color: var(--color-primary);
 }
 
 .custom-modal .when-condition-input {
-  font-family: 'Roboto Mono', monospace;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-left: 2px solid var(--border-subtle);
-  border-radius: 5px;
-  font-size: 0.9rem;
-  flex: 1;
-  max-width: 140px;
-  padding: 5px 10px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--border-subtle);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    flex: 1;
+    max-width: 140px;
+    padding: 5px 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .custom-modal .when-condition-input:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .custom-modal .when-condition-input:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: var(--color-primary);
-  border-left-color: var(--color-primary);
-  color: var(--text-light);
-  background-color: rgba(26, 26, 26, 0.95);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    color: var(--text-light);
+    background-color: rgba(26, 26, 26, 0.95);
 }
 
 .custom-modal .when-condition-input.filled {
-  border-left-color: var(--color-warning);
-  color: var(--text-light);
+    border-left-color: var(--color-warning);
+    color: var(--text-light);
 }
 
 .custom-modal .when-condition-input::placeholder {
-  color: var(--text-secondary);
-  font-style: italic;
-  opacity: 0.7;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.7;
 }
 
 .when-preview {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-  padding: 3px 8px;
-  background-color: rgba(255, 255, 255, 0.04);
-  border-radius: 3px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 3px 8px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 3px;
 }
 
 .custom-modal .when-condition-input.invalid {
-  border-color: var(--color-danger, #e74c3c);
-  border-left-color: var(--color-danger, #e74c3c);
+    border-color: var(--color-danger, #e74c3c);
+    border-left-color: var(--color-danger, #e74c3c);
 }
 
 .custom-modal .when-condition-input.invalid:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(231, 76, 60, 0.25);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(231, 76, 60, 0.25);
 }
 
 .when-warning-text {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
-  color: var(--color-danger, #e74c3c);
-  margin-top: 4px;
-  padding: 3px 8px;
-  background-color: rgba(231, 76, 60, 0.06);
-  border-radius: 3px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--color-danger, #e74c3c);
+    margin-top: 4px;
+    padding: 3px 8px;
+    background-color: rgba(231, 76, 60, 0.06);
+    border-radius: 3px;
 }
 
 .when-help-text {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
 }
 
 /* Scatter Method selector (multi-input scatter) */
 .scatter-method-group {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .custom-modal .scatter-method-select {
-  font-family: 'Roboto Mono', monospace;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-radius: 5px;
-  font-size: 0.9rem;
-  max-width: 220px;
-  padding: 5px 28px 5px 10px;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    font-size: 0.9rem;
+    max-width: 220px;
+    padding: 5px 28px 5px 10px;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
 }
 
 .custom-modal .scatter-method-select:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .custom-modal .scatter-method-select:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: var(--color-primary);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: var(--color-primary);
 }
 
 .scatter-method-help-text {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
 }
 
 .scatter-toggle-group {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .scatter-toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 /* scatter-switch is styled alongside param-switch above */
 
 .scatter-help-text {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
 }
 
 /* Wired/unwired state for File/Directory params */
 .param-card.input-wired {
-  background-color: rgba(74, 144, 226, 0.08);
-  border-color: rgba(74, 144, 226, 0.2);
+    background-color: rgba(74, 144, 226, 0.08);
+    border-color: rgba(74, 144, 226, 0.2);
 }
 
 .input-source {
-  color: var(--color-primary);
-  font-size: 0.8rem;
+    color: var(--color-primary);
+    font-size: 0.8rem;
 }
 
 .input-source-single {
-  margin-top: 4px;
-  padding: 3px 8px;
-  background-color: rgba(74, 144, 226, 0.04);
-  border-radius: 3px;
+    margin-top: 4px;
+    padding: 3px 8px;
+    background-color: rgba(74, 144, 226, 0.04);
+    border-radius: 3px;
 }
 
 .input-source-multi-details {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin-top: 4px;
-  padding: 5px 8px;
-  background-color: rgba(74, 144, 226, 0.04);
-  border: 1px solid rgba(74, 144, 226, 0.1);
-  border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    margin-top: 4px;
+    padding: 5px 8px;
+    background-color: rgba(74, 144, 226, 0.04);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    border-radius: 4px;
 }
 
 .input-source-multi-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
+    display: flex;
+    align-items: flex-start;
+    gap: 8px;
 }
 
 .input-source-multi-row .input-source-multi-sources {
-  flex: 1;
-  min-width: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .input-source-multi-sources {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
 }
 
 .input-source-detail {
-  font-size: 0.72rem;
-  opacity: 0.8;
+    font-size: 0.72rem;
+    opacity: 0.8;
 }
 
 /* .custom-modal prefix needed to override Bootstrap .form-select */
 .custom-modal .link-merge-select {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.8rem;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-radius: 5px;
-  padding: 4px 28px 4px 8px;
-  width: auto;
-  max-width: 170px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
-  color-scheme: dark;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.8rem;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-radius: 5px;
+    padding: 4px 28px 4px 8px;
+    width: auto;
+    max-width: 170px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    color-scheme: dark;
 }
 
 .custom-modal .link-merge-select:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .custom-modal .link-merge-select:focus {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.2);
-  border-color: var(--color-primary);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.2);
+    border-color: var(--color-primary);
 }
 
 .merge-help-text {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  margin-top: 3px;
-  font-style: italic;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    font-style: italic;
 }
 
 /* ============================================
    PARAMETER MODAL — Responsive
    ============================================ */
 @media (max-width: 768px) {
-  .custom-modal .modal-content {
-    padding: 4px;
-  }
+    .custom-modal .modal-content {
+        padding: 4px;
+    }
 
-  .custom-modal .modal-body {
-    padding: 10px;
-  }
+    .custom-modal .modal-body {
+        padding: 10px;
+    }
 
-  .modal-label {
-    font-size: 0.92rem;
-  }
+    .modal-label {
+        font-size: 0.92rem;
+    }
 
-  .param-section-header {
-    font-size: 0.75rem;
-  }
+    .param-section-header {
+        font-size: 0.75rem;
+    }
 
-  .param-card {
-    padding: 6px 8px;
-  }
+    .param-card {
+        padding: 6px 8px;
+    }
 
-  .param-card-header {
-    font-size: 0.85rem;
-    gap: 5px 6px;
-  }
+    .param-card-header {
+        font-size: 0.85rem;
+        gap: 5px 6px;
+    }
 
-  .param-name {
-    flex-shrink: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
+    .param-name {
+        flex-shrink: 1;
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
 
-  .custom-modal .param-number {
-    width: 90px;
-    min-width: 90px;
-    max-width: 90px;
-  }
+    .custom-modal .param-number {
+        width: 90px;
+        min-width: 90px;
+        max-width: 90px;
+    }
 
-  .custom-modal .param-text {
-    width: 120px;
-    max-width: 120px;
-  }
+    .custom-modal .param-text {
+        width: 120px;
+        max-width: 120px;
+    }
 
-  .custom-modal .param-select {
-    width: 140px;
-  }
+    .custom-modal .param-select {
+        width: 140px;
+    }
 
-  .param-description {
-    font-size: 0.75rem;
-  }
+    .param-description {
+        font-size: 0.75rem;
+    }
 
-  .scatter-toggle-row {
-    gap: 8px;
-  }
+    .scatter-toggle-row {
+        gap: 8px;
+    }
 
-  .scatter-help-text,
-  .docker-help-text {
-    font-size: 0.75rem;
-  }
+    .scatter-help-text,
+    .docker-help-text {
+        font-size: 0.75rem;
+    }
 }
 
 @media (max-width: 576px) {
-  .custom-modal .modal-body {
-    padding: 8px;
-  }
+    .custom-modal .modal-body {
+        padding: 8px;
+    }
 
-  .modal-label {
-    font-size: 0.85rem;
-    margin-bottom: 4px;
-  }
+    .modal-label {
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+    }
 
-  .param-card-header {
-    font-size: 0.8rem;
-  }
+    .param-card-header {
+        font-size: 0.8rem;
+    }
 
-  .param-control {
-    margin-left: 0;
-    width: 100%;
-    margin-top: 4px;
-  }
+    .param-control {
+        margin-left: 0;
+        width: 100%;
+        margin-top: 4px;
+    }
 
-  .custom-modal .param-number {
-    width: 70px;
-    min-width: 70px;
-    max-width: 70px;
-    font-size: 0.85rem;
-  }
+    .custom-modal .param-number {
+        width: 70px;
+        min-width: 70px;
+        max-width: 70px;
+        font-size: 0.85rem;
+    }
 
-  .custom-modal .param-text {
-    width: 100%;
-    max-width: 100%;
-    font-size: 0.85rem;
-  }
+    .custom-modal .param-text {
+        width: 100%;
+        max-width: 100%;
+        font-size: 0.85rem;
+    }
 
-  .custom-modal .param-select {
-    width: 100%;
-    max-width: 100%;
-    font-size: 0.85rem;
-  }
+    .custom-modal .param-select {
+        width: 100%;
+        max-width: 100%;
+        font-size: 0.85rem;
+    }
 
-  .param-type-badge {
-    font-size: 0.65rem;
-    padding: 1px 4px;
-  }
+    .param-type-badge {
+        font-size: 0.65rem;
+        padding: 1px 4px;
+    }
 
-  .param-bounds {
-    font-size: 0.65rem;
-  }
+    .param-bounds {
+        font-size: 0.65rem;
+    }
 
-  .param-default-hint {
-    font-size: 0.65rem;
-  }
+    .param-default-hint {
+        font-size: 0.65rem;
+    }
 
-  .input-source {
-    font-size: 0.72rem;
-  }
+    .input-source {
+        font-size: 0.72rem;
+    }
 
-  .params-scroll {
-    max-height: 40vh;
-  }
+    .params-scroll {
+        max-height: 40vh;
+    }
 }
 
 /* ============================================
    NODE STRUCTURE - Streamlined & Responsive
    ============================================ */
 .node-wrapper {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  max-width: 140px;
-  gap: 2px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    max-width: 140px;
+    gap: 2px;
 }
 
 .node-top-row,
 .node-bottom-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0;
-  font-size: 9px;
-  min-height: 13px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0;
+    font-size: 9px;
+    min-height: 13px;
 }
 
 .node-content {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 2px 0;
-  overflow: hidden;
-  height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 2px 0;
+    overflow: hidden;
+    height: 24px;
 }
 
 .node-content .handle-label {
-  font-size: 8px;
-  font-family: 'Roboto Mono', monospace;
-  color: var(--text-muted);
-  font-weight: 500;
-  text-transform: uppercase;
-  opacity: 0.45;
-  pointer-events: none;
-  user-select: none;
-  padding: 0 3px;
-  flex-shrink: 0;
+    font-size: 8px;
+    font-family: 'Roboto Mono', monospace;
+    color: var(--text-muted);
+    font-weight: 500;
+    text-transform: uppercase;
+    opacity: 0.45;
+    pointer-events: none;
+    user-select: none;
+    padding: 0 3px;
+    flex-shrink: 0;
 }
 
 .node-label {
-  font-weight: 600;
-  font-size: 0.95rem;
-  color: var(--text-on-light);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 100%;
-  text-align: center;
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: var(--text-on-light);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    text-align: center;
 }
 
 /* ============================================
@@ -749,20 +786,20 @@
    ============================================ */
 .node-version,
 .node-version-spacer {
-  width: 54px;
-  min-width: 54px;
-  max-width: 54px;
-  font-size: 9px;
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 500;
-  text-align: left;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    width: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    font-size: 9px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+    text-align: left;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .node-version {
-  color: var(--text-muted);
+    color: var(--text-muted);
 }
 
 /* ============================================
@@ -771,44 +808,44 @@
 .node-params-btn,
 .node-info-btn,
 .node-info-spacer {
-  width: 54px;
-  min-width: 54px;
-  max-width: 54px;
-  font-size: 9px;
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 500;
-  text-align: right;
-  user-select: none;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+    width: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    font-size: 9px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 500;
+    text-align: right;
+    user-select: none;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .node-params-btn,
 .node-info-btn {
-  color: var(--text-muted);
-  cursor: pointer;
-  transition: color 0.15s ease;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: color 0.15s ease;
 }
 
 .node-params-btn:hover,
 .node-info-btn:hover {
-  color: var(--color-primary);
+    color: var(--color-primary);
 }
 
 /* Bottom-left badge container — inline icons */
 .node-bottom-left {
-  width: 54px;
-  min-width: 54px;
-  max-width: 54px;
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  overflow: hidden;
+    width: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    display: flex;
+    align-items: center;
+    gap: 2px;
+    overflow: hidden;
 }
 
 .node-bottom-left .node-params-btn {
-  text-align: left;
+    text-align: left;
 }
 
 /* Shared badge base */
@@ -817,418 +854,436 @@
 .node-when-badge,
 .node-fx-badge,
 .node-notes-badge {
-  font-size: 7px;
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  border-radius: 2px;
-  padding: 0px 3px;
-  letter-spacing: 0.3px;
-  text-transform: uppercase;
-  white-space: nowrap;
-  line-height: 1.4;
+    font-size: 7px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    border-radius: 2px;
+    padding: 0px 3px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+    white-space: nowrap;
+    line-height: 1.4;
 }
 
 .node-scatter-badge {
-  color: var(--color-cyan);
-  background-color: rgba(74, 198, 226, 0.12);
-  border: 1px solid rgba(74, 198, 226, 0.3);
+    color: var(--color-cyan);
+    background-color: rgba(74, 198, 226, 0.12);
+    border: 1px solid rgba(74, 198, 226, 0.3);
 }
 
 .node-gather-badge {
-  color: var(--color-success, #2ecc71);
-  background-color: rgba(46, 204, 113, 0.12);
-  border: 1px solid rgba(46, 204, 113, 0.3);
+    color: var(--color-success, #2ecc71);
+    background-color: rgba(46, 204, 113, 0.12);
+    border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
 .node-fx-badge {
-  color: var(--color-primary, #4a90e2);
-  background-color: rgba(74, 144, 226, 0.12);
-  border: 1px solid rgba(74, 144, 226, 0.3);
+    color: var(--color-primary, #4a90e2);
+    background-color: rgba(74, 144, 226, 0.12);
+    border: 1px solid rgba(74, 144, 226, 0.3);
 }
 
 /* Custom workflow node styling — applied to ReactFlow outer container */
 .react-flow__node-default:has(.node-custom-workflow) {
-  border: 2px solid rgba(168, 85, 247, 0.6) !important;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 240, 255, 0.95)) !important;
-  box-shadow: 0 0 6px rgba(168, 85, 247, 0.15);
-  border-radius: 8px;
+    border: 2px solid rgba(168, 85, 247, 0.6) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(245, 240, 255, 0.95)) !important;
+    box-shadow: 0 0 6px rgba(168, 85, 247, 0.15);
+    border-radius: 8px;
 }
 
 .react-flow__node-default:has(.node-custom-workflow):hover {
-  border-color: rgba(168, 85, 247, 0.85) !important;
-  box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
+    border-color: rgba(168, 85, 247, 0.85) !important;
+    box-shadow: 0 0 10px rgba(168, 85, 247, 0.25);
 }
 
 .node-custom-workflow {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none;
 }
 
 .node-custom-badge {
-  width: 54px;
-  min-width: 54px;
-  max-width: 54px;
-  display: flex;
-  align-items: center;
+    width: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    display: flex;
+    align-items: center;
 }
 
 .node-bottom-left .node-custom-badge {
-  width: auto;
-  min-width: auto;
-  max-width: none;
+    width: auto;
+    min-width: auto;
+    max-width: none;
 }
 
 .node-custom-badge-text {
-  font-size: 7px;
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  color: rgba(128, 60, 200, 0.95);
-  background-color: rgba(168, 85, 247, 0.08);
-  border: 1px solid rgba(168, 85, 247, 0.25);
-  border-radius: 2px;
-  padding: 0px 3px;
-  white-space: nowrap;
-  line-height: 1.4;
+    font-size: 7px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    color: rgba(128, 60, 200, 0.95);
+    background-color: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.25);
+    border-radius: 2px;
+    padding: 0px 3px;
+    white-space: nowrap;
+    line-height: 1.4;
 }
 
 /* I/O node styling — green accent (mirrors custom workflow purple pattern) */
 .react-flow__node-default:has(.node-io) {
-  border: 2px solid rgba(46, 204, 113, 0.6) !important;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(240, 255, 245, 0.95)) !important;
-  box-shadow: 0 0 6px rgba(46, 204, 113, 0.15);
-  border-radius: 8px;
+    border: 2px solid rgba(46, 204, 113, 0.6) !important;
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.92), rgba(240, 255, 245, 0.95)) !important;
+    box-shadow: 0 0 6px rgba(46, 204, 113, 0.15);
+    border-radius: 8px;
 }
 
 .react-flow__node-default:has(.node-io):hover {
-  border-color: rgba(46, 204, 113, 0.85) !important;
-  box-shadow: 0 0 10px rgba(46, 204, 113, 0.25);
+    border-color: rgba(46, 204, 113, 0.85) !important;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.25);
 }
 
 .node-io {
-  border: none !important;
-  background: transparent !important;
-  box-shadow: none;
+    border: none !important;
+    background: transparent !important;
+    box-shadow: none;
 }
 
 .node-io-badge {
-  width: 54px;
-  min-width: 54px;
-  max-width: 54px;
-  display: flex;
-  align-items: center;
+    width: 54px;
+    min-width: 54px;
+    max-width: 54px;
+    display: flex;
+    align-items: center;
 }
 
 .node-io-badge-text {
-  font-size: 7px;
-  font-family: 'Roboto Mono', monospace;
-  font-weight: 600;
-  color: rgba(36, 170, 90, 0.95);
-  background-color: rgba(46, 204, 113, 0.08);
-  border: 1px solid rgba(46, 204, 113, 0.25);
-  border-radius: 2px;
-  padding: 0px 3px;
-  white-space: nowrap;
-  line-height: 1.4;
+    font-size: 7px;
+    font-family: 'Roboto Mono', monospace;
+    font-weight: 600;
+    color: rgba(36, 170, 90, 0.95);
+    background-color: rgba(46, 204, 113, 0.08);
+    border: 1px solid rgba(46, 204, 113, 0.25);
+    border-radius: 2px;
+    padding: 0px 3px;
+    white-space: nowrap;
+    line-height: 1.4;
 }
 
-
 .node-warning-badge {
-  font-size: 8px;
-  font-weight: 700;
-  color: var(--color-warning);
-  background-color: rgba(240, 173, 78, 0.15);
-  border: 1px solid rgba(240, 173, 78, 0.3);
-  border-radius: 2px;
-  padding: 0px 3px;
-  white-space: nowrap;
-  line-height: 1.4;
+    font-size: 8px;
+    font-weight: 700;
+    color: var(--color-warning);
+    background-color: rgba(240, 173, 78, 0.15);
+    border: 1px solid rgba(240, 173, 78, 0.3);
+    border-radius: 2px;
+    padding: 0px 3px;
+    white-space: nowrap;
+    line-height: 1.4;
 }
 
 /* Custom workflow parameter modal navigation */
 .custom-workflow-nav {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 8px;
-  padding: 6px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.1);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 8px;
+    padding: 6px 0;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .custom-workflow-nav-btn {
-  font-size: 0.85rem;
-  padding: 2px 10px;
-  min-width: 32px;
+    font-size: 0.85rem;
+    padding: 2px 10px;
+    min-width: 32px;
 }
 
 .custom-workflow-nav-label {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
-  color: var(--text-secondary, #aaa);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    color: var(--text-secondary, #aaa);
 }
 
 /* Expression toggle button in param control */
 .expression-toggle {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
-  font-style: italic;
-  font-weight: 700;
-  color: var(--text-secondary);
-  background-color: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 3px 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  user-select: none;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    font-style: italic;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 3px 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
 .expression-toggle:hover {
-  color: var(--color-primary);
-  border-color: rgba(74, 144, 226, 0.5);
-  background-color: rgba(74, 144, 226, 0.06);
+    color: var(--color-primary);
+    border-color: rgba(74, 144, 226, 0.5);
+    background-color: rgba(74, 144, 226, 0.06);
 }
 
 .expression-toggle.active {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-color: rgba(74, 144, 226, 0.14);
-  box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.15);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: rgba(74, 144, 226, 0.14);
+    box-shadow: 0 0 0 1px rgba(74, 144, 226, 0.15);
 }
 
 /* Scatter toggle button in param control (mirrors expression-toggle with cyan) */
 .scatter-toggle {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  background-color: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 3px 5px;
-  cursor: pointer;
-  flex-shrink: 0;
-  user-select: none;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 3px 5px;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .scatter-toggle:hover {
-  color: var(--color-cyan);
-  border-color: rgba(74, 198, 226, 0.5);
-  background-color: rgba(74, 198, 226, 0.06);
+    color: var(--color-cyan);
+    border-color: rgba(74, 198, 226, 0.5);
+    background-color: rgba(74, 198, 226, 0.06);
 }
 
 .scatter-toggle.active {
-  color: var(--color-cyan);
-  border-color: var(--color-cyan);
-  background-color: rgba(74, 198, 226, 0.14);
+    color: var(--color-cyan);
+    border-color: var(--color-cyan);
+    background-color: rgba(74, 198, 226, 0.14);
 }
 
 .scatter-toggle.locked {
-  opacity: 0.5;
-  cursor: not-allowed;
+    opacity: 0.5;
+    cursor: not-allowed;
 }
 
 .expression-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    width: 100%;
 }
 
 .expression-row .form-control,
 .expression-row .form-select,
 .expression-row .form-check {
-  flex: 1;
+    flex: 1;
 }
 
 /* Inline row for expression input + template dropdown */
 .expression-input-row {
-  display: flex;
-  align-items: center;
-  gap: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .expression-input-row .expression-input {
-  flex: 1;
-  min-width: 0;
+    flex: 1;
+    min-width: 0;
 }
 
 .expression-input-row .expression-template-select {
-  flex-shrink: 0;
-  width: auto;
+    flex-shrink: 0;
+    width: auto;
 }
 
 .custom-modal .expression-input {
-  font-family: 'Roboto Mono', monospace;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-left: 2px solid var(--border-subtle);
-  border-radius: 5px;
-  font-size: 0.85rem;
-  padding: 5px 10px;
-  flex: 1;
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease, background-color 0.2s ease;
+    font-family: 'Roboto Mono', monospace;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-left: 2px solid var(--border-subtle);
+    border-radius: 5px;
+    font-size: 0.85rem;
+    padding: 5px 10px;
+    flex: 1;
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .custom-modal .expression-input.filled {
-  border-left-color: var(--color-primary);
-  color: var(--text-light);
+    border-left-color: var(--color-primary);
+    color: var(--text-light);
 }
 
 .custom-modal .expression-input:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(74, 144, 226, 0.25);
-  border-color: var(--color-primary);
-  border-left-color: var(--color-primary);
-  background-color: rgba(26, 26, 26, 0.95);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(74, 144, 226, 0.25);
+    border-color: var(--color-primary);
+    border-left-color: var(--color-primary);
+    background-color: rgba(26, 26, 26, 0.95);
 }
 
 .custom-modal .expression-input::placeholder {
-  color: var(--text-secondary);
-  font-style: italic;
-  opacity: 0.7;
+    color: var(--text-secondary);
+    font-style: italic;
+    opacity: 0.7;
 }
 
 .custom-modal .expression-template-select {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
-  background-color: var(--bg-primary);
-  color: var(--text-medium);
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 4px 28px 4px 8px;
-  width: auto;
-  max-width: 220px;
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  cursor: pointer;
-  -webkit-appearance: none;
-  -moz-appearance: none;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
-  background-repeat: no-repeat;
-  background-position: right 8px center;
-  background-size: 12px;
-  color-scheme: dark;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    background-color: var(--bg-primary);
+    color: var(--text-medium);
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 4px 28px 4px 8px;
+    width: auto;
+    max-width: 220px;
+    box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+    cursor: pointer;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23888888' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 12px;
+    color-scheme: dark;
 }
 
 .custom-modal .expression-template-select:hover {
-  border-color: rgba(255, 255, 255, 0.22);
+    border-color: rgba(255, 255, 255, 0.22);
 }
 
 .custom-modal .expression-template-select:focus {
-  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2), 0 0 0 2px rgba(74, 144, 226, 0.2);
-  border-color: var(--color-primary);
+    box-shadow:
+        inset 0 1px 2px rgba(0, 0, 0, 0.2),
+        0 0 0 2px rgba(74, 144, 226, 0.2);
+    border-color: var(--color-primary);
 }
 
 /* Expression preview (valueFrom context) */
 .expression-preview {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-top: 4px;
-  padding: 3px 8px;
-  background-color: rgba(255, 255, 255, 0.04);
-  border-radius: 3px;
-  border-left: 2px solid rgba(74, 144, 226, 0.3);
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    margin-top: 4px;
+    padding: 3px 8px;
+    background-color: rgba(255, 255, 255, 0.04);
+    border-radius: 3px;
+    border-left: 2px solid rgba(74, 144, 226, 0.3);
 }
 
 /* Expression validation warning */
 .expression-warning-text {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.75rem;
-  color: var(--color-danger, #e74c3c);
-  margin-top: 4px;
-  padding: 3px 8px;
-  background-color: rgba(231, 76, 60, 0.06);
-  border-radius: 3px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.75rem;
+    color: var(--color-danger, #e74c3c);
+    margin-top: 4px;
+    padding: 3px 8px;
+    background-color: rgba(231, 76, 60, 0.06);
+    border-radius: 3px;
 }
 
 .custom-modal .expression-input.invalid {
-  border-color: var(--color-danger, #e74c3c);
-  border-left-color: var(--color-danger, #e74c3c);
+    border-color: var(--color-danger, #e74c3c);
+    border-left-color: var(--color-danger, #e74c3c);
 }
 
 .custom-modal .expression-input.invalid:focus {
-  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.25), 0 0 0 2px rgba(231, 76, 60, 0.25);
+    box-shadow:
+        inset 0 1px 3px rgba(0, 0, 0, 0.25),
+        0 0 0 2px rgba(231, 76, 60, 0.25);
 }
 
 /* Highlight param cards with active expressions */
 .param-card.has-expression {
-  border-color: rgba(74, 144, 226, 0.25);
-  background-color: rgba(74, 144, 226, 0.05);
+    border-color: rgba(74, 144, 226, 0.25);
+    background-color: rgba(74, 144, 226, 0.05);
 }
 
 .param-card.has-scatter {
-  border-color: rgba(74, 198, 226, 0.3);
-  background-color: rgba(74, 198, 226, 0.06);
+    border-color: rgba(74, 198, 226, 0.3);
+    background-color: rgba(74, 198, 226, 0.06);
 }
 
 /* Scatter + expression info note */
 .expression-scatter-note {
-  font-size: 0.75rem;
-  color: var(--color-cyan);
-  margin-top: 3px;
-  opacity: 0.8;
+    font-size: 0.75rem;
+    color: var(--color-cyan);
+    margin-top: 3px;
+    opacity: 0.8;
 }
 
 .expression-scatter-note code {
-  font-family: 'Roboto Mono', monospace;
-  font-size: inherit;
-  color: inherit;
+    font-family: 'Roboto Mono', monospace;
+    font-size: inherit;
+    color: inherit;
 }
 
 /* Expression details (body of param-card when fx toggled on) */
 .expression-file-details,
 .expression-scalar-details {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  margin-top: 4px;
-  padding: 6px 8px;
-  background-color: rgba(74, 144, 226, 0.04);
-  border: 1px solid rgba(74, 144, 226, 0.1);
-  border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-top: 4px;
+    padding: 6px 8px;
+    background-color: rgba(74, 144, 226, 0.04);
+    border: 1px solid rgba(74, 144, 226, 0.1);
+    border-radius: 4px;
 }
 
 /* Contextual help text for expression mode */
 .expression-help-text {
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  font-style: italic;
-  margin-top: 2px;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-style: italic;
+    margin-top: 2px;
 }
 
 .node-when-badge {
-  color: var(--color-warning, #ffc107);
-  background-color: rgba(255, 193, 7, 0.12);
-  border: 1px solid rgba(255, 193, 7, 0.3);
+    color: var(--color-warning, #ffc107);
+    background-color: rgba(255, 193, 7, 0.12);
+    border: 1px solid rgba(255, 193, 7, 0.3);
 }
 
 .node-notes-badge {
-  color: var(--color-success, #2ecc71);
-  background-color: rgba(46, 204, 113, 0.12);
-  border: 1px solid rgba(46, 204, 113, 0.3);
+    color: var(--color-success, #2ecc71);
+    background-color: rgba(46, 204, 113, 0.12);
+    border: 1px solid rgba(46, 204, 113, 0.3);
 }
 
 .node-notes-textarea {
-  background-color: var(--bg-primary) !important;
-  border: 1px solid rgba(255, 255, 255, 0.08) !important;
-  color: var(--text-light) !important;
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.85rem;
-  border-radius: 6px;
-  resize: vertical;
-  min-height: 60px;
+    background-color: var(--bg-primary) !important;
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    color: var(--text-light) !important;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    border-radius: 6px;
+    resize: vertical;
+    min-height: 60px;
 }
 
 .node-notes-textarea:focus {
-  border-color: var(--border-focus) !important;
-  box-shadow: none !important;
+    border-color: var(--border-focus) !important;
+    box-shadow: none !important;
 }
 
 /* ============================================
@@ -1236,163 +1291,170 @@
    Base .workflow-tooltip is in workflowMenuItem.css
    ============================================ */
 .tooltip-section {
-  margin-bottom: 6px;
+    margin-bottom: 6px;
 }
 
 .tooltip-section:last-child {
-  margin-bottom: 0;
+    margin-bottom: 0;
 }
 
 .tooltip-fullname {
-  padding-bottom: 6px;
-  margin-bottom: 8px;
-  border-bottom: 1px solid var(--border-subtle);
+    padding-bottom: 6px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .tooltip-fullname .tooltip-text {
-  font-weight: 600;
-  font-size: 0.85rem;
-  color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: var(--text-primary);
 }
 
 .tooltip-label {
-  font-size: 0.65rem;
-  color: var(--text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  margin-right: 6px;
+    font-size: 0.65rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-right: 6px;
 }
 
 .tooltip-text {
-  font-size: 0.75rem;
-  color: var(--text-light);
-  line-height: 1.4;
+    font-size: 0.75rem;
+    color: var(--text-light);
+    line-height: 1.4;
 }
 
 /* ── Operation Order Panel (fslmaths etc.) ── */
 
 .operation-order-group {
-  margin-bottom: 16px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .operation-order-help {
-  font-size: 0.8rem;
-  color: var(--text-secondary);
-  margin-top: 6px;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 6px;
 }
 
 .operation-order-list {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
 }
 
 .operation-order-item {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 10px;
-  background-color: var(--bg-tertiary);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  border-radius: 5px;
-  transition: border-color 0.15s ease, background-color 0.15s ease;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    background-color: var(--bg-tertiary);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
 }
 
 .operation-order-item:hover {
-  border-color: rgba(255, 255, 255, 0.14);
-  background-color: rgba(42, 42, 42, 0.9);
+    border-color: rgba(255, 255, 255, 0.14);
+    background-color: rgba(42, 42, 42, 0.9);
 }
 
 .operation-order-pos {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--text-muted);
-  min-width: 16px;
-  text-align: center;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-muted);
+    min-width: 16px;
+    text-align: center;
 }
 
 .operation-order-flag {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-medium);
-  min-width: 60px;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-medium);
+    min-width: 60px;
 }
 
 .operation-order-label {
-  font-family: 'Inter', sans-serif;
-  font-size: 0.8rem;
-  color: var(--text-muted);
-  flex: 1;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+    font-family: 'Inter', sans-serif;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .operation-order-value {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.7rem;
-  color: var(--text-secondary);
-  min-width: 32px;
-  text-align: right;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    min-width: 32px;
+    text-align: right;
 }
 
 .operation-order-arrows {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  margin-left: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    margin-left: auto;
 }
 
 .operation-order-arrow {
-  background: none;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-  color: var(--text-muted);
-  font-size: 0.55rem;
-  line-height: 1;
-  padding: 2px 5px;
-  cursor: pointer;
-  transition: background-color 0.15s ease, color 0.15s ease;
+    background: none;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 3px;
+    color: var(--text-muted);
+    font-size: 0.55rem;
+    line-height: 1;
+    padding: 2px 5px;
+    cursor: pointer;
+    transition:
+        background-color 0.15s ease,
+        color 0.15s ease;
 }
 
 .operation-order-arrow:hover:not(:disabled) {
-  background-color: rgba(255, 255, 255, 0.1);
-  color: var(--text-light);
+    background-color: rgba(255, 255, 255, 0.1);
+    color: var(--text-light);
 }
 
 .operation-order-arrow:disabled {
-  opacity: 0.25;
-  cursor: default;
+    opacity: 0.25;
+    cursor: default;
 }
 
 /* + / − toggle for adding file params to operation order */
 .operation-order-toggle {
-  font-family: 'Roboto Mono', monospace;
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: var(--text-secondary);
-  background-color: transparent;
-  border: 1px solid var(--border-subtle);
-  border-radius: 4px;
-  padding: 3px 6px;
-  cursor: pointer;
-  flex-shrink: 0;
-  user-select: none;
-  line-height: 1;
-  transition: color 0.2s ease, border-color 0.2s ease, background-color 0.2s ease;
+    font-family: 'Roboto Mono', monospace;
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: 1px solid var(--border-subtle);
+    border-radius: 4px;
+    padding: 3px 6px;
+    cursor: pointer;
+    flex-shrink: 0;
+    user-select: none;
+    line-height: 1;
+    transition:
+        color 0.2s ease,
+        border-color 0.2s ease,
+        background-color 0.2s ease;
 }
 
 .operation-order-toggle:hover {
-  color: var(--color-primary);
-  border-color: rgba(74, 144, 226, 0.5);
-  background-color: rgba(74, 144, 226, 0.06);
+    color: var(--color-primary);
+    border-color: rgba(74, 144, 226, 0.5);
+    background-color: rgba(74, 144, 226, 0.06);
 }
 
 .operation-order-toggle.active {
-  color: var(--color-primary);
-  border-color: var(--color-primary);
-  background-color: rgba(74, 144, 226, 0.14);
+    color: var(--color-primary);
+    border-color: var(--color-primary);
+    background-color: rgba(74, 144, 226, 0.14);
 }

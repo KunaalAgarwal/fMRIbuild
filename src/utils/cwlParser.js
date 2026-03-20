@@ -18,8 +18,8 @@ import YAML from 'js-yaml';
 
 // ── Cache ────────────────────────────────────────────────────────────────
 
-const resolvedCache = new Map();   // cwlPath → ParsedTool (resolved)
-const pendingCache = new Map();    // cwlPath → Promise<ParsedTool>
+const resolvedCache = new Map(); // cwlPath → ParsedTool (resolved)
+const pendingCache = new Map(); // cwlPath → Promise<ParsedTool>
 
 // ── Public API ───────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ export async function preloadAllCWL(cwlPaths) {
                 console.warn(`[cwlParser] Failed to load ${p}:`, err.message);
                 return null;
             }
-        })
+        }),
     );
     return results;
 }
@@ -111,7 +111,7 @@ function parseCWLDocument(doc, cwlPath) {
     // ── Parse inputs ──
     if (doc.inputs) {
         const inputEntries = Array.isArray(doc.inputs)
-            ? doc.inputs.map(inp => [inp.id, inp])
+            ? doc.inputs.map((inp) => [inp.id, inp])
             : Object.entries(doc.inputs);
 
         for (const [name, def] of inputEntries) {
@@ -122,7 +122,7 @@ function parseCWLDocument(doc, cwlPath) {
     // ── Parse outputs ──
     if (doc.outputs) {
         const outputEntries = Array.isArray(doc.outputs)
-            ? doc.outputs.map(out => [out.id, out])
+            ? doc.outputs.map((out) => [out.id, out])
             : Object.entries(doc.outputs);
 
         for (const [name, def] of outputEntries) {
@@ -280,7 +280,7 @@ function parseArrayNotation(typeArr, result) {
     const hasNull = typeArr.includes('null');
     result.nullable = hasNull;
 
-    const nonNull = typeArr.filter(t => t !== 'null');
+    const nonNull = typeArr.filter((t) => t !== 'null');
 
     if (nonNull.length === 0) {
         result.baseType = 'null';
@@ -289,7 +289,7 @@ function parseArrayNotation(typeArr, result) {
     }
 
     // Check for union-of-records (mutually exclusive params)
-    const records = nonNull.filter(t => typeof t === 'object' && t !== null && t.type === 'record');
+    const records = nonNull.filter((t) => typeof t === 'object' && t !== null && t.type === 'record');
     if (records.length > 0) {
         result.baseType = 'record';
         result.isRecord = true;
@@ -408,11 +408,11 @@ function extractDockerImage(doc) {
 
     // Array form: check requirements first, then hints
     if (Array.isArray(doc.requirements)) {
-        const r = doc.requirements.find(r => r.class === 'DockerRequirement');
+        const r = doc.requirements.find((r) => r.class === 'DockerRequirement');
         if (r) return stripTag(r.dockerPull);
     }
     if (Array.isArray(doc.hints)) {
-        const h = doc.hints.find(h => h.class === 'DockerRequirement');
+        const h = doc.hints.find((h) => h.class === 'DockerRequirement');
         if (h) return stripTag(h.dockerPull);
     }
 

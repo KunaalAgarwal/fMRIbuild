@@ -17,57 +17,66 @@ export function ToastProvider({ children }) {
     const activeRef = useRef(new Map()); // message -> { id, timerId }
 
     const removeToast = useCallback((id) => {
-        setToasts(prev => prev.filter(t => t.id !== id));
+        setToasts((prev) => prev.filter((t) => t.id !== id));
     }, []);
 
     const dismissToast = useCallback((id, message) => {
-        setToasts(prev => prev.map(t =>
-            t.id === id ? { ...t, show: false } : t
-        ));
+        setToasts((prev) => prev.map((t) => (t.id === id ? { ...t, show: false } : t)));
         activeRef.current.delete(message);
     }, []);
 
-    const addToast = useCallback((message, variant = 'danger', duration = 5000) => {
-        const existing = activeRef.current.get(message);
+    const addToast = useCallback(
+        (message, variant = 'danger', duration = 5000) => {
+            const existing = activeRef.current.get(message);
 
-        if (existing) {
-            clearTimeout(existing.timerId);
-            const timerId = setTimeout(() => dismissToast(existing.id, message), duration);
-            activeRef.current.set(message, { id: existing.id, timerId });
-            return;
-        }
+            if (existing) {
+                clearTimeout(existing.timerId);
+                const timerId = setTimeout(() => dismissToast(existing.id, message), duration);
+                activeRef.current.set(message, { id: existing.id, timerId });
+                return;
+            }
 
-        const id = ++nextToastId;
-        const timerId = setTimeout(() => dismissToast(id, message), duration);
-        activeRef.current.set(message, { id, timerId });
-        setToasts(prev => [...prev, { id, message, variant, show: true }]);
-    }, [dismissToast]);
+            const id = ++nextToastId;
+            const timerId = setTimeout(() => dismissToast(id, message), duration);
+            activeRef.current.set(message, { id, timerId });
+            setToasts((prev) => [...prev, { id, message, variant, show: true }]);
+        },
+        [dismissToast],
+    );
 
-    const showError = useCallback((message, duration = 2000) => {
-        addToast(message, 'danger', duration);
-    }, [addToast]);
+    const showError = useCallback(
+        (message, duration = 2000) => {
+            addToast(message, 'danger', duration);
+        },
+        [addToast],
+    );
 
-    const showWarning = useCallback((message, duration = 1800) => {
-        addToast(message, 'warning', duration);
-    }, [addToast]);
+    const showWarning = useCallback(
+        (message, duration = 1800) => {
+            addToast(message, 'warning', duration);
+        },
+        [addToast],
+    );
 
-    const showSuccess = useCallback((message) => {
-        addToast(message, 'success', 1500);
-    }, [addToast]);
+    const showSuccess = useCallback(
+        (message) => {
+            addToast(message, 'success', 1500);
+        },
+        [addToast],
+    );
 
-    const showInfo = useCallback((message) => {
-        addToast(message, 'info', 1500);
-    }, [addToast]);
+    const showInfo = useCallback(
+        (message) => {
+            addToast(message, 'info', 1500);
+        },
+        [addToast],
+    );
 
     return (
         <ToastContext.Provider value={{ showError, showWarning, showSuccess, showInfo }}>
             {children}
-            <ToastContainer
-                position="top-end"
-                className="p-3 custom-toast-container"
-                style={{ zIndex: 9999 }}
-            >
-                {toasts.map(toast => (
+            <ToastContainer position="top-end" className="p-3 custom-toast-container" style={{ zIndex: 9999 }}>
+                {toasts.map((toast) => (
                     <Toast
                         key={toast.id}
                         show={toast.show}
@@ -77,9 +86,13 @@ export function ToastProvider({ children }) {
                     >
                         <Toast.Body className="custom-toast-body">
                             <span className="toast-label">
-                                {toast.variant === 'danger' ? 'Error' :
-                                 toast.variant === 'warning' ? 'Warning' :
-                                 toast.variant === 'success' ? 'Success' : 'Info'}
+                                {toast.variant === 'danger'
+                                    ? 'Error'
+                                    : toast.variant === 'warning'
+                                      ? 'Warning'
+                                      : toast.variant === 'success'
+                                        ? 'Success'
+                                        : 'Info'}
                             </span>
                             {toast.message}
                         </Toast.Body>

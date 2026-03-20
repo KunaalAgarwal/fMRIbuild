@@ -27,11 +27,7 @@ export function useBIDSHandler({ setNodes, markForSync, showError, showWarning, 
         }
         // Normal data update
         setNodes((prevNodes) =>
-            prevNodes.map((node) =>
-                node.id === nodeId
-                    ? { ...node, data: { ...node.data, ...updates } }
-                    : node
-            )
+            prevNodes.map((node) => (node.id === nodeId ? { ...node, data: { ...node.data, ...updates } } : node)),
         );
         markForSync();
     };
@@ -41,14 +37,14 @@ export function useBIDSHandler({ setNodes, markForSync, showError, showWarning, 
         setNodes((prevNodes) =>
             prevNodes.map((node) => {
                 if (node.id !== cwNodeId) return node;
-                const updatedInternalNodes = (node.data.internalNodes || []).map(n =>
-                    n.isBIDS ? { ...n, ...updates } : n
+                const updatedInternalNodes = (node.data.internalNodes || []).map((n) =>
+                    n.isBIDS ? { ...n, ...updates } : n,
                 );
                 return {
                     ...node,
-                    data: { ...node.data, internalNodes: updatedInternalNodes }
+                    data: { ...node.data, internalNodes: updatedInternalNodes },
                 };
-            })
+            }),
         );
         markForSync();
     };
@@ -83,14 +79,14 @@ export function useBIDSHandler({ setNodes, markForSync, showError, showWarning, 
         const result = await parseBIDSDirectory(files);
 
         if (result.errors.length > 0) {
-            result.errors.forEach(e => showError(e, 6000));
+            result.errors.forEach((e) => showError(e, 6000));
             // Reset file input
             event.target.value = '';
             return;
         }
 
         if (result.warnings.length > 0) {
-            result.warnings.forEach(w => showWarning(w, 5000));
+            result.warnings.forEach((w) => showWarning(w, 5000));
         }
 
         if (result.info.length > 0) {

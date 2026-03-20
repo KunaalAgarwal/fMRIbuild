@@ -18,9 +18,7 @@ export const LIBRARY_MAP = {
 };
 
 // Pre-computed inverse lookup: docker image base → library display name (O(1))
-export const IMAGE_TO_LIBRARY = new Map(
-    Object.entries(DOCKER_IMAGES).map(([key, img]) => [img, LIBRARY_MAP[key]])
-);
+export const IMAGE_TO_LIBRARY = new Map(Object.entries(DOCKER_IMAGES).map(([key, img]) => [img, LIBRARY_MAP[key]]));
 
 export const getLibraryFromDockerImage = (dockerImage) => {
     const baseImage = dockerImage.split(':')[0];

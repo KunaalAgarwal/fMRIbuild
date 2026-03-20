@@ -204,7 +204,9 @@
     stroke-width: 2;
     fill: none;
     stroke-linecap: round;
-    transition: stroke 0.15s ease, stroke-width 0.15s ease;
+    transition:
+        stroke 0.15s ease,
+        stroke-width 0.15s ease;
 }
 
 .connection-line-hitarea {
@@ -252,7 +254,9 @@ g:hover .connection-dot {
     fill: var(--color-success);
     opacity: 0.6;
     pointer-events: none;
-    transition: fill 0.15s ease, opacity 0.15s ease;
+    transition:
+        fill 0.15s ease,
+        opacity 0.15s ease;
 }
 
 .connection-dot-junction.warning-dot {
@@ -275,7 +279,9 @@ g:hover .connection-dot {
     text-overflow: ellipsis;
     white-space: nowrap;
     pointer-events: none;
-    transition: color 0.15s ease, opacity 0.15s ease;
+    transition:
+        color 0.15s ease,
+        opacity 0.15s ease;
 }
 
 .offscreen-label-warning {

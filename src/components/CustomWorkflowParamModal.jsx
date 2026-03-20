@@ -10,26 +10,27 @@ import ParamControl from './ParamControl.jsx';
 import '../styles/workflowItem.css';
 
 const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, internalEdges, wiredInputs }) => {
-    const nonDummyNodes = useMemo(
-        () => (internalNodes || []).filter(n => !n.isDummy),
-        [internalNodes]
-    );
+    const nonDummyNodes = useMemo(() => (internalNodes || []).filter((n) => !n.isDummy), [internalNodes]);
 
     // Compute topological order for scatter propagation
     const firstNodeIndex = useMemo(() => {
         if (nonDummyNodes.length === 0) return 0;
 
-        const nodeIds = new Set(nonDummyNodes.map(n => n.id));
-        const dummyIds = new Set((internalNodes || []).filter(n => n.isDummy).map(n => n.id));
+        const nodeIds = new Set(nonDummyNodes.map((n) => n.id));
+        const dummyIds = new Set((internalNodes || []).filter((n) => n.isDummy).map((n) => n.id));
         const realEdges = (internalEdges || []).filter(
-            e => !dummyIds.has(e.source) && !dummyIds.has(e.target) && nodeIds.has(e.source) && nodeIds.has(e.target)
+            (e) => !dummyIds.has(e.source) && !dummyIds.has(e.target) && nodeIds.has(e.source) && nodeIds.has(e.target),
         );
 
         let order;
-        try { order = topoSort(nonDummyNodes, realEdges); } catch { return 0; }
+        try {
+            order = topoSort(nonDummyNodes, realEdges);
+        } catch {
+            return 0;
+        }
 
         const idToIndex = new Map(nonDummyNodes.map((n, i) => [n.id, i]));
-        const topoIndices = order.map(id => idToIndex.get(id)).filter(i => i !== undefined);
+        const topoIndices = order.map((id) => idToIndex.get(id)).filter((i) => i !== undefined);
         return topoIndices.length > 0 ? topoIndices[0] : 0;
     }, [nonDummyNodes, internalEdges, internalNodes]);
 
@@ -64,7 +65,11 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
             setParamValues({ ...existing });
         } else if (typeof existing === 'string' && existing.trim()) {
-            try { setParamValues(JSON.parse(existing)); } catch { setParamValues({}); }
+            try {
+                setParamValues(JSON.parse(existing));
+            } catch {
+                setParamValues({});
+            }
         } else {
             setParamValues({});
         }
@@ -74,14 +79,16 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         setVersionWarning('');
         const scatterInit = {};
         if (Array.isArray(node.scatterInputs) && node.scatterInputs.length > 0) {
-            node.scatterInputs.forEach(name => { scatterInit[name] = true; });
+            node.scatterInputs.forEach((name) => {
+                scatterInit[name] = true;
+            });
         }
         // Force scatter on for inputs wired from internal BIDS nodes
-        const bidsIds = new Set((internalNodes || []).filter(n => n.isBIDS).map(n => n.id));
+        const bidsIds = new Set((internalNodes || []).filter((n) => n.isBIDS).map((n) => n.id));
         if (bidsIds.size > 0) {
-            for (const edge of (internalEdges || [])) {
+            for (const edge of internalEdges || []) {
                 if (bidsIds.has(edge.source) && edge.target === node.id) {
-                    for (const m of (edge.data?.mappings || [])) {
+                    for (const m of edge.data?.mappings || []) {
                         scatterInit[m.targetInput] = true;
                     }
                 }
@@ -156,7 +163,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             if (!cond) {
                 computedWhenWarning = 'Enter a condition';
             } else {
-                const hasOperator = VALID_OPERATORS.some(op => cond.startsWith(op));
+                const hasOperator = VALID_OPERATORS.some((op) => cond.startsWith(op));
                 if (!hasOperator) computedWhenWarning = 'Invalid operator';
                 else {
                     const afterOp = cond.replace(/^(==|!=|>=|<=|>|<)\s*/, '');
@@ -165,9 +172,10 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             }
         }
 
-        const whenExpression = whenParam && whenCondition.trim() && !computedWhenWarning
-            ? `$(inputs.${whenParam} ${whenCondition.trim()})`
-            : '';
+        const whenExpression =
+            whenParam && whenCondition.trim() && !computedWhenWarning
+                ? `$(inputs.${whenParam} ${whenCondition.trim()})`
+                : '';
 
         const activeScatterInputs = Object.entries(scatterToggles)
             .filter(([_, active]) => active)
@@ -197,9 +205,9 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     const handleSave = () => {
         const finalNodes = saveCurrentNodeState();
         // Map back to original internal nodes (including dummy nodes)
-        const allUpdated = (internalNodes || []).map(origNode => {
+        const allUpdated = (internalNodes || []).map((origNode) => {
             if (origNode.isDummy) return origNode;
-            const edited = finalNodes.find(e => e.id === origNode.id);
+            const edited = finalNodes.find((e) => e.id === origNode.id);
             return edited || origNode;
         });
         onClose(allUpdated);
@@ -224,18 +232,18 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         return filtered;
     }, [wiredInputs, currentNode?.id]);
 
-    const tool = useMemo(() => currentNode ? getToolConfigSync(currentNode.label) : null, [currentNode?.label]);
+    const tool = useMemo(() => (currentNode ? getToolConfigSync(currentNode.label) : null), [currentNode?.label]);
     const dockerImage = tool?.dockerImage || null;
 
     // Compute which inputs of the current node are wired from internal BIDS nodes
     const bidsWiredInputs = useMemo(() => {
         if (!currentNode) return new Set();
-        const bidsIds = new Set((internalNodes || []).filter(n => n.isBIDS).map(n => n.id));
+        const bidsIds = new Set((internalNodes || []).filter((n) => n.isBIDS).map((n) => n.id));
         if (bidsIds.size === 0) return new Set();
         const wired = new Set();
-        for (const edge of (internalEdges || [])) {
+        for (const edge of internalEdges || []) {
             if (bidsIds.has(edge.source) && edge.target === currentNode.id) {
-                for (const m of (edge.data?.mappings || [])) {
+                for (const m of edge.data?.mappings || []) {
                     wired.add(m.targetInput);
                 }
             }
@@ -245,10 +253,8 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
 
     const allParams = useMemo(() => {
         if (!tool) return { required: [], optional: [] };
-        const required = Object.entries(tool.requiredInputs || {})
-            .map(([name, def]) => ({ name, ...def }));
-        const optional = Object.entries(tool.optionalInputs || {})
-            .map(([name, def]) => ({ name, ...def }));
+        const required = Object.entries(tool.requiredInputs || {}).map(([name, def]) => ({ name, ...def }));
+        const optional = Object.entries(tool.optionalInputs || {}).map(([name, def]) => ({ name, ...def }));
         return { required, optional };
     }, [tool]);
 
@@ -257,7 +263,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
         if (!whenParam) return null;
         const cond = whenCondition.trim();
         if (!cond) return whenTouched ? 'Enter a condition (e.g., == true)' : null;
-        const hasOperator = VALID_OPERATORS.some(op => cond.startsWith(op));
+        const hasOperator = VALID_OPERATORS.some((op) => cond.startsWith(op));
         if (!hasOperator) return `Condition should start with an operator: ${VALID_OPERATORS.join(', ')}`;
         const afterOp = cond.replace(/^(==|!=|>=|<=|>|<)\s*/, '');
         if (!afterOp) return 'Missing value after operator';
@@ -277,7 +283,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     }, [expressionValues]);
 
     const library = dockerImage ? getLibraryFromDockerImage(dockerImage) : null;
-    const knownTags = library ? (DOCKER_TAGS[library] || ['latest']) : ['latest'];
+    const knownTags = library ? DOCKER_TAGS[library] || ['latest'] : ['latest'];
 
     const validateDockerVersion = (version) => {
         const trimmed = version.trim();
@@ -291,20 +297,18 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
             setVersionWarning('');
         } else {
             setVersionValid(false);
-            const displayTags = knownTags.length > 4
-                ? `${knownTags.slice(0, 4).join(', ')}...`
-                : knownTags.join(', ');
+            const displayTags = knownTags.length > 4 ? `${knownTags.slice(0, 4).join(', ')}...` : knownTags.join(', ');
             setVersionWarning(`Unknown tag. Known: ${displayTags}`);
         }
     };
 
     const updateParam = (name, value) => {
-        setParamValues(prev => ({ ...prev, [name]: value }));
+        setParamValues((prev) => ({ ...prev, [name]: value }));
     };
 
     const clampToBounds = (name, param) => {
         if (!param.bounds) return;
-        setParamValues(prev => {
+        setParamValues((prev) => {
             const val = prev[name];
             if (val === null || val === undefined) return prev;
             const [min, max] = param.bounds;
@@ -315,14 +319,14 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     };
 
     const updateLinkMerge = (inputName, value) => {
-        setLinkMergeValues(prev => ({ ...prev, [inputName]: value }));
+        setLinkMergeValues((prev) => ({ ...prev, [inputName]: value }));
     };
 
     const handleToggleFx = (paramName) => {
-        setExpressionToggles(prev => {
+        setExpressionToggles((prev) => {
             const wasActive = prev[paramName];
             if (wasActive) {
-                setExpressionValues(prevExpr => {
+                setExpressionValues((prevExpr) => {
                     const next = { ...prevExpr };
                     delete next[paramName];
                     return next;
@@ -333,7 +337,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     };
 
     const handleToggleScatter = (paramName) => {
-        setScatterToggles(prev => ({ ...prev, [paramName]: !prev[paramName] }));
+        setScatterToggles((prev) => ({ ...prev, [paramName]: !prev[paramName] }));
     };
 
     // Build scatter button for a param (context-specific logic stays here)
@@ -344,7 +348,9 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
 
         if (isBIDSWired) {
             return (
-                <span className="scatter-toggle active locked" title="Scatter forced by BIDS input">{'\u21BB'}</span>
+                <span className="scatter-toggle active locked" title="Scatter forced by BIDS input">
+                    {'\u21BB'}
+                </span>
             );
         }
         if (isFirstNode) {
@@ -353,7 +359,9 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                     className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}`}
                     onClick={() => handleToggleScatter(param.name)}
                     title={scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
-                >{'\u21BB'}</span>
+                >
+                    {'\u21BB'}
+                </span>
             );
         }
         if (isDownstreamScattered) {
@@ -361,7 +369,9 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                 <span
                     className="scatter-toggle locked"
                     title={`Inherited from ${nonDummyNodes[firstNodeIndex]?.label || 'root'}`}
-                >{'\u21BB'}</span>
+                >
+                    {'\u21BB'}
+                </span>
             );
         }
         return null;
@@ -370,13 +380,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
     if (!currentNode) return null;
 
     return (
-        <Modal
-            show={show}
-            onHide={handleCancel}
-            centered
-            className="custom-modal"
-            size="lg"
-        >
+        <Modal show={show} onHide={handleCancel} centered className="custom-modal" size="lg">
             <Modal.Header>
                 <Modal.Title style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '1rem', width: '100%' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -422,9 +426,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                 isValid={versionValid}
                                 prefix={`${dockerImage}:`}
                             />
-                            {versionWarning && (
-                                <div className="docker-warning-text">{versionWarning}</div>
-                            )}
+                            {versionWarning && <div className="docker-warning-text">{versionWarning}</div>}
                             <div className="docker-help-text">Select a tag or enter a custom version</div>
                         </Form.Group>
                     )}
@@ -439,11 +441,16 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                 size="sm"
                                 className="when-param-select"
                                 value={whenParam}
-                                onChange={(e) => { setWhenParam(e.target.value); if (!e.target.value) setWhenCondition(''); }}
+                                onChange={(e) => {
+                                    setWhenParam(e.target.value);
+                                    if (!e.target.value) setWhenCondition('');
+                                }}
                             >
                                 <option value="">None</option>
-                                {[...allParams.required, ...allParams.optional].map(p => (
-                                    <option key={p.name} value={p.name}>{p.name}</option>
+                                {[...allParams.required, ...allParams.optional].map((p) => (
+                                    <option key={p.name} value={p.name}>
+                                        {p.name}
+                                    </option>
                                 ))}
                             </Form.Select>
                             {whenParam && (
@@ -453,7 +460,10 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                     className={`when-condition-input${whenCondition.trim() ? ' filled' : ''}${whenWarning ? ' invalid' : ''}`}
                                     placeholder="== true"
                                     value={whenCondition}
-                                    onChange={(e) => { setWhenCondition(e.target.value); setWhenTouched(true); }}
+                                    onChange={(e) => {
+                                        setWhenCondition(e.target.value);
+                                        setWhenTouched(true);
+                                    }}
                                     onBlur={() => setWhenTouched(true)}
                                 />
                             )}
@@ -463,9 +473,7 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                 $(inputs.{whenParam} {whenCondition.trim()})
                             </div>
                         )}
-                        {whenWarning && (
-                            <div className="when-warning-text">{whenWarning}</div>
-                        )}
+                        {whenWarning && <div className="when-warning-text">{whenWarning}</div>}
                     </Form.Group>
 
                     {Object.values(scatterToggles).filter(Boolean).length > 1 && (
@@ -484,9 +492,12 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                                 <option value="nested_crossproduct">nested_crossproduct</option>
                             </Form.Select>
                             <div className="scatter-method-help-text">
-                                {scatterMethod === 'dotproduct' && 'Pairs elements 1:1 across inputs (arrays must be the same length). [A,B] \u00d7 [1,2] \u2192 (A,1), (B,2)'}
-                                {scatterMethod === 'flat_crossproduct' && 'Cartesian product of all inputs \u2014 results in a flat list. [A,B] \u00d7 [1,2] \u2192 (A,1), (A,2), (B,1), (B,2)'}
-                                {scatterMethod === 'nested_crossproduct' && 'Cartesian product \u2014 results nested by the first input. [A,B] \u00d7 [1,2] \u2192 [(A,1),(A,2)], [(B,1),(B,2)]'}
+                                {scatterMethod === 'dotproduct' &&
+                                    'Pairs elements 1:1 across inputs (arrays must be the same length). [A,B] \u00d7 [1,2] \u2192 (A,1), (B,2)'}
+                                {scatterMethod === 'flat_crossproduct' &&
+                                    'Cartesian product of all inputs \u2014 results in a flat list. [A,B] \u00d7 [1,2] \u2192 (A,1), (A,2), (B,1), (B,2)'}
+                                {scatterMethod === 'nested_crossproduct' &&
+                                    'Cartesian product \u2014 results nested by the first input. [A,B] \u00d7 [1,2] \u2192 [(A,1),(A,2)], [(B,1),(B,2)]'}
                             </div>
                         </Form.Group>
                     )}
@@ -496,82 +507,104 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                         {[
                             { params: allParams.required, label: 'Required' },
                             { params: allParams.optional, label: 'Optional' },
-                        ].map(({ params: sectionParams, label: sectionLabel }) =>
-                            sectionParams.length > 0 && (
-                                <div key={sectionLabel} className="param-section">
-                                    <div className="param-section-header">{sectionLabel}</div>
-                                    {sectionParams.map((param) => {
-                                        const isFileType = param.type === 'File' || param.type === 'Directory';
-                                        const wiredSources = currentNodeWiredInputs.get(param.name) || [];
-                                        return (
-                                            <div key={param.name} className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''} ${scatterToggles[param.name] ? 'has-scatter' : ''}`}>
-                                                <div className="param-card-header">
-                                                    <span className="param-name">{param.name}</span>
-                                                    <span className="param-type-badge">{param.type}</span>
-                                                    <ParamControl
-                                                        param={param}
-                                                        paramValues={paramValues}
-                                                        updateParam={updateParam}
-                                                        clampToBounds={clampToBounds}
-                                                        expressionToggles={expressionToggles}
-                                                        handleToggleFx={handleToggleFx}
-                                                        scatterButton={buildScatterButton(param)}
-                                                        nodeId={currentNode?.id}
-                                                    />
-                                                </div>
-                                                {isFileType && wiredSources.length === 1 && (
-                                                    <div className="input-source-single">
-                                                        <span className="input-source">
-                                                            from {wiredSources[0].sourceNodeLabel} / {wiredSources[0].sourceOutput}
-                                                        </span>
+                        ].map(
+                            ({ params: sectionParams, label: sectionLabel }) =>
+                                sectionParams.length > 0 && (
+                                    <div key={sectionLabel} className="param-section">
+                                        <div className="param-section-header">{sectionLabel}</div>
+                                        {sectionParams.map((param) => {
+                                            const isFileType = param.type === 'File' || param.type === 'Directory';
+                                            const wiredSources = currentNodeWiredInputs.get(param.name) || [];
+                                            return (
+                                                <div
+                                                    key={param.name}
+                                                    className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''} ${scatterToggles[param.name] ? 'has-scatter' : ''}`}
+                                                >
+                                                    <div className="param-card-header">
+                                                        <span className="param-name">{param.name}</span>
+                                                        <span className="param-type-badge">{param.type}</span>
+                                                        <ParamControl
+                                                            param={param}
+                                                            paramValues={paramValues}
+                                                            updateParam={updateParam}
+                                                            clampToBounds={clampToBounds}
+                                                            expressionToggles={expressionToggles}
+                                                            handleToggleFx={handleToggleFx}
+                                                            scatterButton={buildScatterButton(param)}
+                                                            nodeId={currentNode?.id}
+                                                        />
                                                     </div>
-                                                )}
-                                                {isFileType && wiredSources.length > 1 && (
-                                                    <div className="input-source-multi-details">
-                                                        <div className="input-source-multi-row">
-                                                            <div className="input-source-multi-sources">
-                                                                {wiredSources.map((src, i) => (
-                                                                    <span key={i} className="input-source input-source-detail">
-                                                                        {src.sourceNodeLabel} / {src.sourceOutput}
-                                                                    </span>
-                                                                ))}
+                                                    {isFileType && wiredSources.length === 1 && (
+                                                        <div className="input-source-single">
+                                                            <span className="input-source">
+                                                                from {wiredSources[0].sourceNodeLabel} /{' '}
+                                                                {wiredSources[0].sourceOutput}
+                                                            </span>
+                                                        </div>
+                                                    )}
+                                                    {isFileType && wiredSources.length > 1 && (
+                                                        <div className="input-source-multi-details">
+                                                            <div className="input-source-multi-row">
+                                                                <div className="input-source-multi-sources">
+                                                                    {wiredSources.map((src, i) => (
+                                                                        <span
+                                                                            key={i}
+                                                                            className="input-source input-source-detail"
+                                                                        >
+                                                                            {src.sourceNodeLabel} / {src.sourceOutput}
+                                                                        </span>
+                                                                    ))}
+                                                                </div>
+                                                                <Form.Select
+                                                                    size="sm"
+                                                                    className="link-merge-select"
+                                                                    value={
+                                                                        linkMergeValues[param.name] || 'merge_flattened'
+                                                                    }
+                                                                    onChange={(e) =>
+                                                                        updateLinkMerge(param.name, e.target.value)
+                                                                    }
+                                                                >
+                                                                    <option value="merge_flattened">
+                                                                        merge_flattened
+                                                                    </option>
+                                                                    <option value="merge_nested">merge_nested</option>
+                                                                </Form.Select>
                                                             </div>
-                                                            <Form.Select
-                                                                size="sm"
-                                                                className="link-merge-select"
-                                                                value={linkMergeValues[param.name] || 'merge_flattened'}
-                                                                onChange={(e) => updateLinkMerge(param.name, e.target.value)}
-                                                            >
-                                                                <option value="merge_flattened">merge_flattened</option>
-                                                                <option value="merge_nested">merge_nested</option>
-                                                            </Form.Select>
+                                                            <div className="merge-help-text">
+                                                                flattened combines all into one list [x1, x2] — nested
+                                                                preserves grouping per source [[x1], [x2]]
+                                                            </div>
                                                         </div>
-                                                        <div className="merge-help-text">
-                                                            flattened combines all into one list [x1, x2] — nested preserves grouping per source [[x1], [x2]]
+                                                    )}
+                                                    {expressionToggles[param.name] && (
+                                                        <ExpressionEditor
+                                                            paramName={param.name}
+                                                            paramType={param.type}
+                                                            isFileType={isFileType}
+                                                            value={expressionValues[param.name]}
+                                                            onChange={(val) =>
+                                                                setExpressionValues((prev) => ({
+                                                                    ...prev,
+                                                                    [param.name]: val,
+                                                                }))
+                                                            }
+                                                            warning={expressionWarnings[param.name]}
+                                                        />
+                                                    )}
+                                                    {param.label && (
+                                                        <div className="param-description">{param.label}</div>
+                                                    )}
+                                                    {param.bounds && (
+                                                        <div className="param-bounds">
+                                                            bounds: {param.bounds[0]} – {param.bounds[1]}
                                                         </div>
-                                                    </div>
-                                                )}
-                                                {expressionToggles[param.name] && (
-                                                    <ExpressionEditor
-                                                        paramName={param.name}
-                                                        paramType={param.type}
-                                                        isFileType={isFileType}
-                                                        value={expressionValues[param.name]}
-                                                        onChange={(val) => setExpressionValues(prev => ({ ...prev, [param.name]: val }))}
-                                                        warning={expressionWarnings[param.name]}
-                                                    />
-                                                )}
-                                                {param.label && (
-                                                    <div className="param-description">{param.label}</div>
-                                                )}
-                                                {param.bounds && (
-                                                    <div className="param-bounds">bounds: {param.bounds[0]} – {param.bounds[1]}</div>
-                                                )}
-                                            </div>
-                                        );
-                                    })}
-                                </div>
-                            )
+                                                    )}
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                ),
                         )}
 
                         {!tool && (
@@ -583,12 +616,15 @@ const CustomWorkflowParamModal = ({ show, onClose, workflowName, internalNodes, 
                             </div>
                         )}
                     </div>
-
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" size="sm" onClick={handleCancel}>Cancel</Button>
-                <Button variant="primary" size="sm" onClick={handleSave}>Save</Button>
+                <Button variant="secondary" size="sm" onClick={handleCancel}>
+                    Cancel
+                </Button>
+                <Button variant="primary" size="sm" onClick={handleSave}>
+                    Save
+                </Button>
             </Modal.Footer>
         </Modal>
     );

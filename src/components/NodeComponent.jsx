@@ -15,10 +15,13 @@ import '../styles/workflowItem.css';
 const NodeComponent = ({ data, id }) => {
     // Force ReactFlow to recompute handle bounds so edges route to left/right handles
     const updateNodeInternals = useUpdateNodeInternals();
-    useEffect(() => { updateNodeInternals(id); }, []);
+    useEffect(() => {
+        updateNodeInternals(id);
+    }, []);
 
     // Check scatter propagation and source-node status
-    const { propagatedIds, sourceNodeIds, scatteredUpstreamInputs, gatherNodeIds } = useContext(ScatterPropagationContext);
+    const { propagatedIds, sourceNodeIds, scatteredUpstreamInputs, gatherNodeIds } =
+        useContext(ScatterPropagationContext);
     const isScatterInherited = propagatedIds.has(id);
     const isGatherNode = gatherNodeIds?.has(id) || false;
     const isSourceNode = sourceNodeIds.has(id);
@@ -45,13 +48,7 @@ const NodeComponent = ({ data, id }) => {
 
     // BIDS dataset nodes
     if (isDummy && data.isBIDS) {
-        return (
-            <BIDSNodeComponent
-                data={data}
-                isScatterInherited={isScatterInherited}
-                isGatherNode={isGatherNode}
-            />
-        );
+        return <BIDSNodeComponent data={data} isScatterInherited={isScatterInherited} isGatherNode={isGatherNode} />;
     }
 
     // Custom workflow (sub-workflow) nodes

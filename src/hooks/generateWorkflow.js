@@ -64,7 +64,7 @@ const resolveFileType = (cwlType) => {
 
     // Nullable: ['null', 'File'] or ['null', { type: 'array', items: 'File' }]
     if (Array.isArray(cwlType)) {
-        const nonNull = cwlType.find(t => t !== 'null');
+        const nonNull = cwlType.find((t) => t !== 'null');
         if (!nonNull) return null;
         const inner = resolveFileType(nonNull);
         return inner ? { ...inner, nullable: true } : null;
@@ -101,7 +101,10 @@ const collectUniqueDockerImages = (dockerVersionMap) => {
     const images = [];
     for (const { dockerImage, dockerVersion } of Object.values(dockerVersionMap)) {
         const tag = `${dockerImage}:${dockerVersion}`;
-        if (!seen.has(tag)) { seen.add(tag); images.push(tag); }
+        if (!seen.has(tag)) {
+            seen.add(tag);
+            images.push(tag);
+        }
     }
     return images.sort();
 };
@@ -187,22 +190,23 @@ export function useGenerateWorkflow() {
 
         /* ---------- build Docker version map for each tool path ---------- */
         // Filter dummy nodes — they have no tool definitions
-        const realNodes = graph.nodes.filter(n => !n.data?.isDummy);
+        const realNodes = graph.nodes.filter((n) => !n.data?.isDummy);
         // Maps cwlPath -> { dockerImage, dockerVersion }
         const dockerVersionMap = {};
         const versionConflicts = [];
-        realNodes.forEach(node => {
+        realNodes.forEach((node) => {
             const tool = getToolConfigSync(node.data.label);
             if (tool?.cwlPath && tool?.dockerImage) {
                 const version = node.data.dockerVersion || 'latest';
                 const existing = dockerVersionMap[tool.cwlPath];
                 if (existing) {
                     // Detect conflicting non-latest versions
-                    if (existing.dockerVersion !== version &&
-                        existing.dockerVersion !== 'latest' && version !== 'latest') {
-                        versionConflicts.push(
-                            `${node.data.label}: "${existing.dockerVersion}" vs "${version}"`
-                        );
+                    if (
+                        existing.dockerVersion !== version &&
+                        existing.dockerVersion !== 'latest' &&
+                        version !== 'latest'
+                    ) {
+                        versionConflicts.push(`${node.data.label}: "${existing.dockerVersion}" vs "${version}"`);
                     }
                     // Prefer non-latest over latest
                     if (existing.dockerVersion === 'latest' && version !== 'latest') {
@@ -222,18 +226,18 @@ export function useGenerateWorkflow() {
 
         /* ---------- fetch each unique tool file and inject Docker version ---------- */
         const uniquePaths = [
-            ...new Set(realNodes.map(n => getToolConfigSync(n.data.label)?.cwlPath).filter(Boolean))
+            ...new Set(realNodes.map((n) => getToolConfigSync(n.data.label)?.cwlPath).filter(Boolean)),
         ];
 
-        const results = await Promise.allSettled(uniquePaths.map(async (p) => {
-            const res = await fetch(`${base}${p}`);
-            if (!res.ok) throw new Error(`${p}: ${res.status} ${res.statusText}`);
-            return { path: p, text: await res.text() };
-        }));
+        const results = await Promise.allSettled(
+            uniquePaths.map(async (p) => {
+                const res = await fetch(`${base}${p}`);
+                if (!res.ok) throw new Error(`${p}: ${res.status} ${res.statusText}`);
+                return { path: p, text: await res.text() };
+            }),
+        );
 
-        const failedPaths = results
-            .map((r, i) => r.status === 'rejected' ? uniquePaths[i] : null)
-            .filter(Boolean);
+        const failedPaths = results.map((r, i) => (r.status === 'rejected' ? uniquePaths[i] : null)).filter(Boolean);
         if (uniquePaths.length > 0 && failedPaths.length === uniquePaths.length) {
             showError(`Unable to fetch any tool files. Check network connectivity.`);
             return;
@@ -254,7 +258,7 @@ export function useGenerateWorkflow() {
                     const cwlDoc = YAML.load(cwlContent);
                     if (!cwlDoc.hints) cwlDoc.hints = {};
                     cwlDoc.hints.DockerRequirement = {
-                        dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`
+                        dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`,
                     };
                     const hasShebang = cwlContent.startsWith('#!/');
                     const shebangLine = hasShebang ? cwlContent.split('\n')[0] + '\n\n' : '';
@@ -269,7 +273,7 @@ export function useGenerateWorkflow() {
 
         /* ---------- generate per-node CWL variants for order-sensitive tools ---------- */
         const fetchedCWLMap = new Map(
-            results.filter(r => r.status === 'fulfilled').map(r => [r.value.path, r.value.text])
+            results.filter((r) => r.status === 'fulfilled').map((r) => [r.value.path, r.value.text]),
         );
         for (const override of positionOverrides) {
             const baseText = fetchedCWLMap.get(override.cwlPath);
@@ -282,7 +286,7 @@ export function useGenerateWorkflow() {
                 if (dockerInfo) {
                     if (!cwlDoc.hints) cwlDoc.hints = {};
                     cwlDoc.hints.DockerRequirement = {
-                        dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`
+                        dockerPull: `${dockerInfo.dockerImage}:${dockerInfo.dockerVersion}`,
                     };
                 }
                 const hasShebang = baseText.startsWith('#!/');
@@ -294,7 +298,7 @@ export function useGenerateWorkflow() {
         }
 
         /* ---------- detect BIDS nodes ---------- */
-        const bidsNodes = graph.nodes.filter(n => n.data?.isBIDS && n.data?.bidsSelections);
+        const bidsNodes = graph.nodes.filter((n) => n.data?.isBIDS && n.data?.bidsSelections);
         const hasBIDS = bidsNodes.length > 0;
 
         if (hasBIDS) {
@@ -335,7 +339,7 @@ export function useGenerateWorkflow() {
         /* ---------- generate RO-Crate metadata (Workflow RO-Crate 1.0) ---------- */
         const toolMeta = {};
         for (const p of uniquePaths) {
-            const node = realNodes.find(n => getToolConfigSync(n.data.label)?.cwlPath === p);
+            const node = realNodes.find((n) => getToolConfigSync(n.data.label)?.cwlPath === p);
             if (node) {
                 const tool = getToolConfigSync(node.data.label);
                 toolMeta[p] = {
@@ -344,20 +348,19 @@ export function useGenerateWorkflow() {
                 };
             }
         }
-        zip.file('ro-crate-metadata.json', buildROCrateMetadata({
-            workflowName: safeWorkflowName,
-            mainWorkflowPath: `workflows/${safeWorkflowName}.cwl`,
-            jobTemplatePath: `workflows/${safeWorkflowName}_job.yml`,
-            toolCWLPaths: uniquePaths,
-            toolMetadata: toolMeta,
-            hasBIDS,
-            dockerImages,
-            singularityFiles: [
-                'Singularity.def',
-                'run_singularity.sh',
-                'prefetch_images_singularity.sh',
-            ],
-        }));
+        zip.file(
+            'ro-crate-metadata.json',
+            buildROCrateMetadata({
+                workflowName: safeWorkflowName,
+                mainWorkflowPath: `workflows/${safeWorkflowName}.cwl`,
+                jobTemplatePath: `workflows/${safeWorkflowName}_job.yml`,
+                toolCWLPaths: uniquePaths,
+                toolMetadata: toolMeta,
+                hasBIDS,
+                dockerImages,
+                singularityFiles: ['Singularity.def', 'run_singularity.sh', 'prefetch_images_singularity.sh'],
+            }),
+        );
 
         zip.folder('additional_inputs');
 

@@ -9,7 +9,7 @@ import '../styles/outputConfigModal.css';
  * Uses BFS in reverse direction (following edges from target to source).
  */
 function discoverUpstreamNodes(outputNodeId, allNodes, allEdges) {
-    const nodeMap = new Map(allNodes.map(n => [n.id, n]));
+    const nodeMap = new Map(allNodes.map((n) => [n.id, n]));
 
     // Build reverse adjacency: target -> [source IDs]
     const reverseAdj = new Map();
@@ -54,15 +54,15 @@ function discoverUpstreamNodes(outputNodeId, allNodes, allEdges) {
 function getNodeOutputs(nodeData) {
     if (nodeData.isCustomWorkflow && nodeData.internalNodes) {
         const { internalNodes = [], internalEdges = [] } = nodeData;
-        const nonDummyNodes = internalNodes.filter(n => !n.isDummy);
+        const nonDummyNodes = internalNodes.filter((n) => !n.isDummy);
 
         // Find intermediate outputs consumed by other internal nodes
         const consumedOutputs = new Set();
         for (const edge of internalEdges) {
-            const srcNode = internalNodes.find(n => n.id === edge.source);
-            const tgtNode = internalNodes.find(n => n.id === edge.target);
+            const srcNode = internalNodes.find((n) => n.id === edge.source);
+            const tgtNode = internalNodes.find((n) => n.id === edge.target);
             if (srcNode && tgtNode && !srcNode.isDummy && !tgtNode.isDummy) {
-                for (const m of (edge.data?.mappings || [])) {
+                for (const m of edge.data?.mappings || []) {
                     consumedOutputs.add(`${edge.source}/${m.sourceOutput}`);
                 }
             }
@@ -108,7 +108,7 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatter
 
         const upstreamNodes = discoverUpstreamNodes(outputNodeId, allNodes, allEdges);
 
-        return upstreamNodes.map(node => ({
+        return upstreamNodes.map((node) => ({
             nodeId: node.id,
             label: node.data.displayLabel || node.data.label,
             isCustomWorkflow: node.data.isCustomWorkflow || false,
@@ -128,9 +128,7 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatter
             for (const output of group.outputs) {
                 const key = `${group.nodeId}/${output.name}`;
                 // Default to selected if no prior config, otherwise restore
-                newSelections[key] = existingSelections
-                    ? (existingSelections[key] !== false)
-                    : true;
+                newSelections[key] = existingSelections ? existingSelections[key] !== false : true;
             }
         }
 
@@ -138,11 +136,11 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatter
     }, [show, upstreamData, outputNodeData]);
 
     const handleToggle = (key) => {
-        setSelections(prev => ({ ...prev, [key]: !prev[key] }));
+        setSelections((prev) => ({ ...prev, [key]: !prev[key] }));
     };
 
     const handleSelectAll = () => {
-        setSelections(prev => {
+        setSelections((prev) => {
             const all = {};
             for (const key of Object.keys(prev)) all[key] = true;
             return all;
@@ -150,7 +148,7 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatter
     };
 
     const handleSelectNone = () => {
-        setSelections(prev => {
+        setSelections((prev) => {
             const none = {};
             for (const key of Object.keys(prev)) none[key] = false;
             return none;
@@ -184,8 +182,12 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatter
                                 {selectedCount} of {totalCount} output{totalCount !== 1 ? 's' : ''} selected
                             </span>
                             <div className="output-config-actions">
-                                <Button variant="link" size="sm" onClick={handleSelectAll}>Select All</Button>
-                                <Button variant="link" size="sm" onClick={handleSelectNone}>Select None</Button>
+                                <Button variant="link" size="sm" onClick={handleSelectAll}>
+                                    Select All
+                                </Button>
+                                <Button variant="link" size="sm" onClick={handleSelectNone}>
+                                    Select None
+                                </Button>
                             </div>
                         </div>
 
@@ -223,10 +225,11 @@ const OutputConfigModal = ({ show, onHide, outputNodeId, outputNodeData, scatter
                         </div>
                     </>
                 )}
-
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancel</Button>
+                <Button variant="secondary" onClick={onHide}>
+                    Cancel
+                </Button>
                 <Button variant="primary" onClick={handleSave} disabled={selectedCount === 0}>
                     Save ({selectedCount})
                 </Button>

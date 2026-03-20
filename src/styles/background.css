@@ -2,177 +2,180 @@
 @import url('https://fonts.googleapis.com/css2?family=Work+Sans:wght@300;400;600&family=Roboto+Mono:wght@400;500&display=swap');
 
 :root {
-  /* Backgrounds */
-  --bg-primary: #1a1a1a;
-  --bg-secondary: #1e1e1e;
-  --bg-tertiary: #2a2a2a;
-  --bg-card: #2e2e2e;
-  --bg-header: #252525;
-  --bg-interactive: #3a3a3a;
-  --bg-hover: #444;
+    /* Backgrounds */
+    --bg-primary: #1a1a1a;
+    --bg-secondary: #1e1e1e;
+    --bg-tertiary: #2a2a2a;
+    --bg-card: #2e2e2e;
+    --bg-header: #252525;
+    --bg-interactive: #3a3a3a;
+    --bg-hover: #444;
 
-  /* Text */
-  --text-primary: #ffffff;
-  --text-light: #e0e0e0;
-  --text-medium: #d0d0d0;
-  --text-muted: #888888;
-  --text-secondary: #666666;
+    /* Text */
+    --text-primary: #ffffff;
+    --text-light: #e0e0e0;
+    --text-medium: #d0d0d0;
+    --text-muted: #888888;
+    --text-secondary: #666666;
 
-  /* Accent */
-  --color-primary: #4a90e2;
-  --color-success: #4CAF50;
-  --color-warning: #ffc107;
-  --color-danger: #e74c3c;
-  --color-cyan: #4ac6e2;
+    /* Accent */
+    --color-primary: #4a90e2;
+    --color-success: #4caf50;
+    --color-warning: #ffc107;
+    --color-danger: #e74c3c;
+    --color-cyan: #4ac6e2;
 
-  /* Node text (dark text on light node backgrounds) */
-  --text-on-light: #333;
+    /* Node text (dark text on light node backgrounds) */
+    --text-on-light: #333;
 
-  /* Borders */
-  --border-subtle: rgba(255, 255, 255, 0.1);
-  --border-medium: rgba(255, 255, 255, 0.15);
-  --border-focus: rgba(255, 255, 255, 0.25);
+    /* Borders */
+    --border-subtle: rgba(255, 255, 255, 0.1);
+    --border-medium: rgba(255, 255, 255, 0.15);
+    --border-focus: rgba(255, 255, 255, 0.25);
 
-  /* Shadows */
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
-  --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
+    /* Shadows */
+    --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 8px 32px rgba(0, 0, 0, 0.5);
 
-  /* MiniMap */
-  --minimap-mask: rgba(0, 0, 0, 0.65);
-  --minimap-bg: #1a1a1a;
+    /* MiniMap */
+    --minimap-mask: rgba(0, 0, 0, 0.65);
+    --minimap-bg: #1a1a1a;
 }
 
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  background-color: var(--bg-primary);
-  font-family: 'Roboto Mono', monospace;
-  color: var(--text-primary);
-  overflow: auto;
+html,
+body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--bg-primary);
+    font-family: 'Roboto Mono', monospace;
+    color: var(--text-primary);
+    overflow: auto;
 }
 
 h2 {
-  font-size: clamp(1.5rem, 1.5vw, 3rem); 
-  font-weight: 600;
-  margin: 0;
-  padding: 8px 0;
+    font-size: clamp(1.5rem, 1.5vw, 3rem);
+    font-weight: 600;
+    margin: 0;
+    padding: 8px 0;
 }
 
 h3 {
-  font-size: clamp(1.2rem, 1vw, 2rem);
-  font-weight: 600;
-  margin: 0;
-  padding: 6px 0;
+    font-size: clamp(1.2rem, 1vw, 2rem);
+    font-weight: 600;
+    margin: 0;
+    padding: 6px 0;
 }
 
 .text {
-  font-size: clamp(0.8rem, 1.0vw, 1.2rem); 
+    font-size: clamp(0.8rem, 1vw, 1.2rem);
 }
 
 .app-layout {
-  display: flex;
-  flex-direction: column;
-  height: 100vh;
-  overflow: auto;
-  scroll-behavior: smooth;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: auto;
+    scroll-behavior: smooth;
 }
 
 .workflow-content {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  height: 100%;
-  padding-bottom: 0;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    height: 100%;
+    padding-bottom: 0;
 }
 
 .workflow-content-main {
-  display: flex;
-  flex: 1;
-  flex-direction: row;
+    display: flex;
+    flex: 1;
+    flex-direction: row;
 }
 
 button {
-  font-family: 'Work Sans', sans-serif;
-  font-weight: 500;
-  font-size: clamp(0.8rem, 1.5vw, 1.2rem);
-  border-radius: 8px;
-  background-color: var(--bg-interactive);
-  color: var(--text-primary);
-  border: none;
-  cursor: pointer;
-  padding: clamp(8px, 0.8vw, 12px) clamp(16px, 1.6vw, 24px);
-  transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.2s ease;
+    font-family: 'Work Sans', sans-serif;
+    font-weight: 500;
+    font-size: clamp(0.8rem, 1.5vw, 1.2rem);
+    border-radius: 8px;
+    background-color: var(--bg-interactive);
+    color: var(--text-primary);
+    border: none;
+    cursor: pointer;
+    padding: clamp(8px, 0.8vw, 12px) clamp(16px, 1.6vw, 24px);
+    transition:
+        background-color 0.3s ease,
+        transform 0.1s ease,
+        box-shadow 0.2s ease;
 }
 
 button:hover {
-  background-color: var(--bg-hover);
-  transform: scale(1.05); 
-  box-shadow: var(--shadow-md);
+    background-color: var(--bg-hover);
+    transform: scale(1.05);
+    box-shadow: var(--shadow-md);
 }
 
 button:focus {
-  outline: 2px solid var(--text-primary);
-  outline-offset: 2px;
+    outline: 2px solid var(--text-primary);
+    outline-offset: 2px;
 }
 
 .toolbar-row {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  position: relative;
-  padding: 0 clamp(10px, 2vw, 20px);
-  margin-bottom: clamp(8px, 2vw, 15px);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    padding: 0 clamp(10px, 2vw, 20px);
+    margin-bottom: clamp(8px, 2vw, 15px);
 }
 
 @media (max-width: 768px) {
-  .toolbar-row {
-    flex-wrap: wrap;
-  }
+    .toolbar-row {
+        flex-wrap: wrap;
+    }
 }
 
 /* Global Scrollbar Styling */
 *::-webkit-scrollbar {
-  width: 10px;
+    width: 10px;
 }
 
 *::-webkit-scrollbar-track {
-  background: var(--border-subtle);
-  border-radius: 8px;
+    background: var(--border-subtle);
+    border-radius: 8px;
 }
 
 *::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.3);
-  border-radius: 8px;
-  border: 2px solid rgba(46, 46, 46, 0.9);
+    background-color: rgba(255, 255, 255, 0.3);
+    border-radius: 8px;
+    border: 2px solid rgba(46, 46, 46, 0.9);
 }
 
 *::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.5);
+    background-color: rgba(255, 255, 255, 0.5);
 }
 
 /* Thin scrollbar utility for compact panels */
 .scrollbar-thin {
-  scrollbar-width: thin;
-  scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.15) transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar {
-  width: 4px;
+    width: 4px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-track {
-  background: transparent;
+    background: transparent;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb {
-  background-color: rgba(255, 255, 255, 0.15);
-  border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.15);
+    border-radius: 4px;
 }
 
 .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-  background-color: rgba(255, 255, 255, 0.25);
+    background-color: rgba(255, 255, 255, 0.25);
 }
-

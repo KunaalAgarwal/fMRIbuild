@@ -9,7 +9,7 @@ import { computeScatteredNodes, buildArrayTypedInputs } from './scatterPropagati
  * Strips non-serializable data (callbacks) and normalizes shape.
  */
 export function serializeNodes(nodes) {
-    return nodes.map(n => ({
+    return nodes.map((n) => ({
         id: n.id,
         label: n.data?.label || n.label || '',
         isDummy: n.data?.isDummy || n.isDummy || false,
@@ -25,7 +25,7 @@ export function serializeNodes(nodes) {
         whenExpression: n.data?.whenExpression || n.whenExpression || '',
         expressions: n.data?.expressions || n.expressions || {},
         operationOrder: n.data?.operationOrder || n.operationOrder || [],
-        position: n.position || { x: 0, y: 0 }
+        position: n.position || { x: 0, y: 0 },
     }));
 }
 
@@ -58,11 +58,11 @@ export function deserializeNode(n) {
 }
 
 export function serializeEdges(edges) {
-    return edges.map(e => ({
+    return edges.map((e) => ({
         id: e.id,
         source: e.source,
         target: e.target,
-        data: { mappings: e.data?.mappings || [] }
+        data: { mappings: e.data?.mappings || [] },
     }));
 }
 
@@ -82,8 +82,9 @@ export function hasUnsavedChanges(workspace, savedWorkflow) {
     const wsEdges = serializeEdges(workspace.edges || []);
     const savedEdges = serializeEdges(savedWorkflow.edges || []);
 
-    return JSON.stringify(wsNodes) !== JSON.stringify(savedNodes) ||
-           JSON.stringify(wsEdges) !== JSON.stringify(savedEdges);
+    return (
+        JSON.stringify(wsNodes) !== JSON.stringify(savedNodes) || JSON.stringify(wsEdges) !== JSON.stringify(savedEdges)
+    );
 }
 
 /* ── Diff helpers ─────────────────────────────────────────────── */
@@ -109,8 +110,16 @@ const DISPLAY_NAMES = {
 const IO_NODE_PROPS = ['label', 'notes'];
 const BIDS_NODE_PROPS = ['label', 'notes', 'bidsSelections'];
 const OPERATIONAL_NODE_PROPS = [
-    'label', 'parameters', 'dockerVersion', 'whenExpression', 'expressions',
-    'scatterInputs', 'scatterMethod', 'linkMergeOverrides', 'operationOrder', 'notes',
+    'label',
+    'parameters',
+    'dockerVersion',
+    'whenExpression',
+    'expressions',
+    'scatterInputs',
+    'scatterMethod',
+    'linkMergeOverrides',
+    'operationOrder',
+    'notes',
 ];
 
 function getCompareProps(node) {
@@ -239,7 +248,7 @@ function isScatterSource(flatNode) {
  */
 function computePropagation(flatNodes, flatEdges) {
     // Wrap flat nodes → { id, data: { ... } }
-    const wrappedNodes = flatNodes.map(n => ({
+    const wrappedNodes = flatNodes.map((n) => ({
         id: n.id,
         data: {
             label: n.label,
@@ -253,9 +262,9 @@ function computePropagation(flatNodes, flatEdges) {
     }));
 
     // Filter out non-BIDS dummy nodes and their edges (same as workflowCanvas.jsx)
-    const dummyIds = new Set(wrappedNodes.filter(n => n.data.isDummy && !n.data.isBIDS).map(n => n.id));
-    const realNodes = wrappedNodes.filter(n => !n.data.isDummy || n.data.isBIDS);
-    const realEdges = flatEdges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
+    const dummyIds = new Set(wrappedNodes.filter((n) => n.data.isDummy && !n.data.isBIDS).map((n) => n.id));
+    const realNodes = wrappedNodes.filter((n) => !n.data.isDummy || n.data.isBIDS);
+    const realEdges = flatEdges.filter((e) => !dummyIds.has(e.source) && !dummyIds.has(e.target));
 
     const arrayTypedInputs = buildArrayTypedInputs(flatNodes);
     return computeScatteredNodes(realNodes, realEdges, arrayTypedInputs);
@@ -297,8 +306,8 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
     const wsNodesClean = wsNodes.map(({ position, ...rest }) => rest);
     const savedNodesClean = savedNodes.map(({ position, ...rest }) => rest);
 
-    const savedNodeMap = new Map(savedNodesClean.map(n => [n.id, n]));
-    const currentNodeMap = new Map(wsNodesClean.map(n => [n.id, n]));
+    const savedNodeMap = new Map(savedNodesClean.map((n) => [n.id, n]));
+    const currentNodeMap = new Map(wsNodesClean.map((n) => [n.id, n]));
 
     // Build label lookup for edge display (combine both sets)
     const nodeLabelMap = new Map();
@@ -333,8 +342,8 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
     const wsEdges = serializeEdges(currentWorkspace.edges || []);
     const savedEdges = serializeEdges(savedWorkflow.edges || []);
 
-    const savedEdgeMap = new Map(savedEdges.map(e => [e.id, e]));
-    const currentEdgeMap = new Map(wsEdges.map(e => [e.id, e]));
+    const savedEdgeMap = new Map(savedEdges.map((e) => [e.id, e]));
+    const currentEdgeMap = new Map(wsEdges.map((e) => [e.id, e]));
 
     for (const [id, edge] of currentEdgeMap) {
         const enriched = {
@@ -377,9 +386,9 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
     }
 
     // ── Helper to find or create a modified node entry ─────────
-    const addedIds = new Set(result.nodes.added.map(n => n.id));
-    const removedIds = new Set(result.nodes.removed.map(n => n.id));
-    const modifiedById = new Map(result.nodes.modified.map(n => [n.id, n]));
+    const addedIds = new Set(result.nodes.added.map((n) => n.id));
+    const removedIds = new Set(result.nodes.removed.map((n) => n.id));
+    const modifiedById = new Map(result.nodes.modified.map((n) => [n.id, n]));
 
     function getOrCreateModified(nodeId) {
         if (modifiedById.has(nodeId)) return modifiedById.get(nodeId);
@@ -406,8 +415,10 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
         if (!savedProp.scatteredNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
             if (isScatterSource(currentNodeMap.get(id))) continue;
             getOrCreateModified(id).changes.push({
-                property: 'scatterPropagation', displayName: 'Scatter',
-                saved: null, current: 'Propagated from upstream',
+                property: 'scatterPropagation',
+                displayName: 'Scatter',
+                saved: null,
+                current: 'Propagated from upstream',
             });
         }
     }
@@ -415,24 +426,30 @@ export function computeWorkflowDiff(savedWorkflow, currentWorkspace) {
         if (!currentProp.scatteredNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
             if (isScatterSource(savedNodeMap.get(id))) continue;
             getOrCreateModified(id).changes.push({
-                property: 'scatterPropagation', displayName: 'Scatter',
-                saved: 'Propagated from upstream', current: null,
+                property: 'scatterPropagation',
+                displayName: 'Scatter',
+                saved: 'Propagated from upstream',
+                current: null,
             });
         }
     }
     for (const id of currentProp.gatherNodeIds) {
         if (!savedProp.gatherNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
             getOrCreateModified(id).changes.push({
-                property: 'gatherStatus', displayName: 'Gather',
-                saved: null, current: 'Gathers scattered inputs',
+                property: 'gatherStatus',
+                displayName: 'Gather',
+                saved: null,
+                current: 'Gathers scattered inputs',
             });
         }
     }
     for (const id of savedProp.gatherNodeIds) {
         if (!currentProp.gatherNodeIds.has(id) && !addedIds.has(id) && !removedIds.has(id)) {
             getOrCreateModified(id).changes.push({
-                property: 'gatherStatus', displayName: 'Gather',
-                saved: 'Gathers scattered inputs', current: null,
+                property: 'gatherStatus',
+                displayName: 'Gather',
+                saved: 'Gathers scattered inputs',
+                current: null,
             });
         }
     }

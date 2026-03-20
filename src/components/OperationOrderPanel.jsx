@@ -9,7 +9,7 @@ import { FIXED_POSITION_PARAMS } from '../utils/toolAnnotations.js';
 const OperationOrderPanel = ({ allParams, paramValues, wiredInputs, operationOrder, onOrderChange }) => {
     // Determine which operations are "active"
     const activeOps = useMemo(() => {
-        const active = allParams.filter(p => {
+        const active = allParams.filter((p) => {
             if (FIXED_POSITION_PARAMS.has(p.name)) return false;
             if (!p.flag) return false; // no CLI flag = not a reorderable operation
             // Wired file inputs are automatically active
@@ -37,14 +37,14 @@ const OperationOrderPanel = ({ allParams, paramValues, wiredInputs, operationOrd
 
     const moveUp = (idx) => {
         if (idx === 0) return;
-        const names = activeOps.map(p => p.name);
+        const names = activeOps.map((p) => p.name);
         [names[idx - 1], names[idx]] = [names[idx], names[idx - 1]];
         onOrderChange(names);
     };
 
     const moveDown = (idx) => {
         if (idx === activeOps.length - 1) return;
-        const names = activeOps.map(p => p.name);
+        const names = activeOps.map((p) => p.name);
         [names[idx], names[idx + 1]] = [names[idx + 1], names[idx]];
         onOrderChange(names);
     };
@@ -81,13 +81,17 @@ const OperationOrderPanel = ({ allParams, paramValues, wiredInputs, operationOrd
                                 onClick={() => moveUp(idx)}
                                 disabled={idx === 0}
                                 title="Move up"
-                            >{'\u25B2'}</button>
+                            >
+                                {'\u25B2'}
+                            </button>
                             <button
                                 className="operation-order-arrow"
                                 onClick={() => moveDown(idx)}
                                 disabled={idx === activeOps.length - 1}
                                 title="Move down"
-                            >{'\u25BC'}</button>
+                            >
+                                {'\u25BC'}
+                            </button>
                         </span>
                     </div>
                 ))}

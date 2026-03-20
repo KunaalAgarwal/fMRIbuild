@@ -24,10 +24,7 @@ function buildRootEntities(workflowName, mainWorkflowPath, hasPart) {
             '@id': 'ro-crate-metadata.json',
             '@type': 'CreativeWork',
             about: { '@id': './' },
-            conformsTo: [
-                { '@id': RO_CRATE_SPEC },
-                { '@id': WORKFLOW_RO_CRATE_SPEC },
-            ],
+            conformsTo: [{ '@id': RO_CRATE_SPEC }, { '@id': WORKFLOW_RO_CRATE_SPEC }],
         },
         {
             '@id': './',
@@ -70,7 +67,7 @@ function buildWorkflowEntity(workflowName, mainWorkflowPath, jobTemplatePath) {
 
 /** Build entities for individual tool CWL files. */
 function buildToolEntities(toolCWLPaths, toolMetadata) {
-    return toolCWLPaths.map(p => {
+    return toolCWLPaths.map((p) => {
         const meta = toolMetadata[p];
         const entity = {
             '@id': p,
@@ -87,7 +84,7 @@ function buildToolEntities(toolCWLPaths, toolMetadata) {
 
 /** Build entities for Docker images. */
 function buildDockerEntities(dockerImages) {
-    return dockerImages.map(img => {
+    return dockerImages.map((img) => {
         const [repo] = img.split(':');
         return {
             '@id': `${DOCKER_HUB_URL}/${repo}`,
@@ -131,7 +128,8 @@ function buildSupportEntities(singularityFiles) {
         '@id': 'additional_inputs/',
         '@type': 'Dataset',
         name: 'Additional inputs',
-        description: 'Directory for supplementary files needed by the workflow at runtime. Provided at the convenience for the user to organize their supplementary files',
+        description:
+            'Directory for supplementary files needed by the workflow at runtime. Provided at the convenience for the user to organize their supplementary files',
     });
 
     if (singularityFiles.length > 0) {
@@ -217,8 +215,8 @@ export function buildROCrateMetadata({
         { '@id': 'Dockerfile' },
         { '@id': 'run.sh' },
         { '@id': 'prefetch_images.sh' },
-        ...singularityFiles.map(f => ({ '@id': f })),
-        ...toolCWLPaths.map(p => ({ '@id': p })),
+        ...singularityFiles.map((f) => ({ '@id': f })),
+        ...toolCWLPaths.map((p) => ({ '@id': p })),
         { '@id': 'additional_inputs/' },
         ...(hasBIDS ? [{ '@id': 'bids_query.json' }, { '@id': 'resolve_bids.py' }] : []),
     ];
@@ -238,6 +236,6 @@ export function buildROCrateMetadata({
             '@graph': graph,
         },
         null,
-        2
+        2,
     );
 }

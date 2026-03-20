@@ -32,7 +32,9 @@ const wrapped = annotationsSource
     .replace(/import\.meta\.env\.\w+/g, 'false');
 
 // Build a function that returns all the constants we need
-const extractFn = new Function(wrapped + `
+const extractFn = new Function(
+    wrapped +
+        `
     return {
         TOOL_ANNOTATIONS,
         DOCKER_IMAGES,
@@ -41,12 +43,11 @@ const extractFn = new Function(wrapped + `
         modalityOrder,
         modalityDescriptions,
     };
-`);
+`,
+);
 
-const {
-    TOOL_ANNOTATIONS, DOCKER_IMAGES, DOCKER_TAGS,
-    MODALITY_ASSIGNMENTS, modalityOrder, modalityDescriptions,
-} = extractFn();
+const { TOOL_ANNOTATIONS, DOCKER_IMAGES, DOCKER_TAGS, MODALITY_ASSIGNMENTS, modalityOrder, modalityDescriptions } =
+    extractFn();
 
 // --- Parse all CWL files ---
 const cwlDir = join(projectRoot, 'public', 'cwl');
@@ -75,9 +76,7 @@ function findCwlFiles(dir) {
 function parseCwl(cwl) {
     const result = {
         baseCommand: cwl.baseCommand || null,
-        dockerPull: cwl.hints?.DockerRequirement?.dockerPull
-            || cwl.requirements?.DockerRequirement?.dockerPull
-            || null,
+        dockerPull: cwl.hints?.DockerRequirement?.dockerPull || cwl.requirements?.DockerRequirement?.dockerPull || null,
         inputs: {},
         outputs: {},
     };
@@ -120,9 +119,9 @@ function formatType(type) {
     if (type == null) return 'any';
     if (typeof type === 'string') return type;
     if (Array.isArray(type)) {
-        const nonNull = type.filter(t => t !== 'null');
+        const nonNull = type.filter((t) => t !== 'null');
         if (nonNull.length === 1) return formatType(nonNull[0]);
-        return nonNull.map(t => formatType(t)).join(' | ');
+        return nonNull.map((t) => formatType(t)).join(' | ');
     }
     if (typeof type === 'object') {
         if (type.type === 'array') return formatType(type.items) + '[]';

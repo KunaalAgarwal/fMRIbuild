@@ -47,10 +47,8 @@ export function buildArrayTypedInputs(nodes) {
  */
 export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()) {
     // Source nodes: nodes with no incoming edges
-    const targetIds = new Set(edges.map(e => e.target));
-    const sourceNodeIds = new Set(
-        nodes.filter(n => !targetIds.has(n.id)).map(n => n.id)
-    );
+    const targetIds = new Set(edges.map((e) => e.target));
+    const sourceNodeIds = new Set(nodes.filter((n) => !targetIds.has(n.id)).map((n) => n.id));
 
     // Build adjacency list (outgoing edges per node) for O(V+E) traversal
     const outgoing = new Map();
@@ -70,8 +68,10 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
 
         if ((node.data?.scatterInputs?.length || 0) > 0) {
             scatteredNodeIds.add(node.id);
-        } else if (node.data?.isCustomWorkflow &&
-            node.data?.internalNodes?.some(n => (n.scatterInputs?.length || 0) > 0)) {
+        } else if (
+            node.data?.isCustomWorkflow &&
+            node.data?.internalNodes?.some((n) => (n.scatterInputs?.length || 0) > 0)
+        ) {
             scatteredNodeIds.add(node.id);
         } else if (node.data?.isBIDS && node.data?.bidsSelections) {
             scatteredNodeIds.add(node.id);
@@ -91,7 +91,7 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
 
     while (head < queue.length) {
         const nodeId = queue[head++];
-        for (const edge of (outgoing.get(nodeId) || [])) {
+        for (const edge of outgoing.get(nodeId) || []) {
             const targetId = edge.target;
             if (scatteredNodeIds.has(targetId)) continue;
 
@@ -100,12 +100,11 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
 
             // Skip bids_directory mappings from BIDS nodes — they don't carry scatter
             if (bidsNodeIds.has(nodeId)) {
-                mappings = mappings.filter(m => m.sourceOutput !== 'bids_directory');
+                mappings = mappings.filter((m) => m.sourceOutput !== 'bids_directory');
                 if (mappings.length === 0) continue;
             }
 
-            const isGatherEdge = mappings.length > 0 &&
-                mappings.every(m => targetArrayInputs.has(m.targetInput));
+            const isGatherEdge = mappings.length > 0 && mappings.every((m) => targetArrayInputs.has(m.targetInput));
 
             if (!targetEdgeInfo.has(targetId)) {
                 targetEdgeInfo.set(targetId, { hasGatherEdge: false, hasScatterEdge: false });
@@ -149,7 +148,7 @@ export function computeScatteredNodes(nodes, edges, arrayTypedInputs = new Map()
         if (mappings.length === 0) continue;
 
         if (bidsNodeIds.has(edge.source)) {
-            mappings = mappings.filter(m => m.sourceOutput !== 'bids_directory');
+            mappings = mappings.filter((m) => m.sourceOutput !== 'bids_directory');
             if (mappings.length === 0) continue;
         }
 

@@ -15,7 +15,16 @@ import { labelFontSize } from './nodeUtils.js';
 /**
  * Renders regular tool nodes with parameter modal, scatter, conditional, and expression support.
  */
-const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourceNode, upstreamScatterInputs, wiredInputs, propagatedIds }) => {
+const ToolNodeComponent = ({
+    data,
+    id,
+    isScatterInherited,
+    isGatherNode,
+    isSourceNode,
+    upstreamScatterInputs,
+    wiredInputs,
+    propagatedIds,
+}) => {
     const [showModal, setShowModal] = useState(false);
     const [paramValues, setParamValues] = useState({});
     const [dockerVersion, setDockerVersion] = useState(data.dockerVersion || 'latest');
@@ -40,10 +49,8 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
     // All parameters split into required and optional
     const allParams = useMemo(() => {
         if (!tool) return { required: [], optional: [] };
-        const required = Object.entries(tool.requiredInputs || {})
-            .map(([name, def]) => ({ name, ...def }));
-        const optional = Object.entries(tool.optionalInputs || {})
-            .map(([name, def]) => ({ name, ...def }));
+        const required = Object.entries(tool.requiredInputs || {}).map(([name, def]) => ({ name, ...def }));
+        const optional = Object.entries(tool.optionalInputs || {}).map(([name, def]) => ({ name, ...def }));
         return { required, optional };
     }, [tool]);
 
@@ -52,7 +59,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
         if (!whenParam) return null;
         const cond = whenCondition.trim();
         if (!cond) return whenTouched ? 'Enter a condition (e.g., == true)' : null;
-        const hasOperator = VALID_OPERATORS.some(op => cond.startsWith(op));
+        const hasOperator = VALID_OPERATORS.some((op) => cond.startsWith(op));
         if (!hasOperator) return `Condition should start with an operator: ${VALID_OPERATORS.join(', ')}`;
         const afterOp = cond.replace(/^(==|!=|>=|<=|>|<)\s*/, '');
         if (!afterOp) return 'Missing value after operator';
@@ -74,7 +81,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
 
     // Get known tags for this tool's docker image
     const library = dockerImage ? getLibraryFromDockerImage(dockerImage) : null;
-    const knownTags = library ? (DOCKER_TAGS[library] || ['latest']) : ['latest'];
+    const knownTags = library ? DOCKER_TAGS[library] || ['latest'] : ['latest'];
 
     // Validate docker version against known tags
     const validateDockerVersion = (version) => {
@@ -90,9 +97,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
             setVersionWarning('');
         } else {
             setVersionValid(false);
-            const displayTags = knownTags.length > 4
-                ? `${knownTags.slice(0, 4).join(', ')}...`
-                : knownTags.join(', ');
+            const displayTags = knownTags.length > 4 ? `${knownTags.slice(0, 4).join(', ')}...` : knownTags.join(', ');
             setVersionWarning(`Unknown tag. Known: ${displayTags}`);
         }
     };
@@ -104,7 +109,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
 
     // Update a single param value
     const updateParam = (name, value) => {
-        setParamValues(prev => ({ ...prev, [name]: value }));
+        setParamValues((prev) => ({ ...prev, [name]: value }));
     };
 
     // Clamp numeric value to bounds on blur
@@ -118,20 +123,20 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
 
     // Helper to update linkMerge override for a specific input
     const updateLinkMerge = (inputName, value) => {
-        setLinkMergeValues(prev => ({ ...prev, [inputName]: value }));
+        setLinkMergeValues((prev) => ({ ...prev, [inputName]: value }));
     };
 
     // Scatter toggle handler: toggles a parameter for scatter
     const handleToggleScatter = (paramName) => {
-        setScatterToggles(prev => ({ ...prev, [paramName]: !prev[paramName] }));
+        setScatterToggles((prev) => ({ ...prev, [paramName]: !prev[paramName] }));
     };
 
     // Shared fx toggle handler: clears expression value when turning off
     const handleToggleFx = (paramName) => {
-        setExpressionToggles(prev => {
+        setExpressionToggles((prev) => {
             const wasActive = prev[paramName];
             if (wasActive) {
-                setExpressionValues(prevExpr => {
+                setExpressionValues((prevExpr) => {
                     const next = { ...prevExpr };
                     delete next[paramName];
                     return next;
@@ -144,30 +149,43 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
     // Build scatter button for a param (context-specific logic stays here)
     const buildScatterButton = (param) => {
         const isScatterLocked = upstreamScatterInputs.has(param.name);
-        const isGatherLocked = isGatherNode && param.type?.endsWith('[]') && (wiredInputs.get(param.name) || []).length > 0;
+        const isGatherLocked =
+            isGatherNode && param.type?.endsWith('[]') && (wiredInputs.get(param.name) || []).length > 0;
         const isLocked = isScatterLocked || isGatherLocked;
         return (
             <span
                 className={`scatter-toggle${scatterToggles[param.name] ? ' active' : ''}${isLocked ? ' locked' : ''}`}
                 onClick={isLocked ? undefined : () => handleToggleScatter(param.name)}
-                title={isGatherLocked ? 'This input gathers scattered outputs into an array' : isScatterLocked ? 'Inherited from upstream scatter' : scatterToggles[param.name] ? 'Remove from scatter' : 'Add to scatter'}
-            >{'\u21BB'}</span>
+                title={
+                    isGatherLocked
+                        ? 'This input gathers scattered outputs into an array'
+                        : isScatterLocked
+                          ? 'Inherited from upstream scatter'
+                          : scatterToggles[param.name]
+                            ? 'Remove from scatter'
+                            : 'Add to scatter'
+                }
+            >
+                {'\u21BB'}
+            </span>
         );
     };
 
     // Toggle a file parameter in/out of the operation order (for orderSensitive tools)
     const toggleFileInOrder = (name) => {
-        setOperationOrder(prev =>
-            prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
-        );
+        setOperationOrder((prev) => (prev.includes(name) ? prev.filter((n) => n !== name) : [...prev, name]));
     };
 
     const handleOpenModal = () => {
         // Initialize scatter toggles from saved scatterInputs or auto-suggest from upstream
         const scatterInit = {};
         const savedScatter = data.scatterInputs || [];
-        savedScatter.forEach(name => { scatterInit[name] = true; });
-        upstreamScatterInputs.forEach(name => { scatterInit[name] = true; });
+        savedScatter.forEach((name) => {
+            scatterInit[name] = true;
+        });
+        upstreamScatterInputs.forEach((name) => {
+            scatterInit[name] = true;
+        });
         setScatterToggles(scatterInit);
         setScatterMethod(data.scatterMethod || 'dotproduct');
 
@@ -205,7 +223,11 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
         if (existing && typeof existing === 'object' && !Array.isArray(existing)) {
             setParamValues({ ...existing });
         } else if (typeof existing === 'string' && existing.trim()) {
-            try { setParamValues(JSON.parse(existing)); } catch { setParamValues({}); }
+            try {
+                setParamValues(JSON.parse(existing));
+            } catch {
+                setParamValues({});
+            }
         } else {
             setParamValues({});
         }
@@ -244,9 +266,10 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                 scatterInputs: activeScatterInputs,
                 scatterMethod: activeScatterInputs.length > 1 ? scatterMethod : undefined,
                 linkMergeOverrides: linkMergeValues,
-                whenExpression: whenParam && whenCondition.trim() && !whenWarning
-                    ? `$(inputs.${whenParam} ${whenCondition.trim()})`
-                    : '',
+                whenExpression:
+                    whenParam && whenCondition.trim() && !whenWarning
+                        ? `$(inputs.${whenParam} ${whenCondition.trim()})`
+                        : '',
                 expressions: cleanedExpressions,
                 operationOrder: tool?.orderSensitive ? operationOrder : undefined,
             });
@@ -264,13 +287,17 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                     ) : (
                         <span className="node-version-spacer"></span>
                     )}
-                    <span className="node-params-btn" onClick={handleOpenModal}>Params</span>
+                    <span className="node-params-btn" onClick={handleOpenModal}>
+                        Params
+                    </span>
                 </div>
 
                 <div onDoubleClick={handleOpenModal} className="node-content">
                     <Handle type="target" position={Position.Left} />
                     <span className="handle-label">IN</span>
-                    <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>{data.displayLabel || data.label}</span>
+                    <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>
+                        {data.displayLabel || data.label}
+                    </span>
                     <span className="handle-label">OUT</span>
                     <Handle type="source" position={Position.Right} />
                 </div>
@@ -280,7 +307,9 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                         {isScatterInherited && <span className="node-scatter-badge">&#x21BB;</span>}
                         {isGatherNode && <span className="node-gather-badge">G</span>}
                         {data.whenExpression && <span className="node-when-badge">?</span>}
-                        {data.expressions && Object.keys(data.expressions).length > 0 && <span className="node-fx-badge">fx</span>}
+                        {data.expressions && Object.keys(data.expressions).length > 0 && (
+                            <span className="node-fx-badge">fx</span>
+                        )}
                     </span>
                     {toolInfo ? (
                         <span
@@ -289,7 +318,9 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                             onMouseEnter={infoTip.onMouseEnter}
                             onMouseLeave={infoTip.onMouseLeave}
                             onClick={infoTip.onClick}
-                        >Info</span>
+                        >
+                            Info
+                        </span>
                     ) : (
                         <span className="node-info-spacer"></span>
                     )}
@@ -297,58 +328,54 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
             </div>
 
             {/* Info Tooltip (same style as workflowMenuItem) */}
-            {infoTip.show && toolInfo && createPortal(
-                <div
-                    ref={infoTip.tooltipRef}
-                    className="workflow-tooltip"
-                    style={{
-                        top: infoTip.pos.top,
-                        left: infoTip.pos.left,
-                        transform: 'translateY(-50%)'
-                    }}
-                >
-                    {toolInfo.fullName && (
-                        <div className="tooltip-section tooltip-fullname">
-                            <span className="tooltip-text">{toolInfo.fullName}</span>
-                        </div>
-                    )}
-                    <div className="tooltip-section">
-                        <span className="tooltip-label">Function:</span>
-                        <span className="tooltip-text">{toolInfo.function}</span>
-                    </div>
-                    {toolInfo.modality && (
+            {infoTip.show &&
+                toolInfo &&
+                createPortal(
+                    <div
+                        ref={infoTip.tooltipRef}
+                        className="workflow-tooltip"
+                        style={{
+                            top: infoTip.pos.top,
+                            left: infoTip.pos.left,
+                            transform: 'translateY(-50%)',
+                        }}
+                    >
+                        {toolInfo.fullName && (
+                            <div className="tooltip-section tooltip-fullname">
+                                <span className="tooltip-text">{toolInfo.fullName}</span>
+                            </div>
+                        )}
                         <div className="tooltip-section">
-                            <span className="tooltip-label">Expected Input:</span>
-                            <span className="tooltip-text">{toolInfo.modality}</span>
+                            <span className="tooltip-label">Function:</span>
+                            <span className="tooltip-text">{toolInfo.function}</span>
                         </div>
-                    )}
-                    {toolInfo.keyParameters && (
+                        {toolInfo.modality && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Expected Input:</span>
+                                <span className="tooltip-text">{toolInfo.modality}</span>
+                            </div>
+                        )}
+                        {toolInfo.keyParameters && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Key Parameters:</span>
+                                <span className="tooltip-text">{toolInfo.keyParameters}</span>
+                            </div>
+                        )}
+                        {toolInfo.keyPoints && (
+                            <div className="tooltip-section">
+                                <span className="tooltip-label">Key Points:</span>
+                                <span className="tooltip-text">{toolInfo.keyPoints}</span>
+                            </div>
+                        )}
                         <div className="tooltip-section">
-                            <span className="tooltip-label">Key Parameters:</span>
-                            <span className="tooltip-text">{toolInfo.keyParameters}</span>
+                            <span className="tooltip-label">Typical Use:</span>
+                            <span className="tooltip-text">{toolInfo.typicalUse}</span>
                         </div>
-                    )}
-                    {toolInfo.keyPoints && (
-                        <div className="tooltip-section">
-                            <span className="tooltip-label">Key Points:</span>
-                            <span className="tooltip-text">{toolInfo.keyPoints}</span>
-                        </div>
-                    )}
-                    <div className="tooltip-section">
-                        <span className="tooltip-label">Typical Use:</span>
-                        <span className="tooltip-text">{toolInfo.typicalUse}</span>
-                    </div>
-                </div>,
-                document.body
-            )}
+                    </div>,
+                    document.body,
+                )}
 
-            <Modal
-                show={showModal}
-                onHide={handleCloseModal}
-                centered
-                className="custom-modal"
-                size="lg"
-            >
+            <Modal show={showModal} onHide={handleCloseModal} centered className="custom-modal" size="lg">
                 <Modal.Header>
                     <Modal.Title style={{ fontFamily: 'Roboto Mono, monospace', fontSize: '1rem' }}>
                         {data.label} - Parameters
@@ -359,9 +386,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                         {/* Docker Version Input */}
                         {dockerImage && (
                             <Form.Group className="docker-version-group">
-                                <Form.Label className="modal-label">
-                                    Docker Image
-                                </Form.Label>
+                                <Form.Label className="modal-label">Docker Image</Form.Label>
                                 <TagDropdown
                                     value={dockerVersion}
                                     onChange={setDockerVersion}
@@ -371,12 +396,8 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                     isValid={versionValid}
                                     prefix={`${dockerImage}:`}
                                 />
-                                {versionWarning && (
-                                    <div className="docker-warning-text">{versionWarning}</div>
-                                )}
-                                <div className="docker-help-text">
-                                    Select a tag or enter a custom version
-                                </div>
+                                {versionWarning && <div className="docker-warning-text">{versionWarning}</div>}
+                                <div className="docker-help-text">Select a tag or enter a custom version</div>
                             </Form.Group>
                         )}
 
@@ -390,11 +411,16 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                     size="sm"
                                     className="when-param-select"
                                     value={whenParam}
-                                    onChange={(e) => { setWhenParam(e.target.value); if (!e.target.value) setWhenCondition(''); }}
+                                    onChange={(e) => {
+                                        setWhenParam(e.target.value);
+                                        if (!e.target.value) setWhenCondition('');
+                                    }}
                                 >
                                     <option value="">None</option>
-                                    {[...allParams.required, ...allParams.optional].map(p => (
-                                        <option key={p.name} value={p.name}>{p.name}</option>
+                                    {[...allParams.required, ...allParams.optional].map((p) => (
+                                        <option key={p.name} value={p.name}>
+                                            {p.name}
+                                        </option>
                                     ))}
                                 </Form.Select>
                                 {whenParam && (
@@ -404,7 +430,10 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                         className={`when-condition-input${whenCondition.trim() ? ' filled' : ''}${whenWarning ? ' invalid' : ''}`}
                                         placeholder="== true"
                                         value={whenCondition}
-                                        onChange={(e) => { setWhenCondition(e.target.value); setWhenTouched(true); }}
+                                        onChange={(e) => {
+                                            setWhenCondition(e.target.value);
+                                            setWhenTouched(true);
+                                        }}
                                         onBlur={() => setWhenTouched(true)}
                                     />
                                 )}
@@ -414,9 +443,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                     $(inputs.{whenParam} {whenCondition.trim()})
                                 </div>
                             )}
-                            {whenWarning && (
-                                <div className="when-warning-text">{whenWarning}</div>
-                            )}
+                            {whenWarning && <div className="when-warning-text">{whenWarning}</div>}
                             <div className="when-help-text">
                                 Select an input parameter, then write a condition (e.g., == true, &gt; 0.5, != null).
                                 Step only runs when the condition is true. Skipped steps produce null outputs.
@@ -453,9 +480,12 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                         <option value="nested_crossproduct">nested_crossproduct</option>
                                     </Form.Select>
                                     <div className="scatter-method-help-text">
-                                        {scatterMethod === 'dotproduct' && 'Pairs elements 1:1 across inputs (arrays must be the same length). [A,B] \u00d7 [1,2] \u2192 (A,1), (B,2)'}
-                                        {scatterMethod === 'flat_crossproduct' && 'Cartesian product of all inputs \u2014 results in a flat list. [A,B] \u00d7 [1,2] \u2192 (A,1), (A,2), (B,1), (B,2)'}
-                                        {scatterMethod === 'nested_crossproduct' && 'Cartesian product \u2014 results nested by the first input. [A,B] \u00d7 [1,2] \u2192 [(A,1),(A,2)], [(B,1),(B,2)]'}
+                                        {scatterMethod === 'dotproduct' &&
+                                            'Pairs elements 1:1 across inputs (arrays must be the same length). [A,B] \u00d7 [1,2] \u2192 (A,1), (B,2)'}
+                                        {scatterMethod === 'flat_crossproduct' &&
+                                            'Cartesian product of all inputs \u2014 results in a flat list. [A,B] \u00d7 [1,2] \u2192 (A,1), (A,2), (B,1), (B,2)'}
+                                        {scatterMethod === 'nested_crossproduct' &&
+                                            'Cartesian product \u2014 results nested by the first input. [A,B] \u00d7 [1,2] \u2192 [(A,1),(A,2)], [(B,1),(B,2)]'}
                                     </div>
                                 </Form.Group>
                             ) : null;
@@ -467,97 +497,150 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                             {[
                                 { params: allParams.required, label: 'Required' },
                                 { params: allParams.optional, label: 'Optional' },
-                            ].map(({ params: sectionParams, label: sectionLabel }) =>
-                                sectionParams.length > 0 && (
-                                    <div key={sectionLabel} className="param-section">
-                                        <div className="param-section-header">{sectionLabel}</div>
-                                        {sectionParams.map((param) => {
-                                            const wiredSources = wiredInputs.get(param.name) || [];
-                                            const isFileType = /^(File|Directory)(\[\])?$/.test(param.type);
-                                            return (
-                                                <div key={param.name} className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''} ${scatterToggles[param.name] ? 'has-scatter' : ''}`}>
-                                                    <div className="param-card-header">
-                                                        <span className="param-name">{param.name}</span>
-                                                        <span className="param-type-badge" title={param.enumSymbols?.length ? param.enumSymbols.join(', ') : param.options?.length ? param.options.join(', ') : param.type}>{param.type}</span>
-                                                        <ParamControl
-                                                            param={param}
-                                                            paramValues={paramValues}
-                                                            updateParam={updateParam}
-                                                            clampToBounds={clampToBounds}
-                                                            expressionToggles={expressionToggles}
-                                                            handleToggleFx={handleToggleFx}
-                                                            scatterButton={buildScatterButton(param)}
-                                                            nodeId={id}
-                                                        />
-                                                        {tool?.orderSensitive && isFileType && wiredSources.length === 0 && (
+                            ].map(
+                                ({ params: sectionParams, label: sectionLabel }) =>
+                                    sectionParams.length > 0 && (
+                                        <div key={sectionLabel} className="param-section">
+                                            <div className="param-section-header">{sectionLabel}</div>
+                                            {sectionParams.map((param) => {
+                                                const wiredSources = wiredInputs.get(param.name) || [];
+                                                const isFileType = /^(File|Directory)(\[\])?$/.test(param.type);
+                                                return (
+                                                    <div
+                                                        key={param.name}
+                                                        className={`param-card ${isFileType && wiredSources.length > 0 ? 'input-wired' : ''} ${expressionValues[param.name] ? 'has-expression' : ''} ${scatterToggles[param.name] ? 'has-scatter' : ''}`}
+                                                    >
+                                                        <div className="param-card-header">
+                                                            <span className="param-name">{param.name}</span>
                                                             <span
-                                                                className={`operation-order-toggle ${operationOrder.includes(param.name) ? 'active' : ''}`}
-                                                                onClick={() => toggleFileInOrder(param.name)}
-                                                                title={operationOrder.includes(param.name) ? 'Remove from operation order' : 'Add to operation order'}
+                                                                className="param-type-badge"
+                                                                title={
+                                                                    param.enumSymbols?.length
+                                                                        ? param.enumSymbols.join(', ')
+                                                                        : param.options?.length
+                                                                          ? param.options.join(', ')
+                                                                          : param.type
+                                                                }
                                                             >
-                                                                {operationOrder.includes(param.name) ? '\u2212' : '+'}
+                                                                {param.type}
                                                             </span>
+                                                            <ParamControl
+                                                                param={param}
+                                                                paramValues={paramValues}
+                                                                updateParam={updateParam}
+                                                                clampToBounds={clampToBounds}
+                                                                expressionToggles={expressionToggles}
+                                                                handleToggleFx={handleToggleFx}
+                                                                scatterButton={buildScatterButton(param)}
+                                                                nodeId={id}
+                                                            />
+                                                            {tool?.orderSensitive &&
+                                                                isFileType &&
+                                                                wiredSources.length === 0 && (
+                                                                    <span
+                                                                        className={`operation-order-toggle ${operationOrder.includes(param.name) ? 'active' : ''}`}
+                                                                        onClick={() => toggleFileInOrder(param.name)}
+                                                                        title={
+                                                                            operationOrder.includes(param.name)
+                                                                                ? 'Remove from operation order'
+                                                                                : 'Add to operation order'
+                                                                        }
+                                                                    >
+                                                                        {operationOrder.includes(param.name)
+                                                                            ? '\u2212'
+                                                                            : '+'}
+                                                                    </span>
+                                                                )}
+                                                        </div>
+                                                        {isFileType && wiredSources.length === 1 && (
+                                                            <div className="input-source-single">
+                                                                <span className="input-source">
+                                                                    from {wiredSources[0].sourceNodeLabel} /{' '}
+                                                                    {wiredSources[0].sourceOutput}
+                                                                    {upstreamScatterInputs.has(param.name)
+                                                                        ? ' (scattered)'
+                                                                        : ''}
+                                                                </span>
+                                                            </div>
+                                                        )}
+
+                                                        {isFileType && wiredSources.length > 1 && (
+                                                            <div className="input-source-multi-details">
+                                                                <div className="input-source-multi-row">
+                                                                    <div className="input-source-multi-sources">
+                                                                        {wiredSources.map((src, i) => (
+                                                                            <span
+                                                                                key={i}
+                                                                                className="input-source input-source-detail"
+                                                                            >
+                                                                                {src.sourceNodeLabel} /{' '}
+                                                                                {src.sourceOutput}
+                                                                                {upstreamScatterInputs.has(param.name)
+                                                                                    ? ' (scattered)'
+                                                                                    : ''}
+                                                                            </span>
+                                                                        ))}
+                                                                    </div>
+                                                                    <Form.Select
+                                                                        size="sm"
+                                                                        className="link-merge-select"
+                                                                        value={
+                                                                            linkMergeValues[param.name] ||
+                                                                            'merge_flattened'
+                                                                        }
+                                                                        onChange={(e) =>
+                                                                            updateLinkMerge(param.name, e.target.value)
+                                                                        }
+                                                                    >
+                                                                        <option value="merge_flattened">
+                                                                            merge_flattened
+                                                                        </option>
+                                                                        <option value="merge_nested">
+                                                                            merge_nested
+                                                                        </option>
+                                                                    </Form.Select>
+                                                                </div>
+                                                                <div className="merge-help-text">
+                                                                    flattened combines all into one list [x1, x2] —
+                                                                    nested preserves grouping per source [[x1], [x2]]
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        {expressionToggles[param.name] && (
+                                                            <ExpressionEditor
+                                                                paramName={param.name}
+                                                                paramType={param.type}
+                                                                isFileType={isFileType}
+                                                                value={expressionValues[param.name]}
+                                                                onChange={(val) =>
+                                                                    setExpressionValues((prev) => ({
+                                                                        ...prev,
+                                                                        [param.name]: val,
+                                                                    }))
+                                                                }
+                                                                warning={expressionWarnings[param.name]}
+                                                                isScattered={isScatterInherited}
+                                                                showHelpText
+                                                            />
+                                                        )}
+                                                        {param.label && (
+                                                            <div className="param-description">{param.label}</div>
+                                                        )}
+                                                        {param.bounds && (
+                                                            <div className="param-bounds">
+                                                                bounds: {param.bounds[0]} – {param.bounds[1]}
+                                                            </div>
+                                                        )}
+                                                        {param.hasDefault && (
+                                                            <div className="param-default-hint">
+                                                                default: {String(param.defaultValue)}
+                                                            </div>
                                                         )}
                                                     </div>
-                                                    {isFileType && wiredSources.length === 1 && (
-                                                        <div className="input-source-single">
-                                                            <span className="input-source">
-                                                                from {wiredSources[0].sourceNodeLabel} / {wiredSources[0].sourceOutput}{upstreamScatterInputs.has(param.name) ? ' (scattered)' : ''}
-                                                            </span>
-                                                        </div>
-                                                    )}
-
-                                                    {isFileType && wiredSources.length > 1 && (
-                                                        <div className="input-source-multi-details">
-                                                            <div className="input-source-multi-row">
-                                                                <div className="input-source-multi-sources">
-                                                                    {wiredSources.map((src, i) => (
-                                                                        <span key={i} className="input-source input-source-detail">
-                                                                            {src.sourceNodeLabel} / {src.sourceOutput}{upstreamScatterInputs.has(param.name) ? ' (scattered)' : ''}
-                                                                        </span>
-                                                                    ))}
-                                                                </div>
-                                                                <Form.Select
-                                                                    size="sm"
-                                                                    className="link-merge-select"
-                                                                    value={linkMergeValues[param.name] || 'merge_flattened'}
-                                                                    onChange={(e) => updateLinkMerge(param.name, e.target.value)}
-                                                                >
-                                                                    <option value="merge_flattened">merge_flattened</option>
-                                                                    <option value="merge_nested">merge_nested</option>
-                                                                </Form.Select>
-                                                            </div>
-                                                            <div className="merge-help-text">
-                                                                flattened combines all into one list [x1, x2] — nested preserves grouping per source [[x1], [x2]]
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                    {expressionToggles[param.name] && (
-                                                        <ExpressionEditor
-                                                            paramName={param.name}
-                                                            paramType={param.type}
-                                                            isFileType={isFileType}
-                                                            value={expressionValues[param.name]}
-                                                            onChange={(val) => setExpressionValues(prev => ({ ...prev, [param.name]: val }))}
-                                                            warning={expressionWarnings[param.name]}
-                                                            isScattered={isScatterInherited}
-                                                            showHelpText
-                                                        />
-                                                    )}
-                                                    {param.label && (
-                                                        <div className="param-description">{param.label}</div>
-                                                    )}
-                                                    {param.bounds && (
-                                                        <div className="param-bounds">bounds: {param.bounds[0]} – {param.bounds[1]}</div>
-                                                    )}
-                                                    {param.hasDefault && (
-                                                        <div className="param-default-hint">default: {String(param.defaultValue)}</div>
-                                                    )}
-                                                </div>
-                                            );
-                                        })}
-                                    </div>
-                                )
+                                                );
+                                            })}
+                                        </div>
+                                    ),
                             )}
 
                             {/* Fallback for unknown tools */}
@@ -569,9 +652,7 @@ const ToolNodeComponent = ({ data, id, isScatterInherited, isGatherNode, isSourc
                                     </div>
                                 </div>
                             )}
-
                         </div>
-
                     </Form>
                 </Modal.Body>
             </Modal>

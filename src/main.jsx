@@ -4,10 +4,10 @@ import ActionsBar from './components/actionsBar';
 import HeaderBar from './components/headerBar';
 import WorkflowMenu from './components/workflowMenu';
 import ToggleWorkflowBar from './components/toggleWorkflowBar';
-import WorkflowCanvas from './components/workflowCanvas'
+import WorkflowCanvas from './components/workflowCanvas';
 import OutputNameInput from './components/outputNameInput';
 import WorkflowNameInput from './components/workflowNameInput';
-import Footer from "./components/footer";
+import Footer from './components/footer';
 import CWLPreviewPanel from './components/CWLPreviewPanel';
 import WorkflowComparisonModal from './components/WorkflowComparisonModal';
 import { useWorkspaces } from './hooks/useWorkspaces';
@@ -18,39 +18,47 @@ import { TOOL_ANNOTATIONS } from './utils/toolAnnotations.js';
 import { preloadAllCWL } from './utils/cwlParser.js';
 import { invalidateMergeCache } from './utils/toolRegistry.js';
 import { topoSort } from './utils/topoSort.js';
-import { serializeNodes, serializeEdges, deserializeNode, hasUnsavedChanges, computeWorkflowDiff } from './utils/workflowDiff.js';
+import {
+    serializeNodes,
+    serializeEdges,
+    deserializeNode,
+    hasUnsavedChanges,
+    computeWorkflowDiff,
+} from './utils/workflowDiff.js';
 
 import 'bootstrap/dist/css/bootstrap.min.css';
 import './styles/background.css';
 
 /** Get the Set of IDs for dummy nodes (supports both flat and data-nested shapes). */
-const getDummyIds = (nodes) =>
-    new Set(nodes.filter(n => n.isDummy || n.data?.isDummy).map(n => n.id));
+const getDummyIds = (nodes) => new Set(nodes.filter((n) => n.isDummy || n.data?.isDummy).map((n) => n.id));
 
 /**
  * Compute boundary nodes (first/last non-dummy in topological order)
  * for a set of internal nodes and edges.
  */
 function computeBoundaryNodes(nodes, edges) {
-    const nonDummyNodes = nodes.filter(n => !n.isDummy && !n.data?.isDummy);
+    const nonDummyNodes = nodes.filter((n) => !n.isDummy && !n.data?.isDummy);
     if (nonDummyNodes.length === 0) return { firstNonDummy: null, lastNonDummy: null };
 
     const dummyIds = getDummyIds(nodes);
-    const realEdges = edges.filter(e => !dummyIds.has(e.source) && !dummyIds.has(e.target));
+    const realEdges = edges.filter((e) => !dummyIds.has(e.source) && !dummyIds.has(e.target));
 
     let order;
-    try { order = topoSort(nonDummyNodes, realEdges); } catch { return { firstNonDummy: null, lastNonDummy: null }; }
+    try {
+        order = topoSort(nonDummyNodes, realEdges);
+    } catch {
+        return { firstNonDummy: null, lastNonDummy: null };
+    }
 
-    const nodeById = new Map(nonDummyNodes.map(n => [n.id, n]));
+    const nodeById = new Map(nonDummyNodes.map((n) => [n.id, n]));
     const firstNode = nodeById.get(order[0]);
     const lastNode = nodeById.get(order[order.length - 1]);
 
     return {
         firstNonDummy: firstNode?.label || firstNode?.data?.label || null,
-        lastNonDummy: lastNode?.label || lastNode?.data?.label || null
+        lastNonDummy: lastNode?.label || lastNode?.data?.label || null,
     };
 }
-
 
 function App() {
     const {
@@ -67,7 +75,7 @@ function App() {
         updateSavedWorkflowId,
         removeWorkflowNodesFromAll,
         revertCurrentWorkspaceItems,
-        saveViewportForWorkspace
+        saveViewportForWorkspace,
     } = useWorkspaces();
 
     const currentOutputName = workspaces[currentWorkspace]?.name || '';
@@ -82,29 +90,33 @@ function App() {
 
     const { generateWorkflow } = useGenerateWorkflow();
     const { showError, showSuccess, showWarning, showInfo } = useToast();
-    const { saveWorkflow, updateWorkflow, deleteWorkflow, getNextDefaultName, customWorkflows } = useCustomWorkflowsContext();
+    const { saveWorkflow, updateWorkflow, deleteWorkflow, getNextDefaultName, customWorkflows } =
+        useCustomWorkflowsContext();
 
     // Preload all CWL files on mount so getToolConfigSync() works synchronously
     useEffect(() => {
         const cwlPaths = Object.values(TOOL_ANNOTATIONS)
-            .map(ann => ann.cwlPath)
+            .map((ann) => ann.cwlPath)
             .filter(Boolean);
         preloadAllCWL(cwlPaths)
             .then(() => {
                 invalidateMergeCache();
                 setCwlReady(true);
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error('[App] CWL preload failed:', err);
                 showError('Failed to load tool definitions. Some tools may not work correctly.');
                 setCwlReady(true); // still allow rendering so the app isn't stuck
             });
     }, []);
 
-    const handleDeleteWorkflow = useCallback((wfId) => {
-        deleteWorkflow(wfId);
-        removeWorkflowNodesFromAll(wfId);
-    }, [deleteWorkflow, removeWorkflowNodesFromAll]);
+    const handleDeleteWorkflow = useCallback(
+        (wfId) => {
+            deleteWorkflow(wfId);
+            removeWorkflowNodesFromAll(wfId);
+        },
+        [deleteWorkflow, removeWorkflowNodesFromAll],
+    );
 
     const handleSaveAsCustomNode = useCallback(() => {
         if (!getWorkflowData) {
@@ -119,7 +131,7 @@ function App() {
         }
 
         // Need at least 1 non-dummy node
-        const nonDummyNodes = data.nodes.filter(n => !n.data?.isDummy);
+        const nonDummyNodes = data.nodes.filter((n) => !n.data?.isDummy);
         if (nonDummyNodes.length === 0) {
             showError('Cannot save a workspace with only I/O nodes as a custom node.');
             return;
@@ -141,7 +153,7 @@ function App() {
             nodes: serializedNodes,
             edges: serializedEdges,
             hasValidationWarnings: false,
-            boundaryNodes
+            boundaryNodes,
         };
 
         if (savedWorkflowId) {
@@ -163,69 +175,91 @@ function App() {
         if (!currentWorkflowName.trim()) {
             updateWorkflowName(name);
         }
-    }, [getWorkflowData, currentWorkflowName, currentOutputName, savedWorkflowId, saveWorkflow, updateWorkflow, updateSavedWorkflowId, getNextDefaultName, showError, showSuccess, showWarning, updateWorkflowName]);
+    }, [
+        getWorkflowData,
+        currentWorkflowName,
+        currentOutputName,
+        savedWorkflowId,
+        saveWorkflow,
+        updateWorkflow,
+        updateSavedWorkflowId,
+        getNextDefaultName,
+        showError,
+        showSuccess,
+        showWarning,
+        updateWorkflowName,
+    ]);
 
-    const handleWorkflowNameChange = useCallback((newName) => {
-        updateWorkflowName(newName);
-    }, [updateWorkflowName]);
+    const handleWorkflowNameChange = useCallback(
+        (newName) => {
+            updateWorkflowName(newName);
+        },
+        [updateWorkflowName],
+    );
 
-    const handleWorkspaceSwitch = useCallback((newIndex) => {
-        // Warn if leaving a workspace with unsaved custom workflow changes
-        const currentWs = workspaces[currentWorkspace];
-        const currentWfName = currentWs?.workflowName?.trim();
-        if (currentWfName) {
-            const savedWf = customWorkflows.find(w => w.name === currentWfName);
-            if (savedWf && hasUnsavedChanges(currentWs, savedWf)) {
-                showWarning(`Workflow "${currentWfName}" has unsaved changes`);
+    const handleWorkspaceSwitch = useCallback(
+        (newIndex) => {
+            // Warn if leaving a workspace with unsaved custom workflow changes
+            const currentWs = workspaces[currentWorkspace];
+            const currentWfName = currentWs?.workflowName?.trim();
+            if (currentWfName) {
+                const savedWf = customWorkflows.find((w) => w.name === currentWfName);
+                if (savedWf && hasUnsavedChanges(currentWs, savedWf)) {
+                    showWarning(`Workflow "${currentWfName}" has unsaved changes`);
+                }
             }
-        }
 
-        // Notify if arriving at a workspace editing a custom workflow
-        const targetWs = workspaces[newIndex];
-        const targetWfName = targetWs?.workflowName?.trim();
-        if (targetWfName) {
-            const targetSaved = customWorkflows.find(w => w.name === targetWfName);
-            if (targetSaved) {
-                showInfo(`Editing custom workflow "${targetWfName}"`);
+            // Notify if arriving at a workspace editing a custom workflow
+            const targetWs = workspaces[newIndex];
+            const targetWfName = targetWs?.workflowName?.trim();
+            if (targetWfName) {
+                const targetSaved = customWorkflows.find((w) => w.name === targetWfName);
+                if (targetSaved) {
+                    showInfo(`Editing custom workflow "${targetWfName}"`);
+                }
             }
-        }
 
-        setCurrentWorkspace(newIndex);
-    }, [workspaces, currentWorkspace, customWorkflows, setCurrentWorkspace, showWarning, showInfo]);
+            setCurrentWorkspace(newIndex);
+        },
+        [workspaces, currentWorkspace, customWorkflows, setCurrentWorkspace, showWarning, showInfo],
+    );
 
-    const handleEditWorkflow = useCallback((workflow) => {
-        // Check if this workflow is already open in an existing workspace
-        const existingIndex = workspaces.findIndex(ws => ws.savedWorkflowId === workflow.id);
-        if (existingIndex !== -1) {
-            handleWorkspaceSwitch(existingIndex);
-            return;
-        }
+    const handleEditWorkflow = useCallback(
+        (workflow) => {
+            // Check if this workflow is already open in an existing workspace
+            const existingIndex = workspaces.findIndex((ws) => ws.savedWorkflowId === workflow.id);
+            if (existingIndex !== -1) {
+                handleWorkspaceSwitch(existingIndex);
+                return;
+            }
 
-        // Convert serialized nodes back to canvas format
-        const nodes = workflow.nodes.map(deserializeNode);
-        const edges = workflow.edges.map(e => ({
-            id: e.id,
-            source: e.source,
-            target: e.target,
-            data: e.data || { mappings: [] },
-        }));
+            // Convert serialized nodes back to canvas format
+            const nodes = workflow.nodes.map(deserializeNode);
+            const edges = workflow.edges.map((e) => ({
+                id: e.id,
+                source: e.source,
+                target: e.target,
+                data: e.data || { mappings: [] },
+            }));
 
-        addNewWorkspaceWithData({
-            nodes,
-            edges,
-            name: workflow.outputName || '',
-            workflowName: workflow.name,
-            savedWorkflowId: workflow.id
-        });
-        showInfo(`Editing "${workflow.name}" in new workspace`);
-    }, [addNewWorkspaceWithData, showInfo, workspaces, handleWorkspaceSwitch]);
+            addNewWorkspaceWithData({
+                nodes,
+                edges,
+                name: workflow.outputName || '',
+                workflowName: workflow.name,
+                savedWorkflowId: workflow.id,
+            });
+            showInfo(`Editing "${workflow.name}" in new workspace`);
+        },
+        [addNewWorkspaceWithData, showInfo, workspaces, handleWorkspaceSwitch],
+    );
 
     const handleOpenComparison = useCallback(() => {
         if (!savedWorkflowId) {
             showWarning('Current workspace is not editing a saved workflow.');
             return;
         }
-        const workflow = customWorkflows.find(w => w.id === savedWorkflowId);
+        const workflow = customWorkflows.find((w) => w.id === savedWorkflowId);
         if (!workflow) {
             showError('Saved workflow not found.');
             return;
@@ -243,11 +277,11 @@ function App() {
     const handleRevertWorkflow = useCallback(() => {
         if (!savedWorkflowId) return;
 
-        const workflow = customWorkflows.find(w => w.id === savedWorkflowId);
+        const workflow = customWorkflows.find((w) => w.id === savedWorkflowId);
         if (!workflow) return;
 
         const nodes = workflow.nodes.map(deserializeNode);
-        const edges = workflow.edges.map(e => ({
+        const edges = workflow.edges.map((e) => ({
             id: e.id,
             source: e.source,
             target: e.target,
@@ -258,81 +292,92 @@ function App() {
         updateWorkflowName(workflow.name);
         updateWorkspaceName(workflow.outputName || '');
         showSuccess(`Reverted "${workflow.name}" to last saved state.`);
-    }, [savedWorkflowId, customWorkflows, revertCurrentWorkspaceItems, updateWorkflowName, updateWorkspaceName, showSuccess]);
+    }, [
+        savedWorkflowId,
+        customWorkflows,
+        revertCurrentWorkspaceItems,
+        updateWorkflowName,
+        updateWorkspaceName,
+        showSuccess,
+    ]);
 
     // Detect unsaved changes against the saved custom workflow
-    const savedWorkflow = savedWorkflowId ? customWorkflows.find(w => w.id === savedWorkflowId) : null;
+    const savedWorkflow = savedWorkflowId ? customWorkflows.find((w) => w.id === savedWorkflowId) : null;
     const workflowHasChanges = savedWorkflow ? hasUnsavedChanges(workspaces[currentWorkspace], savedWorkflow) : false;
 
     return (
-            <div className="app-layout">
-                <HeaderBar />
-                <div className="toolbar-row">
-                    <ActionsBar
-                        onNewWorkspace={addNewWorkspace}
-                        onClearWorkspace={clearCurrentWorkspace}
-                        onRemoveWorkspace={removeCurrentWorkspace}
-                        workspaceCount={workspaces.length}
-                        onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName)}
-                        onSaveWorkflow={handleSaveAsCustomNode}
-                        onRevertWorkflow={handleOpenComparison}
-                        isSavedWorkflow={!!savedWorkflowId}
-                        workflowHasChanges={workflowHasChanges}
-                    />
-                    <div className="workflow-names-container">
-                        <OutputNameInput
-                            name={currentOutputName}
-                            onNameChange={updateWorkspaceName}
-                        />
-                        <WorkflowNameInput
-                            name={currentWorkflowName}
-                            onNameChange={handleWorkflowNameChange}
-                            placeholder={getNextDefaultName()}
-                        />
-                    </div>
-                </div>
-                <div className="workflow-content">
-                    <div className="workflow-content-main">
-                        <WorkflowMenu onEditWorkflow={handleEditWorkflow} onDeleteWorkflow={handleDeleteWorkflow} />
-                        {cwlReady ? (
-                            <WorkflowCanvas
-                                workflowItems={workspaces[currentWorkspace]}
-                                updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
-                                onSetWorkflowData={setGetWorkflowData}
-                                currentWorkspaceIndex={currentWorkspace}
-                                saveViewportForWorkspace={saveViewportForWorkspace}
-                            />
-                        ) : (
-                            <div className="workflow-canvas-loading" style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', color: 'var(--text-secondary)' }}>
-                                Loading tool definitions…
-                            </div>
-                        )}
-                        <CWLPreviewPanel
-                            getWorkflowData={getWorkflowData}
-                        />
-                    </div>
-                    <ToggleWorkflowBar
-                        current={currentWorkspace}
-                        workspaces={workspaces}
-                        onChange={handleWorkspaceSwitch}
+        <div className="app-layout">
+            <HeaderBar />
+            <div className="toolbar-row">
+                <ActionsBar
+                    onNewWorkspace={addNewWorkspace}
+                    onClearWorkspace={clearCurrentWorkspace}
+                    onRemoveWorkspace={removeCurrentWorkspace}
+                    workspaceCount={workspaces.length}
+                    onGenerateWorkflow={() => generateWorkflow(getWorkflowData, currentOutputName)}
+                    onSaveWorkflow={handleSaveAsCustomNode}
+                    onRevertWorkflow={handleOpenComparison}
+                    isSavedWorkflow={!!savedWorkflowId}
+                    workflowHasChanges={workflowHasChanges}
+                />
+                <div className="workflow-names-container">
+                    <OutputNameInput name={currentOutputName} onNameChange={updateWorkspaceName} />
+                    <WorkflowNameInput
+                        name={currentWorkflowName}
+                        onNameChange={handleWorkflowNameChange}
+                        placeholder={getNextDefaultName()}
                     />
                 </div>
-                <Footer />
-                <WorkflowComparisonModal
-                    show={showComparisonModal}
-                    onHide={() => setShowComparisonModal(false)}
-                    diffData={comparisonDiffData}
-                    onSave={() => {
-                        handleSaveAsCustomNode();
-                        setShowComparisonModal(false);
-                    }}
-                    onRevert={() => {
-                        handleRevertWorkflow();
-                        setShowComparisonModal(false);
-                    }}
-                    savedName={savedWorkflow?.name || ''}
+            </div>
+            <div className="workflow-content">
+                <div className="workflow-content-main">
+                    <WorkflowMenu onEditWorkflow={handleEditWorkflow} onDeleteWorkflow={handleDeleteWorkflow} />
+                    {cwlReady ? (
+                        <WorkflowCanvas
+                            workflowItems={workspaces[currentWorkspace]}
+                            updateCurrentWorkspaceItems={updateCurrentWorkspaceItems}
+                            onSetWorkflowData={setGetWorkflowData}
+                            currentWorkspaceIndex={currentWorkspace}
+                            saveViewportForWorkspace={saveViewportForWorkspace}
+                        />
+                    ) : (
+                        <div
+                            className="workflow-canvas-loading"
+                            style={{
+                                flex: 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                color: 'var(--text-secondary)',
+                            }}
+                        >
+                            Loading tool definitions…
+                        </div>
+                    )}
+                    <CWLPreviewPanel getWorkflowData={getWorkflowData} />
+                </div>
+                <ToggleWorkflowBar
+                    current={currentWorkspace}
+                    workspaces={workspaces}
+                    onChange={handleWorkspaceSwitch}
                 />
             </div>
+            <Footer />
+            <WorkflowComparisonModal
+                show={showComparisonModal}
+                onHide={() => setShowComparisonModal(false)}
+                diffData={comparisonDiffData}
+                onSave={() => {
+                    handleSaveAsCustomNode();
+                    setShowComparisonModal(false);
+                }}
+                onRevert={() => {
+                    handleRevertWorkflow();
+                    setShowComparisonModal(false);
+                }}
+                savedName={savedWorkflow?.name || ''}
+            />
+        </div>
     );
 }
 
@@ -341,5 +386,5 @@ ReactDOM.createRoot(document.getElementById('root')).render(
         <CustomWorkflowsProvider>
             <App />
         </CustomWorkflowsProvider>
-    </ToastProvider>
+    </ToastProvider>,
 );

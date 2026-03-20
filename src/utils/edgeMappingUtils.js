@@ -8,7 +8,7 @@ import { checkExtensionCompatibility } from './extensionValidation.js';
 
 export const getBaseType = (type) => {
     // Remove nullable (?) and array ([]) modifiers
-    return type?.replace(/[\?\[\]]/g, '') || 'File';
+    return type?.replace(/[?[\]]/g, '') || 'File';
 };
 
 export const isArrayType = (type) => type?.includes('[]') || false;
@@ -19,13 +19,19 @@ export const formatTypeHint = (type, extensions) => {
     const suffix = isArray ? '[]' : '';
 
     if (baseType === 'File' && extensions && extensions.length > 0) {
-        return extensions.map(ext => ext + suffix).join(', ');
+        return extensions.map((ext) => ext + suffix).join(', ');
     }
 
     return type || 'File';
 };
 
-export const checkTypeCompatibility = (outputType, inputType, outputExtensions = null, inputAcceptedExtensions = null, sourceIsScattered = false) => {
+export const checkTypeCompatibility = (
+    outputType,
+    inputType,
+    outputExtensions = null,
+    inputAcceptedExtensions = null,
+    sourceIsScattered = false,
+) => {
     if (!outputType || !inputType) return { compatible: true, warning: true, reason: 'Type information unavailable' };
 
     const outBase = getBaseType(outputType);
@@ -61,7 +67,7 @@ export const checkTypeCompatibility = (outputType, inputType, outputExtensions =
             return {
                 compatible: false,
                 reason: extCompat.reason,
-                isExtensionMismatch: true
+                isExtensionMismatch: true,
             };
         }
         if (extCompat.warning) {
@@ -74,12 +80,20 @@ export const checkTypeCompatibility = (outputType, inputType, outputExtensions =
 
     // Array → scalar: scatter unwraps the array across downstream inputs
     if (outArray && !inArray) {
-        return { compatible: true, scatterNote: true, reason: `Array output (${outputType}) will scatter across ${inputType} inputs` };
+        return {
+            compatible: true,
+            scatterNote: true,
+            reason: `Array output (${outputType}) will scatter across ${inputType} inputs`,
+        };
     }
     // Scalar → array: normally incompatible, but valid when source is scattered (gather)
     if (!outArray && inArray) {
         if (sourceIsScattered) {
-            return { compatible: true, gatherNote: true, reason: 'Scatter outputs will be gathered into a single array input' };
+            return {
+                compatible: true,
+                gatherNote: true,
+                reason: 'Scatter outputs will be gathered into a single array input',
+            };
         }
         return { compatible: false, reason: `Type mismatch: ${outputType} cannot satisfy ${inputType}` };
     }
@@ -106,17 +120,24 @@ export const getToolIO = (nodeData) => {
     // BIDS Input nodes: dynamic outputs from BIDS selections
     if (isDummy && nodeData.isBIDS) {
         const selections = nodeData.bidsSelections?.selections || {};
-        const fileOutputs = Object.keys(selections).length > 0
-            ? Object.entries(selections).map(([key]) => ({
-                name: key,
-                type: 'File[]',
-                label: key,
-                extensions: [],
-            }))
-            : [{ name: 'data', type: 'File[]', label: 'data (no selections yet)', extensions: [] }];
+        const fileOutputs =
+            Object.keys(selections).length > 0
+                ? Object.entries(selections).map(([key]) => ({
+                      name: key,
+                      type: 'File[]',
+                      label: key,
+                      extensions: [],
+                  }))
+                : [{ name: 'data', type: 'File[]', label: 'data (no selections yet)', extensions: [] }];
         const outputs = [
             ...fileOutputs,
-            { name: 'bids_directory', type: 'Directory', label: 'Entire BIDS Directory', description: 'Used when bids_dir is accepted as input', extensions: [] },
+            {
+                name: 'bids_directory',
+                type: 'Directory',
+                label: 'Entire BIDS Directory',
+                description: 'Used when bids_dir is accepted as input',
+                extensions: [],
+            },
         ];
         return {
             outputs,
@@ -130,16 +151,16 @@ export const getToolIO = (nodeData) => {
     if (isDummy) {
         return {
             outputs: [{ name: 'data', type: 'any', label: 'data', extensions: [] }],
-            inputs:  [{ name: 'data', type: 'any', label: 'data', acceptedExtensions: null }],
+            inputs: [{ name: 'data', type: 'any', label: 'data', acceptedExtensions: null }],
             isGeneric: true,
-            isDummy: true
+            isDummy: true,
         };
     }
 
     // Custom workflow nodes: aggregate IO from all internal non-dummy nodes
     if (isCustomWorkflow && internalNodes) {
         const { internalEdges } = nodeData;
-        const nonDummyNodes = internalNodes.filter(n => !n.isDummy);
+        const nonDummyNodes = internalNodes.filter((n) => !n.isDummy);
         const outputs = [];
         const inputs = [];
 
@@ -147,10 +168,10 @@ export const getToolIO = (nodeData) => {
         const consumedOutputs = new Set();
         if (internalEdges) {
             for (const edge of internalEdges) {
-                const srcNode = internalNodes.find(n => n.id === edge.source);
-                const tgtNode = internalNodes.find(n => n.id === edge.target);
+                const srcNode = internalNodes.find((n) => n.id === edge.source);
+                const tgtNode = internalNodes.find((n) => n.id === edge.target);
                 if (srcNode && tgtNode && !srcNode.isDummy && !tgtNode.isDummy) {
-                    for (const m of (edge.data?.mappings || [])) {
+                    for (const m of edge.data?.mappings || []) {
                         consumedOutputs.add(`${edge.source}/${m.sourceOutput}`);
                     }
                 }
@@ -211,7 +232,7 @@ export const getToolIO = (nodeData) => {
         const scatteredIds = new Set();
 
         // Phase 1: explicit scatter (nodes with scatterInputs)
-        nonDummyNodes.forEach(node => {
+        nonDummyNodes.forEach((node) => {
             if (node.scatterInputs?.length > 0) {
                 scatteredIds.add(node.id);
                 groupInfo[node.label] = { scattered: true };
@@ -226,16 +247,16 @@ export const getToolIO = (nodeData) => {
                 const srcId = queue.shift();
                 for (const edge of internalEdges) {
                     if (edge.source !== srcId || visited.has(edge.target)) continue;
-                    const tgtNode = nonDummyNodes.find(n => n.id === edge.target);
+                    const tgtNode = nonDummyNodes.find((n) => n.id === edge.target);
                     if (!tgtNode) continue;
                     const tgtTool = getToolConfigSync(tgtNode.label);
                     if (!tgtTool) continue;
                     const mappings = edge.data?.mappings || [];
                     if (mappings.length === 0) continue;
                     // Check if ALL mapped inputs are array types (gather) vs any scalar (scatter inherit)
-                    const allArray = mappings.every(m => {
-                        const inputDef = tgtTool.requiredInputs?.[m.targetInput]
-                            || tgtTool.optionalInputs?.[m.targetInput];
+                    const allArray = mappings.every((m) => {
+                        const inputDef =
+                            tgtTool.requiredInputs?.[m.targetInput] || tgtTool.optionalInputs?.[m.targetInput];
                         return inputDef?.type?.includes('[]');
                     });
                     if (allArray) {
@@ -261,7 +282,7 @@ export const getToolIO = (nodeData) => {
                 type: def.type,
                 label: def.label || name,
                 extensions: def.extensions || [],
-                enumSymbols: def.enumSymbols || null
+                enumSymbols: def.enumSymbols || null,
             })),
             inputs: [
                 // Required inputs first
@@ -271,7 +292,7 @@ export const getToolIO = (nodeData) => {
                     label: def.label || name,
                     acceptedExtensions: def.acceptedExtensions || null,
                     required: true,
-                    enumSymbols: def.enumSymbols || def.options || null
+                    enumSymbols: def.enumSymbols || def.options || null,
                 })),
                 // Optional inputs second (exclude record types)
                 ...Object.entries(tool.optionalInputs || {})
@@ -282,16 +303,16 @@ export const getToolIO = (nodeData) => {
                         label: def.label || name,
                         acceptedExtensions: null,
                         required: false,
-                        enumSymbols: def.enumSymbols || def.options || null
-                    }))
+                        enumSymbols: def.enumSymbols || def.options || null,
+                    })),
             ],
-            isGeneric: false
+            isGeneric: false,
         };
     }
     // Fallback for undefined tools
     return {
         outputs: [{ name: 'output', type: 'File', label: 'Output', extensions: [] }],
         inputs: [{ name: 'input', type: 'File', label: 'Input', acceptedExtensions: null }],
-        isGeneric: true
+        isGeneric: true,
     };
 };

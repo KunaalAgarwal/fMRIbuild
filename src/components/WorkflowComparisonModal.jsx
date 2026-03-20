@@ -8,27 +8,17 @@ function DiffSection({ title, children, badgeCounts, defaultExpanded }) {
 
     return (
         <div className="diff-section">
-            <div className="diff-section-header" onClick={() => setExpanded(e => !e)}>
+            <div className="diff-section-header" onClick={() => setExpanded((e) => !e)}>
                 <span className={`diff-section-chevron ${expanded ? 'expanded' : ''}`}>&#9654;</span>
                 <span className="diff-section-title">{title}</span>
-                {badgeCounts.added > 0 && (
-                    <span className="diff-count-badge added">+{badgeCounts.added}</span>
-                )}
-                {badgeCounts.removed > 0 && (
-                    <span className="diff-count-badge removed">-{badgeCounts.removed}</span>
-                )}
-                {badgeCounts.modified > 0 && (
-                    <span className="diff-count-badge modified">~{badgeCounts.modified}</span>
-                )}
+                {badgeCounts.added > 0 && <span className="diff-count-badge added">+{badgeCounts.added}</span>}
+                {badgeCounts.removed > 0 && <span className="diff-count-badge removed">-{badgeCounts.removed}</span>}
+                {badgeCounts.modified > 0 && <span className="diff-count-badge modified">~{badgeCounts.modified}</span>}
                 {totalCount === 0 && (
-                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #888)' }}>
-                        No changes
-                    </span>
+                    <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary, #888)' }}>No changes</span>
                 )}
             </div>
-            {expanded && totalCount > 0 && (
-                <div className="diff-section-body">{children}</div>
-            )}
+            {expanded && totalCount > 0 && <div className="diff-section-body">{children}</div>}
         </div>
     );
 }
@@ -36,9 +26,7 @@ function DiffSection({ title, children, badgeCounts, defaultExpanded }) {
 function ValueDisplay({ saved, current }) {
     return (
         <div className="diff-property-values">
-            <span className={`diff-value-saved ${saved == null ? 'diff-value-empty' : ''}`}>
-                {saved ?? '(none)'}
-            </span>
+            <span className={`diff-value-saved ${saved == null ? 'diff-value-empty' : ''}`}>{saved ?? '(none)'}</span>
             <span className="diff-value-arrow">&#8594;</span>
             <span className={`diff-value-current ${current == null ? 'diff-value-empty' : ''}`}>
                 {current ?? '(none)'}
@@ -51,7 +39,7 @@ function SubChanges({ subChanges }) {
     if (!subChanges || subChanges.length === 0) return null;
     return (
         <div className="diff-sub-changes">
-            {subChanges.map(sc => (
+            {subChanges.map((sc) => (
                 <div key={sc.key} className="diff-sub-change">
                     <span className="diff-sub-key">{sc.key}</span>
                     {sc.type === 'added' ? (
@@ -79,7 +67,11 @@ function SubChanges({ subChanges }) {
 
 function formatScatterMethod(method) {
     if (!method) return null;
-    const labels = { dotproduct: 'Dot Product', flat_crossproduct: 'Flat Cross Product', nested_crossproduct: 'Nested Cross Product' };
+    const labels = {
+        dotproduct: 'Dot Product',
+        flat_crossproduct: 'Flat Cross Product',
+        nested_crossproduct: 'Nested Cross Product',
+    };
     return labels[method] || method;
 }
 
@@ -97,9 +89,7 @@ function formatLinkMerge(overrides) {
 }
 
 /** Property display configs by node type. */
-const IO_DISPLAY_PROPS = [
-    { key: 'notes', label: 'Notes' },
-];
+const IO_DISPLAY_PROPS = [{ key: 'notes', label: 'Notes' }];
 const BIDS_DISPLAY_PROPS = [
     { key: 'notes', label: 'Notes' },
     { key: 'bidsSelections', label: 'BIDS Selections', isObject: true },
@@ -145,7 +135,11 @@ function objectToSubChanges(value, changeType, propKey) {
     const entries = Object.entries(value).filter(([, v]) => v !== undefined && v !== null && v !== '');
     const isLinkMerge = propKey === 'linkMergeOverrides';
     return entries.map(([k, v]) => {
-        const formatted = isLinkMerge ? formatMergeMethodLabel(v) : (typeof v === 'object' ? JSON.stringify(v) : String(v));
+        const formatted = isLinkMerge
+            ? formatMergeMethodLabel(v)
+            : typeof v === 'object'
+              ? JSON.stringify(v)
+              : String(v);
         return {
             key: k,
             ...(changeType === 'added' ? { current: formatted } : { saved: formatted }),
@@ -176,13 +170,15 @@ function NodeCard({ node, type }) {
                 {nodeTypeLabel && <div className="diff-card-summary">{nodeTypeLabel}</div>}
                 {properties.length > 0 && (
                     <div className="diff-property-list">
-                        {properties.map(p => (
+                        {properties.map((p) => (
                             <div key={p.displayName} className="diff-property-row">
                                 <span className="diff-property-label">{p.displayName}</span>
                                 {p.subChanges ? (
                                     <SubChanges subChanges={p.subChanges} />
                                 ) : (
-                                    <span className={type === 'added' ? 'diff-value-current' : 'diff-value-saved'}>{p.value}</span>
+                                    <span className={type === 'added' ? 'diff-value-current' : 'diff-value-saved'}>
+                                        {p.value}
+                                    </span>
                                 )}
                             </div>
                         ))}
@@ -193,9 +189,14 @@ function NodeCard({ node, type }) {
     }
 
     // Modified node
-    const modifiedLabel = node.savedLabel !== node.label
-        ? <>{node.savedLabel} <span className="diff-value-arrow">&#8594;</span> {node.label}</>
-        : node.label;
+    const modifiedLabel =
+        node.savedLabel !== node.label ? (
+            <>
+                {node.savedLabel} <span className="diff-value-arrow">&#8594;</span> {node.label}
+            </>
+        ) : (
+            node.label
+        );
     const modifiedTypeLabel = getNodeTypeLabel(node);
 
     return (
@@ -203,7 +204,7 @@ function NodeCard({ node, type }) {
             <div className="diff-card-title">{modifiedLabel}</div>
             {modifiedTypeLabel && <div className="diff-card-summary">{modifiedTypeLabel}</div>}
             <div className="diff-property-list">
-                {node.changes.map(change => (
+                {node.changes.map((change) => (
                     <div key={change.property} className="diff-property-row">
                         <span className="diff-property-label">{change.displayName}</span>
                         {change.subChanges ? (
@@ -252,13 +253,19 @@ function EdgeCard({ edge, type }) {
                             <div>
                                 <div style={{ marginBottom: 4 }}>
                                     <span className="diff-value-saved" style={{ maxWidth: '100%' }}>
-                                        {(change.saved || []).map(m => `${m.sourceOutput} → ${m.targetInput}`).join(', ') || '(none)'}
+                                        {(change.saved || [])
+                                            .map((m) => `${m.sourceOutput} → ${m.targetInput}`)
+                                            .join(', ') || '(none)'}
                                     </span>
                                 </div>
-                                <span className="diff-value-arrow" style={{ display: 'block', margin: '2px 0' }}>&#8595;</span>
+                                <span className="diff-value-arrow" style={{ display: 'block', margin: '2px 0' }}>
+                                    &#8595;
+                                </span>
                                 <div>
                                     <span className="diff-value-current" style={{ maxWidth: '100%' }}>
-                                        {(change.current || []).map(m => `${m.sourceOutput} → ${m.targetInput}`).join(', ') || '(none)'}
+                                        {(change.current || [])
+                                            .map((m) => `${m.sourceOutput} → ${m.targetInput}`)
+                                            .join(', ') || '(none)'}
                                     </span>
                                 </div>
                             </div>
@@ -279,13 +286,7 @@ export default function WorkflowComparisonModal({ show, onHide, diffData, onReve
     const edgeTotal = diffData.edges.added.length + diffData.edges.removed.length + diffData.edges.modified.length;
 
     return (
-        <Modal
-            show={show}
-            onHide={onHide}
-            centered
-            size="xl"
-            className="workflow-comparison-modal"
-        >
+        <Modal show={show} onHide={onHide} centered size="xl" className="workflow-comparison-modal">
             <Modal.Header>
                 <Modal.Title>Staged Changes: {savedName}</Modal.Title>
                 <div style={{ display: 'flex', gap: '8px' }}>
@@ -309,7 +310,7 @@ export default function WorkflowComparisonModal({ show, onHide, diffData, onReve
                                 badgeCounts={{ added: 0, removed: 0, modified: diffData.metadata.length }}
                                 defaultExpanded={true}
                             >
-                                {diffData.metadata.map(m => (
+                                {diffData.metadata.map((m) => (
                                     <div key={m.field} className="diff-metadata-row">
                                         <span className="diff-metadata-field">{m.field}</span>
                                         <ValueDisplay saved={m.saved || '(empty)'} current={m.current || '(empty)'} />
@@ -330,20 +331,32 @@ export default function WorkflowComparisonModal({ show, onHide, diffData, onReve
                         >
                             {diffData.nodes.added.length > 0 && (
                                 <>
-                                    <div className="diff-subsection-header added">Added ({diffData.nodes.added.length})</div>
-                                    {diffData.nodes.added.map(n => <NodeCard key={n.id} node={n} type="added" />)}
+                                    <div className="diff-subsection-header added">
+                                        Added ({diffData.nodes.added.length})
+                                    </div>
+                                    {diffData.nodes.added.map((n) => (
+                                        <NodeCard key={n.id} node={n} type="added" />
+                                    ))}
                                 </>
                             )}
                             {diffData.nodes.removed.length > 0 && (
                                 <>
-                                    <div className="diff-subsection-header removed">Removed ({diffData.nodes.removed.length})</div>
-                                    {diffData.nodes.removed.map(n => <NodeCard key={n.id} node={n} type="removed" />)}
+                                    <div className="diff-subsection-header removed">
+                                        Removed ({diffData.nodes.removed.length})
+                                    </div>
+                                    {diffData.nodes.removed.map((n) => (
+                                        <NodeCard key={n.id} node={n} type="removed" />
+                                    ))}
                                 </>
                             )}
                             {diffData.nodes.modified.length > 0 && (
                                 <>
-                                    <div className="diff-subsection-header modified">Modified ({diffData.nodes.modified.length})</div>
-                                    {diffData.nodes.modified.map(n => <NodeCard key={n.id} node={n} type="modified" />)}
+                                    <div className="diff-subsection-header modified">
+                                        Modified ({diffData.nodes.modified.length})
+                                    </div>
+                                    {diffData.nodes.modified.map((n) => (
+                                        <NodeCard key={n.id} node={n} type="modified" />
+                                    ))}
                                 </>
                             )}
                         </DiffSection>
@@ -360,20 +373,32 @@ export default function WorkflowComparisonModal({ show, onHide, diffData, onReve
                         >
                             {diffData.edges.added.length > 0 && (
                                 <>
-                                    <div className="diff-subsection-header added">Added ({diffData.edges.added.length})</div>
-                                    {diffData.edges.added.map(e => <EdgeCard key={e.id} edge={e} type="added" />)}
+                                    <div className="diff-subsection-header added">
+                                        Added ({diffData.edges.added.length})
+                                    </div>
+                                    {diffData.edges.added.map((e) => (
+                                        <EdgeCard key={e.id} edge={e} type="added" />
+                                    ))}
                                 </>
                             )}
                             {diffData.edges.removed.length > 0 && (
                                 <>
-                                    <div className="diff-subsection-header removed">Removed ({diffData.edges.removed.length})</div>
-                                    {diffData.edges.removed.map(e => <EdgeCard key={e.id} edge={e} type="removed" />)}
+                                    <div className="diff-subsection-header removed">
+                                        Removed ({diffData.edges.removed.length})
+                                    </div>
+                                    {diffData.edges.removed.map((e) => (
+                                        <EdgeCard key={e.id} edge={e} type="removed" />
+                                    ))}
                                 </>
                             )}
                             {diffData.edges.modified.length > 0 && (
                                 <>
-                                    <div className="diff-subsection-header modified">Modified ({diffData.edges.modified.length})</div>
-                                    {diffData.edges.modified.map(e => <EdgeCard key={e.id} edge={e} type="modified" />)}
+                                    <div className="diff-subsection-header modified">
+                                        Modified ({diffData.edges.modified.length})
+                                    </div>
+                                    {diffData.edges.modified.map((e) => (
+                                        <EdgeCard key={e.id} edge={e} type="modified" />
+                                    ))}
                                 </>
                             )}
                         </DiffSection>

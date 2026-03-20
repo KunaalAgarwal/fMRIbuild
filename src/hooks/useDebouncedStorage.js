@@ -39,7 +39,9 @@ export function useDebouncedStorage(key, value, delay = 300) {
                 timeoutRef.current = null;
                 try {
                     localStorage.setItem(key, JSON.stringify(valueRef.current));
-                } catch { /* best effort */ }
+                } catch {
+                    /* best effort */
+                }
             }
         };
     }, [key, value, delay]);
@@ -52,7 +54,9 @@ export function useDebouncedStorage(key, value, delay = 300) {
                 timeoutRef.current = null;
                 try {
                     localStorage.setItem(key, JSON.stringify(valueRef.current));
-                } catch { /* best effort */ }
+                } catch {
+                    /* best effort */
+                }
             }
         };
         window.addEventListener('beforeunload', handleBeforeUnload);

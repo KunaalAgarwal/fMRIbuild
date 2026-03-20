@@ -23,13 +23,7 @@ function IONodeModal({ show, onHide, label, notes, onSave }) {
     };
 
     return (
-        <Modal
-            show={show}
-            onHide={onHide}
-            centered
-            size="sm"
-            className="io-node-modal"
-        >
+        <Modal show={show} onHide={onHide} centered size="sm" className="io-node-modal">
             <Modal.Header>
                 <Modal.Title>Edit I/O Node</Modal.Title>
             </Modal.Header>
@@ -60,8 +54,12 @@ function IONodeModal({ show, onHide, label, notes, onSave }) {
                 </Form>
             </Modal.Body>
             <Modal.Footer>
-                <Button variant="secondary" onClick={onHide}>Cancel</Button>
-                <Button variant="primary" onClick={handleSave}>Save</Button>
+                <Button variant="secondary" onClick={onHide}>
+                    Cancel
+                </Button>
+                <Button variant="primary" onClick={handleSave}>
+                    Save
+                </Button>
             </Modal.Footer>
         </Modal>
     );

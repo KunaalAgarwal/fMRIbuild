@@ -12,7 +12,9 @@
     box-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
     backdrop-filter: blur(8px);
     overflow: hidden;
-    transition: flex 0.3s ease, max-width 0.3s ease;
+    transition:
+        flex 0.3s ease,
+        max-width 0.3s ease;
 }
 
 .cwl-preview-panel.cwl-collapsed {
@@ -151,10 +153,19 @@
     overflow-y: auto;
 }
 
-.cwl-key { color: var(--color-primary); }
-.cwl-string { color: var(--color-success); }
-.cwl-comment { color: var(--text-secondary); font-style: italic; }
-.cwl-bool { color: #e0a050; }
+.cwl-key {
+    color: var(--color-primary);
+}
+.cwl-string {
+    color: var(--color-success);
+}
+.cwl-comment {
+    color: var(--text-secondary);
+    font-style: italic;
+}
+.cwl-bool {
+    color: #e0a050;
+}
 
 .cwl-empty-message {
     color: var(--text-secondary);

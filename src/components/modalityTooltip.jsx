@@ -12,7 +12,7 @@ function ModalityTooltip({ children, name, description }) {
             const rect = elementRef.current.getBoundingClientRect();
             setTooltipPos({
                 top: rect.top + rect.height / 2,
-                left: rect.right + 10
+                left: rect.right + 10,
             });
         }
         setIsHovered(true);
@@ -24,32 +24,30 @@ function ModalityTooltip({ children, name, description }) {
 
     return (
         <>
-            <div
-                ref={elementRef}
-                onMouseEnter={handleMouseEnter}
-                onMouseLeave={handleMouseLeave}
-            >
+            <div ref={elementRef} onMouseEnter={handleMouseEnter} onMouseLeave={handleMouseLeave}>
                 {children}
             </div>
-            {isHovered && description && createPortal(
-                <div
-                    className="workflow-tooltip"
-                    style={{
-                        top: tooltipPos.top,
-                        left: tooltipPos.left,
-                        transform: 'translateY(-50%)'
-                    }}
-                >
-                    <div className="tooltip-section tooltip-fullname">
-                        <span className="tooltip-text">{name}</span>
-                    </div>
-                    <div className="tooltip-section">
-                        <span className="tooltip-label">Description</span>
-                        <span className="tooltip-text">{description}</span>
-                    </div>
-                </div>,
-                document.body
-            )}
+            {isHovered &&
+                description &&
+                createPortal(
+                    <div
+                        className="workflow-tooltip"
+                        style={{
+                            top: tooltipPos.top,
+                            left: tooltipPos.left,
+                            transform: 'translateY(-50%)',
+                        }}
+                    >
+                        <div className="tooltip-section tooltip-fullname">
+                            <span className="tooltip-text">{name}</span>
+                        </div>
+                        <div className="tooltip-section">
+                            <span className="tooltip-label">Description</span>
+                            <span className="tooltip-text">{description}</span>
+                        </div>
+                    </div>,
+                    document.body,
+                )}
         </>
     );
 }

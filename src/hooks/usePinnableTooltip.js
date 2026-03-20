@@ -34,33 +34,33 @@ export function usePinnableTooltip() {
     }, [updatePosition]);
 
     const onMouseLeave = useCallback(() => {
-        setPinned(prev => {
+        setPinned((prev) => {
             if (!prev) setShow(false);
             return prev;
         });
     }, []);
 
-    const onClick = useCallback((e) => {
-        e.stopPropagation();
-        setPinned(prev => {
-            if (prev) {
-                setShow(false);
-                return false;
-            }
-            updatePosition();
-            setShow(true);
-            return true;
-        });
-    }, [updatePosition]);
+    const onClick = useCallback(
+        (e) => {
+            e.stopPropagation();
+            setPinned((prev) => {
+                if (prev) {
+                    setShow(false);
+                    return false;
+                }
+                updatePosition();
+                setShow(true);
+                return true;
+            });
+        },
+        [updatePosition],
+    );
 
     // Close pinned tooltip when clicking outside
     useEffect(() => {
         if (!pinned) return;
         const handleClickOutside = (e) => {
-            if (
-                iconRef.current?.contains(e.target) ||
-                tooltipRef.current?.contains(e.target)
-            ) return;
+            if (iconRef.current?.contains(e.target) || tooltipRef.current?.contains(e.target)) return;
             setPinned(false);
             setShow(false);
         };

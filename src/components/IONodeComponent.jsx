@@ -12,9 +12,8 @@ const IONodeComponent = ({ data, id, isScatterInherited, isGatherNode, propagate
     const [showOutputConfigModal, setShowOutputConfigModal] = useState(false);
 
     const isOutputNode = data.isOutputNode === true || data.label === 'Output';
-    const outputCount = isOutputNode && data.selectedOutputs
-        ? Object.values(data.selectedOutputs).filter(Boolean).length
-        : null;
+    const outputCount =
+        isOutputNode && data.selectedOutputs ? Object.values(data.selectedOutputs).filter(Boolean).length : null;
 
     return (
         <>
@@ -26,7 +25,9 @@ const IONodeComponent = ({ data, id, isScatterInherited, isGatherNode, propagate
                 <div className="node-content">
                     <Handle type="target" position={Position.Left} />
                     <span className="handle-label">IN</span>
-                    <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>{data.displayLabel || data.label}</span>
+                    <span className="node-label" style={{ fontSize: labelFontSize(data.displayLabel || data.label) }}>
+                        {data.displayLabel || data.label}
+                    </span>
                     <span className="handle-label">OUT</span>
                     <Handle type="source" position={Position.Right} />
                 </div>
@@ -35,13 +36,18 @@ const IONodeComponent = ({ data, id, isScatterInherited, isGatherNode, propagate
                         {isScatterInherited && <span className="node-scatter-badge">&#x21BB;</span>}
                         {isGatherNode && <span className="node-gather-badge">G</span>}
                         {data.whenExpression && <span className="node-when-badge">?</span>}
-                        {data.expressions && Object.keys(data.expressions).length > 0 && <span className="node-fx-badge">fx</span>}
+                        {data.expressions && Object.keys(data.expressions).length > 0 && (
+                            <span className="node-fx-badge">fx</span>
+                        )}
                         {data.notes && <span className="node-notes-badge">N</span>}
                     </span>
                     {isOutputNode ? (
                         <span
                             className="node-output-config-btn"
-                            onClick={(e) => { e.stopPropagation(); setShowOutputConfigModal(true); }}
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                setShowOutputConfigModal(true);
+                            }}
                         >
                             {outputCount !== null ? `config (${outputCount})` : 'config'}
                         </span>

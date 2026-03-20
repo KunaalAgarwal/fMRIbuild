@@ -28,7 +28,7 @@
 
 .footer-span {
     font-weight: 500;
-    font-size: clamp(0.25rem, 1.0vw, 1.25rem);
+    font-size: clamp(0.25rem, 1vw, 1.25rem);
 }
 
 .footer-links {

@@ -40,9 +40,7 @@ export function getToolConfigSync(toolName) {
     const cwlPath = annotation.cwlPath;
     const parsed = cwlPath ? getToolDefinitionSync(cwlPath) : null;
 
-    const merged = parsed
-        ? mergeToolData(toolName, parsed, annotation)
-        : annotationOnlyFallback(toolName, annotation);
+    const merged = parsed ? mergeToolData(toolName, parsed, annotation) : annotationOnlyFallback(toolName, annotation);
 
     mergedCache.set(toolName, merged);
     return merged;
@@ -153,7 +151,9 @@ function mergeToolData(toolName, parsed, annotation) {
  * Fallback when CWL is not yet parsed — return minimal config from annotations only.
  */
 function annotationOnlyFallback(toolName, annotation) {
-    console.warn(`[toolRegistry] CWL not loaded for "${toolName}" — using annotation-only fallback with empty inputs/outputs.`);
+    console.warn(
+        `[toolRegistry] CWL not loaded for "${toolName}" — using annotation-only fallback with empty inputs/outputs.`,
+    );
     return {
         id: toolName,
         cwlPath: annotation.cwlPath,

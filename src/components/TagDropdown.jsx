@@ -6,15 +6,7 @@ import '../styles/tagDropdown.css';
  * Custom dropdown for selecting Docker image tags.
  * Matches the project's dark theme UI patterns.
  */
-const TagDropdown = ({
-    value,
-    onChange,
-    onBlur,
-    tags = [],
-    placeholder = 'latest',
-    isValid = true,
-    prefix = ''
-}) => {
+const TagDropdown = ({ value, onChange, onBlur, tags = [], placeholder = 'latest', isValid = true, prefix = '' }) => {
     const [isOpen, setIsOpen] = useState(false);
     const [inputValue, setInputValue] = useState(value);
     const [filteredTags, setFilteredTags] = useState(tags);
@@ -53,7 +45,7 @@ const TagDropdown = ({
             setDropdownPosition({
                 top: rect.bottom + 4,
                 left: rect.left,
-                width: rect.width
+                width: rect.width,
             });
         }
     }, [isOpen]);
@@ -95,13 +87,11 @@ const TagDropdown = ({
         switch (e.key) {
             case 'ArrowDown':
                 e.preventDefault();
-                setHighlightedIndex(prev =>
-                    prev < filteredTags.length - 1 ? prev + 1 : prev
-                );
+                setHighlightedIndex((prev) => (prev < filteredTags.length - 1 ? prev + 1 : prev));
                 break;
             case 'ArrowUp':
                 e.preventDefault();
-                setHighlightedIndex(prev => prev > 0 ? prev - 1 : -1);
+                setHighlightedIndex((prev) => (prev > 0 ? prev - 1 : -1));
                 break;
             case 'Enter':
                 e.preventDefault();
@@ -122,45 +112,44 @@ const TagDropdown = ({
         }
     };
 
-    const dropdownContent = isOpen && filteredTags.length > 0 && createPortal(
-        <div
-            className="tag-dropdown-list"
-            style={{
-                top: dropdownPosition.top,
-                left: dropdownPosition.left,
-                width: dropdownPosition.width
-            }}
-        >
-            {filteredTags.map((tag, index) => (
-                <div
-                    key={tag}
-                    className={`tag-dropdown-item ${
-                        index === highlightedIndex ? 'highlighted' : ''
-                    } ${tag === inputValue ? 'selected' : ''}`}
-                    onMouseEnter={() => setHighlightedIndex(index)}
-                    onMouseDown={(e) => {
-                        e.preventDefault();
-                        handleSelectTag(tag);
-                    }}
-                >
-                    {tag}
-                    {tag === 'latest' && (
-                        <span className="tag-badge">default</span>
-                    )}
-                </div>
-            ))}
-        </div>,
-        document.body
-    );
+    const dropdownContent =
+        isOpen &&
+        filteredTags.length > 0 &&
+        createPortal(
+            <div
+                className="tag-dropdown-list"
+                style={{
+                    top: dropdownPosition.top,
+                    left: dropdownPosition.left,
+                    width: dropdownPosition.width,
+                }}
+            >
+                {filteredTags.map((tag, index) => (
+                    <div
+                        key={tag}
+                        className={`tag-dropdown-item ${
+                            index === highlightedIndex ? 'highlighted' : ''
+                        } ${tag === inputValue ? 'selected' : ''}`}
+                        onMouseEnter={() => setHighlightedIndex(index)}
+                        onMouseDown={(e) => {
+                            e.preventDefault();
+                            handleSelectTag(tag);
+                        }}
+                    >
+                        {tag}
+                        {tag === 'latest' && <span className="tag-badge">default</span>}
+                    </div>
+                ))}
+            </div>,
+            document.body,
+        );
 
     return (
         <div
             ref={wrapperRef}
             className={`tag-dropdown-wrapper ${isOpen ? 'focused' : ''} ${!isValid ? 'invalid' : ''}`}
         >
-            {prefix && (
-                <span className="tag-dropdown-prefix">{prefix}</span>
-            )}
+            {prefix && <span className="tag-dropdown-prefix">{prefix}</span>}
             <input
                 ref={inputRef}
                 type="text"

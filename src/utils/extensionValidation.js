@@ -13,7 +13,7 @@ export const EXTENSION_CATEGORIES = {
     transform_ants: ['.mat', 'Warp.nii.gz', 'InverseWarp.nii.gz', 'GenericAffine.mat'],
     transform_fs: ['.lta', '.xfm', '.dat'],
     text: ['.txt', '.csv', '.1D', '.par', '.tsv'],
-    log: ['.log']
+    log: ['.log'],
 };
 
 // Compatibility matrix: which categories can connect to each other
@@ -27,7 +27,7 @@ const COMPATIBLE_CATEGORIES = {
     transform_ants: ['transform_fsl', 'transform_ants'],
     transform_fs: ['transform_fs'],
     text: ['text'],
-    log: ['log']
+    log: ['log'],
 };
 
 /**
@@ -143,8 +143,8 @@ export function checkExtensionCompatibility(outputExtensions, inputAcceptedExten
     }
 
     // Check for direct extension match
-    const hasDirectMatch = outputExtensions.some(outExt =>
-        inputAcceptedExtensions.some(inExt => {
+    const hasDirectMatch = outputExtensions.some((outExt) =>
+        inputAcceptedExtensions.some((inExt) => {
             // Exact match
             if (outExt === inExt) return true;
             // AFNI wildcard match: +orig.HEAD matches +orig.*
@@ -157,7 +157,7 @@ export function checkExtensionCompatibility(outputExtensions, inputAcceptedExten
                 return inExt.startsWith(prefix);
             }
             return false;
-        })
+        }),
     );
 
     if (hasDirectMatch) {
@@ -174,7 +174,7 @@ export function checkExtensionCompatibility(outputExtensions, inputAcceptedExten
             return {
                 compatible: true,
                 warning: true,
-                reason: `Cross-format: ${outCategory} → ${inCategory}`
+                reason: `Cross-format: ${outCategory} → ${inCategory}`,
             };
         }
     }
@@ -182,6 +182,6 @@ export function checkExtensionCompatibility(outputExtensions, inputAcceptedExten
     // Not compatible - return mismatch info
     return {
         compatible: false,
-        reason: `Extension mismatch: ${outputExtensions.join(', ')} → ${inputAcceptedExtensions.join(', ')}`
+        reason: `Extension mismatch: ${outputExtensions.join(', ')} → ${inputAcceptedExtensions.join(', ')}`,
     };
 }

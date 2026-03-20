@@ -6,29 +6,29 @@
  * @throws {Error} If the graph contains a cycle.
  */
 export function topoSort(nodes, edges) {
-    const incoming = Object.fromEntries(nodes.map(n => [n.id, 0]));
-    const outgoing = new Map(nodes.map(n => [n.id, []]));
+    const incoming = Object.fromEntries(nodes.map((n) => [n.id, 0]));
+    const outgoing = new Map(nodes.map((n) => [n.id, []]));
 
     for (const e of edges) {
         if (incoming[e.target] !== undefined) incoming[e.target]++;
         outgoing.get(e.source)?.push(e.target);
     }
 
-    const queue = nodes.filter(n => incoming[n.id] === 0).map(n => n.id);
+    const queue = nodes.filter((n) => incoming[n.id] === 0).map((n) => n.id);
     const order = [];
     let head = 0;
 
     while (head < queue.length) {
         const id = queue[head++];
         order.push(id);
-        for (const t of (outgoing.get(id) || [])) {
+        for (const t of outgoing.get(id) || []) {
             if (--incoming[t] === 0) queue.push(t);
         }
     }
 
     if (order.length !== nodes.length) {
         const sorted = new Set(order);
-        const cycleNodes = nodes.filter(n => !sorted.has(n.id)).map(n => n.id);
+        const cycleNodes = nodes.filter((n) => !sorted.has(n.id)).map((n) => n.id);
         throw new Error(`Workflow graph has cycles. Involved nodes: ${cycleNodes.join(', ')}`);
     }
 

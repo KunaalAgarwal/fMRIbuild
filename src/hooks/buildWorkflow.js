@@ -12,11 +12,11 @@ import { deserializeNode } from '../utils/workflowDiff.js';
  */
 function expandCustomWorkflowNodes(graph) {
     const { nodes, edges } = graph;
-    const customNodes = nodes.filter(n => n.data?.isCustomWorkflow);
+    const customNodes = nodes.filter((n) => n.data?.isCustomWorkflow);
 
     if (customNodes.length === 0) return graph;
 
-    const customNodeIds = new Set(customNodes.map(n => n.id));
+    const customNodeIds = new Set(customNodes.map((n) => n.id));
     const expandedNodes = [];
     const expandedEdges = [];
 
@@ -41,7 +41,7 @@ function expandCustomWorkflowNodes(graph) {
     }
 
     // 2. Keep non-custom nodes as-is
-    const regularNodes = nodes.filter(n => !customNodeIds.has(n.id));
+    const regularNodes = nodes.filter((n) => !customNodeIds.has(n.id));
 
     // 3. Rewrite external edges that touch custom workflow nodes
     const rewrittenEdges = [];
@@ -234,27 +234,29 @@ function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
             ...Object.keys(effectiveTool.requiredInputs || {}),
             ...Object.keys(effectiveTool.optionalInputs || {}),
         ]);
-        const result = new Set(explicitScatter.filter(name => allInputNames.has(name)));
+        const result = new Set(explicitScatter.filter((name) => allInputNames.has(name)));
         // Also include auto-detected upstream scatter inputs (they're mandatory
         // and locked in the UI — explicit scatter alone may be stale)
         if (ctx.scatteredSteps.has(nodeId)) {
             const nodeArrayInputs = ctx.arrayTypedInputs?.get(nodeId) || new Set();
-            (incomingEdges || []).forEach(edge => {
+            (incomingEdges || []).forEach((edge) => {
                 if (!ctx.scatteredSteps.has(edge.source)) return;
-                (edge.data?.mappings || []).forEach(m => {
+                (edge.data?.mappings || []).forEach((m) => {
                     if (!nodeArrayInputs.has(m.targetInput)) {
                         result.add(m.targetInput);
                     }
                 });
             });
-            ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
-                (edge.data?.mappings || []).forEach(m => {
-                    if (m.sourceOutput === 'bids_directory') return;
-                    if (!nodeArrayInputs.has(m.targetInput)) {
-                        result.add(m.targetInput);
-                    }
+            ctx.bidsEdges
+                .filter((e) => e.target === nodeId)
+                .forEach((edge) => {
+                    (edge.data?.mappings || []).forEach((m) => {
+                        if (m.sourceOutput === 'bids_directory') return;
+                        if (!nodeArrayInputs.has(m.targetInput)) {
+                            result.add(m.targetInput);
+                        }
+                    });
                 });
-            });
         }
         return result;
     }
@@ -266,22 +268,24 @@ function getEffectiveScatterInputs(ctx, nodeId, effectiveTool, incomingEdges) {
     // but NOT on array-typed inputs (those are gather inputs)
     const inputs = [];
     const nodeArrayInputs = ctx.arrayTypedInputs?.get(nodeId) || new Set();
-    (incomingEdges || []).forEach(edge => {
+    (incomingEdges || []).forEach((edge) => {
         if (!ctx.scatteredSteps.has(edge.source)) return;
-        (edge.data?.mappings || []).forEach(m => {
+        (edge.data?.mappings || []).forEach((m) => {
             if (!inputs.includes(m.targetInput) && !nodeArrayInputs.has(m.targetInput)) {
                 inputs.push(m.targetInput);
             }
         });
     });
-    ctx.bidsEdges.filter(e => e.target === nodeId).forEach(edge => {
-        (edge.data?.mappings || []).forEach(m => {
-            if (m.sourceOutput === 'bids_directory') return;
-            if (!inputs.includes(m.targetInput) && !nodeArrayInputs.has(m.targetInput)) {
-                inputs.push(m.targetInput);
-            }
+    ctx.bidsEdges
+        .filter((e) => e.target === nodeId)
+        .forEach((edge) => {
+            (edge.data?.mappings || []).forEach((m) => {
+                if (m.sourceOutput === 'bids_directory') return;
+                if (!inputs.includes(m.targetInput) && !nodeArrayInputs.has(m.targetInput)) {
+                    inputs.push(m.targetInput);
+                }
+            });
         });
-    });
     return new Set(inputs);
 }
 
@@ -317,7 +321,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             } else {
                 const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
                 step.in[inputName] = {
-                    source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                    source: wiredSources.map((ws) => ctx.resolveWiredSource(ws)),
                     linkMerge,
                     valueFrom: expr,
                 };
@@ -328,10 +332,10 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         } else if (wiredSources.length > 1) {
             const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
             const entry = {
-                source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                source: wiredSources.map((ws) => ctx.resolveWiredSource(ws)),
                 linkMerge,
             };
-            if (wiredSources.some(ws => sourceNeedsFlatten(ctx, ws))) {
+            if (wiredSources.some((ws) => sourceNeedsFlatten(ctx, ws))) {
                 entry.valueFrom = '$(self.flat())';
                 ctx.needsInlineJavascript = true;
                 ctx.needsStepInputExpression = true;
@@ -345,7 +349,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             // record types have no direct CWL representation; default to string for workflow inputs
             const inputType = effectiveScatter.has(inputName)
                 ? toArrayType(type)
-                : (toCWLType(type, false, inputDef.enumSymbols) || 'string');
+                : toCWLType(type, false, inputDef.enumSymbols) || 'string';
             ctx.wf.inputs[wfInputName] = { type: inputType };
             step.in[inputName] = wfInputName;
 
@@ -379,7 +383,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             } else if (wiredSources.length > 1) {
                 const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
                 step.in[inputName] = {
-                    source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                    source: wiredSources.map((ws) => ctx.resolveWiredSource(ws)),
                     linkMerge,
                     valueFrom: optExpr,
                 };
@@ -403,7 +407,7 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
             const selectedVariant = getValidUserParam(node.data, inputName);
 
             if (selectedVariant && inputDef.recordVariants) {
-                const variant = inputDef.recordVariants.find(v => v.name === selectedVariant);
+                const variant = inputDef.recordVariants.find((v) => v.name === selectedVariant);
                 if (variant?.fields) {
                     const fieldKey = Object.keys(variant.fields)[0];
                     const fieldType = variant.fields[fieldKey]?.type;
@@ -431,10 +435,10 @@ function buildStepInputBindings(ctx, step, node, effectiveTool, stepId, isSingle
         } else if (wiredSources.length > 1) {
             const linkMerge = node.data.linkMergeOverrides?.[inputName] || 'merge_flattened';
             const entry = {
-                source: wiredSources.map(ws => ctx.resolveWiredSource(ws)),
+                source: wiredSources.map((ws) => ctx.resolveWiredSource(ws)),
                 linkMerge,
             };
-            if (wiredSources.some(ws => sourceNeedsFlatten(ctx, ws))) {
+            if (wiredSources.some((ws) => sourceNeedsFlatten(ctx, ws))) {
                 entry.valueFrom = '$(self.flat())';
                 ctx.needsInlineJavascript = true;
                 ctx.needsStepInputExpression = true;
@@ -512,7 +516,7 @@ function wrapConditional(outputEntry, isConditional, ctx) {
  * Mutates: ctx.wf.outputs, ctx.needsMultipleInputFeature.
  */
 function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
-    terminalNodes.forEach(node => {
+    terminalNodes.forEach((node) => {
         const tool = getToolConfigSync(node.data.label);
         const outputs = tool?.outputs || { output: { type: 'File', label: 'Output' } };
         const stepId = ctx.getStepId(node.id);
@@ -521,13 +525,11 @@ function declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds) {
         const isScattered = scatterConfig !== null;
 
         Object.entries(outputs).forEach(([outputName, outputDef]) => {
-            const wfOutputName = isSingleTerminal
-                ? outputName
-                : `${stepId}_${outputName}`;
+            const wfOutputName = isSingleTerminal ? outputName : `${stepId}_${outputName}`;
 
             const outputEntry = {
                 type: computeOutputCWLType(outputDef, isScattered),
-                outputSource: `${stepId}/${outputName}`
+                outputSource: `${stepId}/${outputName}`,
             };
 
             wrapConditional(outputEntry, conditionalStepIds.has(node.id), ctx);
@@ -586,13 +588,11 @@ function declareSelectedOutputs(ctx, selectedOutputs, conditionalStepIds) {
             const outputDef = outputs[outputName];
             if (!outputDef) continue;
 
-            const wfOutputName = totalSelectedOutputs === 1
-                ? outputName
-                : `${stepId}_${outputName}`;
+            const wfOutputName = totalSelectedOutputs === 1 ? outputName : `${stepId}_${outputName}`;
 
             const outputEntry = {
                 type: computeOutputCWLType(outputDef, isScattered),
-                outputSource: `${stepId}/${outputName}`
+                outputSource: `${stepId}/${outputName}`,
             };
 
             wrapConditional(outputEntry, conditionalStepIds.has(canvasNodeId), ctx);
@@ -613,31 +613,27 @@ export function buildCWLWorkflowObject(graph) {
     // If an Output node exists with selectedOutputs, use those selections
     // instead of the default "all terminal outputs" behavior.
     const outputConfigNode = graph.nodes.find(
-        n => n.data?.isDummy && (n.data?.isOutputNode || n.data?.label === 'Output') && n.data?.selectedOutputs
+        (n) => n.data?.isDummy && (n.data?.isOutputNode || n.data?.label === 'Output') && n.data?.selectedOutputs,
     );
     const outputSelections = outputConfigNode?.data?.selectedOutputs || null;
 
     // Extract BIDS nodes before filtering (they generate workflow-level inputs)
-    const bidsNodes = graph.nodes.filter(n => n.data?.isBIDS && n.data?.bidsSelections);
-    const bidsNodeIds = new Set(bidsNodes.map(n => n.id));
+    const bidsNodes = graph.nodes.filter((n) => n.data?.isBIDS && n.data?.bidsSelections);
+    const bidsNodeIds = new Set(bidsNodes.map((n) => n.id));
 
     // Collect edges FROM BIDS nodes (used for wired-inputs computation)
-    const bidsEdges = graph.edges.filter(e => bidsNodeIds.has(e.source));
+    const bidsEdges = graph.edges.filter((e) => bidsNodeIds.has(e.source));
 
     // Filter out ALL dummy nodes (including BIDS) before processing
-    const dummyNodeIds = new Set(
-        graph.nodes.filter(n => n.data?.isDummy).map(n => n.id)
-    );
+    const dummyNodeIds = new Set(graph.nodes.filter((n) => n.data?.isDummy).map((n) => n.id));
 
     // Get non-dummy nodes and filter edges that connect to/from dummy nodes
-    const nodes = graph.nodes.filter(n => !n.data?.isDummy);
-    const edges = graph.edges.filter(e =>
-        !dummyNodeIds.has(e.source) && !dummyNodeIds.has(e.target)
-    );
+    const nodes = graph.nodes.filter((n) => !n.data?.isDummy);
+    const edges = graph.edges.filter((e) => !dummyNodeIds.has(e.source) && !dummyNodeIds.has(e.target));
 
     /* ---------- Pre-compute lookup maps for O(1) access ---------- */
-    const nodeMap = new Map(nodes.map(n => [n.id, n]));
-    const nodeById = id => nodeMap.get(id);
+    const nodeMap = new Map(nodes.map((n) => [n.id, n]));
+    const nodeById = (id) => nodeMap.get(id);
 
     const inEdgeMap = new Map();
     const outEdgeMap = new Map();
@@ -649,8 +645,8 @@ export function buildCWLWorkflowObject(graph) {
         inEdgeMap.get(edge.target)?.push(edge);
         outEdgeMap.get(edge.source)?.push(edge);
     }
-    const inEdgesOf = id => inEdgeMap.get(id) || [];
-    const outEdgesOf = id => outEdgeMap.get(id) || [];
+    const inEdgesOf = (id) => inEdgeMap.get(id) || [];
+    const outEdgesOf = (id) => outEdgeMap.get(id) || [];
 
     /* ---------- topo-sort (Kahn's algorithm) ---------- */
     const order = topoSort(nodes, edges);
@@ -690,7 +686,11 @@ export function buildCWLWorkflowObject(graph) {
 
     const arrayTypedInputs = buildArrayTypedInputs(nodes);
 
-    const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(scatterNodes, scatterEdges, arrayTypedInputs);
+    const { scatteredNodeIds: scatteredSteps, sourceNodeIds } = computeScatteredNodes(
+        scatterNodes,
+        scatterEdges,
+        arrayTypedInputs,
+    );
 
     /* ---------- build CWL skeleton ---------- */
     const wf = {
@@ -698,21 +698,20 @@ export function buildCWLWorkflowObject(graph) {
         class: 'Workflow',
         inputs: {},
         outputs: {},
-        steps: {}
+        steps: {},
     };
 
     // Generate workflow-level File[] inputs only for BIDS selections consumed by non-dummy nodes
     const consumedBidsSelections = new Set();
     for (const edge of bidsEdges) {
         if (dummyNodeIds.has(edge.target)) continue;
-        for (const m of (edge.data?.mappings || [])) {
+        for (const m of edge.data?.mappings || []) {
             consumedBidsSelections.add(m.sourceOutput);
         }
     }
     for (const selKey of consumedBidsSelections) {
-        wf.inputs[selKey] = selKey === 'bids_directory'
-            ? { type: 'Directory' }
-            : { type: { type: 'array', items: 'File' } };
+        wf.inputs[selKey] =
+            selKey === 'bids_directory' ? { type: 'Directory' } : { type: { type: 'array', items: 'File' } };
     }
 
     const conditionalStepIds = new Set();
@@ -758,8 +757,16 @@ export function buildCWLWorkflowObject(graph) {
 
     /* ---------- shared context for extracted helpers ---------- */
     const ctx = {
-        wf, jobDefaults, cwlDefaultKeys, wiredInputsMap, scatteredSteps, nodeMap,
-        bidsEdges, resolveWiredSource, getStepId, arrayTypedInputs,
+        wf,
+        jobDefaults,
+        cwlDefaultKeys,
+        wiredInputsMap,
+        scatteredSteps,
+        nodeMap,
+        bidsEdges,
+        resolveWiredSource,
+        getStepId,
+        arrayTypedInputs,
         effectiveScatterMap: new Map(), // populated below
         needsMultipleInputFeature: false,
         needsInlineJavascript: false,
@@ -768,13 +775,15 @@ export function buildCWLWorkflowObject(graph) {
 
     /* ---------- helper: resolve tool config with generic fallback ---------- */
     const getEffectiveTool = (label) => {
-        return getToolConfigSync(label) || {
-            id: label.toLowerCase().replace(/[^a-z0-9]/g, '_'),
-            cwlPath: `cwl/generic/${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}.cwl`,
-            requiredInputs: { input: { type: 'File', label: 'Input' } },
-            optionalInputs: {},
-            outputs: { output: { type: 'File', label: 'Output' } }
-        };
+        return (
+            getToolConfigSync(label) || {
+                id: label.toLowerCase().replace(/[^a-z0-9]/g, '_'),
+                cwlPath: `cwl/generic/${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}.cwl`,
+                requiredInputs: { input: { type: 'File', label: 'Input' } },
+                optionalInputs: {},
+                outputs: { output: { type: 'File', label: 'Output' } },
+            }
+        );
     };
 
     /* ---------- pre-compute effective scatter inputs per node ---------- */
@@ -794,16 +803,15 @@ export function buildCWLWorkflowObject(graph) {
         const isSingleNode = nodes.length === 1;
 
         // Step skeleton — use per-node CWL variant if operation order is customized
-        const hasCustomOrder = effectiveTool.orderSensitive
-            && Array.isArray(node.data.operationOrder)
-            && node.data.operationOrder.length > 0;
-        const customCwlPath = hasCustomOrder
-            ? effectiveTool.cwlPath.replace(/\.cwl$/, `_${stepId}.cwl`)
-            : null;
+        const hasCustomOrder =
+            effectiveTool.orderSensitive &&
+            Array.isArray(node.data.operationOrder) &&
+            node.data.operationOrder.length > 0;
+        const customCwlPath = hasCustomOrder ? effectiveTool.cwlPath.replace(/\.cwl$/, `_${stepId}.cwl`) : null;
         const step = {
             run: `../${customCwlPath || effectiveTool.cwlPath}`,
             in: {},
-            out: Object.keys(effectiveTool.outputs)
+            out: Object.keys(effectiveTool.outputs),
         };
         if (hasCustomOrder) {
             positionOverrides.push({
@@ -823,8 +831,8 @@ export function buildCWLWorkflowObject(graph) {
         if (dockerImage) {
             step.hints = {
                 DockerRequirement: {
-                    dockerPull: `${dockerImage}:${dockerVersion}`
-                }
+                    dockerPull: `${dockerImage}:${dockerVersion}`,
+                },
             };
         }
 
@@ -857,14 +865,14 @@ export function buildCWLWorkflowObject(graph) {
         declareSelectedOutputs(ctx, outputSelections, conditionalStepIds);
     } else {
         // Fallback: all outputs from terminal nodes (original behavior)
-        const terminalNodes = nodes.filter(n => outEdgesOf(n.id).length === 0);
+        const terminalNodes = nodes.filter((n) => outEdgesOf(n.id).length === 0);
         declareTerminalOutputs(ctx, terminalNodes, conditionalStepIds);
     }
 
     /* ---------- assemble requirements (after outputs, which may set pickValue/needsMultipleInputFeature) ---------- */
     const requirements = {};
     if (ctx.needsInlineJavascript) requirements.InlineJavascriptRequirement = {};
-    const hasAnyScatter = [...ctx.effectiveScatterMap.values()].some(s => s.size > 0);
+    const hasAnyScatter = [...ctx.effectiveScatterMap.values()].some((s) => s.size > 0);
     if (hasAnyScatter) requirements.ScatterFeatureRequirement = {};
     if (ctx.needsMultipleInputFeature) requirements.MultipleInputFeatureRequirement = {};
     if (ctx.needsStepInputExpression) requirements.StepInputExpressionRequirement = {};
@@ -872,8 +880,6 @@ export function buildCWLWorkflowObject(graph) {
 
     return { wf, jobDefaults, cwlDefaultKeys, positionOverrides };
 }
-
-
 
 /**
  * Generate a job input template from a CWL workflow object.
@@ -900,15 +906,22 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
 
         // Primitive types
         switch (cwlType) {
-            case 'File':      return null;
-            case 'Directory':  return null;
-            case 'string':     return 'a_string';
+            case 'File':
+                return null;
+            case 'Directory':
+                return null;
+            case 'string':
+                return 'a_string';
             case 'int':
-            case 'long':       return 0;
+            case 'long':
+                return 0;
             case 'float':
-            case 'double':     return 0.1;
-            case 'boolean':    return false;
-            default:           return null;
+            case 'double':
+                return 0.1;
+            case 'boolean':
+                return false;
+            default:
+                return null;
         }
     };
 
@@ -916,7 +929,7 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
     const extractBaseType = (cwlType) => {
         if (cwlType == null) return { base: null, isArray: false };
         if (Array.isArray(cwlType)) {
-            const nonNull = cwlType.find(t => t !== 'null');
+            const nonNull = cwlType.find((t) => t !== 'null');
             return nonNull ? extractBaseType(nonNull) : { base: null, isArray: false };
         }
         if (typeof cwlType === 'object' && cwlType.type === 'array') {
@@ -932,12 +945,14 @@ export function buildJobTemplate(wf, jobDefaults = {}, cwlDefaultKeys = new Set(
         if (value === null || value === undefined) return value;
         const { base } = extractBaseType(cwlType);
         switch (base) {
-            case 'int': case 'long':
+            case 'int':
+            case 'long':
                 return typeof value === 'number' ? value : parseInt(value, 10);
-            case 'float': case 'double':
+            case 'float':
+            case 'double':
                 return typeof value === 'number' ? value : parseFloat(value);
             case 'boolean':
-                return typeof value === 'boolean' ? value : (value === 'true' || value === true);
+                return typeof value === 'boolean' ? value : value === 'true' || value === true;
             default:
                 return value;
         }

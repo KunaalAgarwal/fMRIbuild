@@ -32,15 +32,15 @@ const EdgeMappingModal = ({
         if (show) {
             if (existingMappings.length > 0) {
                 // Migrate old dummy node mapping names ('output'/'input' → 'data')
-                const migratedMappings = existingMappings.map(m => ({
-                    sourceOutput: (sourceIO.isDummy && m.sourceOutput === 'output') ? 'data' : m.sourceOutput,
-                    targetInput: (targetIO.isDummy && m.targetInput === 'input') ? 'data' : m.targetInput,
+                const migratedMappings = existingMappings.map((m) => ({
+                    sourceOutput: sourceIO.isDummy && m.sourceOutput === 'output' ? 'data' : m.sourceOutput,
+                    targetInput: targetIO.isDummy && m.targetInput === 'input' ? 'data' : m.targetInput,
                 }));
                 // Filter out stale mappings referencing removed inputs/outputs
-                const validOutputNames = new Set(sourceIO.outputs.map(o => o.name));
-                const validInputNames = new Set(targetIO.inputs.map(i => i.name));
+                const validOutputNames = new Set(sourceIO.outputs.map((o) => o.name));
+                const validInputNames = new Set(targetIO.inputs.map((i) => i.name));
                 const validMappings = migratedMappings.filter(
-                    m => validOutputNames.has(m.sourceOutput) && validInputNames.has(m.targetInput)
+                    (m) => validOutputNames.has(m.sourceOutput) && validInputNames.has(m.targetInput),
                 );
                 setMappings(validMappings);
             } else {
@@ -49,7 +49,7 @@ const EdgeMappingModal = ({
                 if (sourceIO.outputs.length > 0 && targetIO.inputs.length > 0) {
                     defaultMapping.push({
                         sourceOutput: sourceIO.outputs[0].name,
-                        targetInput: targetIO.inputs[0].name
+                        targetInput: targetIO.inputs[0].name,
                     });
                 }
                 setMappings(defaultMapping);
@@ -87,76 +87,82 @@ const EdgeMappingModal = ({
         const outputsScrollRect = outputsScrollRef.current?.getBoundingClientRect();
         const inputsScrollRect = inputsScrollRef.current?.getBoundingClientRect();
 
-        const newPositions = mappings.map(mapping => {
-            const outputEl = outputRefs.current[mapping.sourceOutput];
-            const inputEl = inputRefs.current[mapping.targetInput];
+        const newPositions = mappings
+            .map((mapping) => {
+                const outputEl = outputRefs.current[mapping.sourceOutput];
+                const inputEl = inputRefs.current[mapping.targetInput];
 
-            if (!outputEl || !inputEl) return null;
+                if (!outputEl || !inputEl) return null;
 
-            const outputRect = outputEl.getBoundingClientRect();
-            const inputRect = inputEl.getBoundingClientRect();
+                const outputRect = outputEl.getBoundingClientRect();
+                const inputRect = inputEl.getBoundingClientRect();
 
-            // Check if endpoints are within visible scroll area
-            const outputVisible = outputsScrollRect &&
-                outputRect.bottom > outputsScrollRect.top &&
-                outputRect.top < outputsScrollRect.bottom;
-            const inputVisible = inputsScrollRect &&
-                inputRect.bottom > inputsScrollRect.top &&
-                inputRect.top < inputsScrollRect.bottom;
+                // Check if endpoints are within visible scroll area
+                const outputVisible =
+                    outputsScrollRect &&
+                    outputRect.bottom > outputsScrollRect.top &&
+                    outputRect.top < outputsScrollRect.bottom;
+                const inputVisible =
+                    inputsScrollRect &&
+                    inputRect.bottom > inputsScrollRect.top &&
+                    inputRect.top < inputsScrollRect.bottom;
 
-            // Both off-screen → hide entirely
-            if (!outputVisible && !inputVisible) return null;
+                // Both off-screen → hide entirely
+                if (!outputVisible && !inputVisible) return null;
 
-            const x1 = outputRect.right - containerRect.left;
-            const y1 = outputRect.top + outputRect.height / 2 - containerRect.top;
-            const x2 = inputRect.left - containerRect.left;
-            const y2 = inputRect.top + inputRect.height / 2 - containerRect.top;
+                const x1 = outputRect.right - containerRect.left;
+                const y1 = outputRect.top + outputRect.height / 2 - containerRect.top;
+                const x2 = inputRect.left - containerRect.left;
+                const y2 = inputRect.top + inputRect.height / 2 - containerRect.top;
 
-            // Gap midpoint X between the two scroll containers
-            const gapMidX = outputsScrollRect && inputsScrollRect
-                ? (outputsScrollRect.right - containerRect.left + inputsScrollRect.left - containerRect.left) / 2
-                : (x1 + x2) / 2;
+                // Gap midpoint X between the two scroll containers
+                const gapMidX =
+                    outputsScrollRect && inputsScrollRect
+                        ? (outputsScrollRect.right - containerRect.left + inputsScrollRect.left - containerRect.left) /
+                          2
+                        : (x1 + x2) / 2;
 
-            // Use parameter names for off-screen text
-            const outputLabel = mapping.sourceOutput;
-            const inputLabel = mapping.targetInput;
+                // Use parameter names for off-screen text
+                const outputLabel = mapping.sourceOutput;
+                const inputLabel = mapping.targetInput;
 
-            // Gap boundaries (column edges relative to container)
-            const gapLeftX = outputsScrollRect
-                ? outputsScrollRect.right - containerRect.left
-                : x1;
-            const gapRightX = inputsScrollRect
-                ? inputsScrollRect.left - containerRect.left
-                : x2;
+                // Gap boundaries (column edges relative to container)
+                const gapLeftX = outputsScrollRect ? outputsScrollRect.right - containerRect.left : x1;
+                const gapRightX = inputsScrollRect ? inputsScrollRect.left - containerRect.left : x2;
 
-            return {
-                x1, y1, x2, y2,
-                key: `${mapping.sourceOutput}-${mapping.targetInput}`,
-                outputOffScreen: !outputVisible,
-                inputOffScreen: !inputVisible,
-                outputLabel,
-                inputLabel,
-                gapMidX,
-                gapLeftX,
-                gapRightX,
-                outputClampY: !outputVisible
-                    ? (outputRect.top < outputsScrollRect.top
-                        ? outputsScrollRect.top - containerRect.top + 20
-                        : outputsScrollRect.bottom - containerRect.top - 20)
-                    : y1,
-                inputClampY: !inputVisible
-                    ? (inputRect.top < inputsScrollRect.top
-                        ? inputsScrollRect.top - containerRect.top + 20
-                        : inputsScrollRect.bottom - containerRect.top - 20)
-                    : y2,
-            };
-        }).filter(Boolean);
+                return {
+                    x1,
+                    y1,
+                    x2,
+                    y2,
+                    key: `${mapping.sourceOutput}-${mapping.targetInput}`,
+                    outputOffScreen: !outputVisible,
+                    inputOffScreen: !inputVisible,
+                    outputLabel,
+                    inputLabel,
+                    gapMidX,
+                    gapLeftX,
+                    gapRightX,
+                    outputClampY: !outputVisible
+                        ? outputRect.top < outputsScrollRect.top
+                            ? outputsScrollRect.top - containerRect.top + 20
+                            : outputsScrollRect.bottom - containerRect.top - 20
+                        : y1,
+                    inputClampY: !inputVisible
+                        ? inputRect.top < inputsScrollRect.top
+                            ? inputsScrollRect.top - containerRect.top + 20
+                            : inputsScrollRect.bottom - containerRect.top - 20
+                        : y2,
+                };
+            })
+            .filter(Boolean);
 
         // Space apart overlapping off-screen labels (min 16px gap)
         const minGap = 16;
         const spaceApart = (positions, key) => {
-            const offScreen = positions.filter(p => p[key] !== undefined &&
-                (key === 'outputClampY' ? p.outputOffScreen : p.inputOffScreen));
+            const offScreen = positions.filter(
+                (p) => p[key] !== undefined && (key === 'outputClampY' ? p.outputOffScreen : p.inputOffScreen),
+            );
             if (offScreen.length < 2) return;
             offScreen.sort((a, b) => a[key] - b[key]);
             for (let i = 1; i < offScreen.length; i++) {
@@ -179,24 +185,24 @@ const EdgeMappingModal = ({
     };
 
     const handleOutputClick = (outputName) => {
-        setSelectedOutput(prev => prev === outputName ? null : outputName);
+        setSelectedOutput((prev) => (prev === outputName ? null : outputName));
     };
 
     const handleInputClick = (inputName) => {
         if (selectedOutput) {
             // Check if this exact mapping exists (to toggle off)
             const existingExactMatch = mappings.findIndex(
-                m => m.sourceOutput === selectedOutput && m.targetInput === inputName
+                (m) => m.sourceOutput === selectedOutput && m.targetInput === inputName,
             );
 
             if (existingExactMatch >= 0) {
                 // Remove existing mapping (toggle off)
-                setMappings(prev => prev.filter((_, i) => i !== existingExactMatch));
+                setMappings((prev) => prev.filter((_, i) => i !== existingExactMatch));
             } else {
                 // Enforce one-to-one: remove any existing mapping TO this input, then add new one
-                setMappings(prev => [
-                    ...prev.filter(m => m.targetInput !== inputName),
-                    { sourceOutput: selectedOutput, targetInput: inputName }
+                setMappings((prev) => [
+                    ...prev.filter((m) => m.targetInput !== inputName),
+                    { sourceOutput: selectedOutput, targetInput: inputName },
                 ]);
             }
             setSelectedOutput(null);
@@ -205,9 +211,9 @@ const EdgeMappingModal = ({
 
     const handleLineClick = (mapping) => {
         // Remove mapping when clicking on line
-        setMappings(prev => prev.filter(
-            m => !(m.sourceOutput === mapping.sourceOutput && m.targetInput === mapping.targetInput)
-        ));
+        setMappings((prev) =>
+            prev.filter((m) => !(m.sourceOutput === mapping.sourceOutput && m.targetInput === mapping.targetInput)),
+        );
     };
 
     const handleSave = () => {
@@ -229,15 +235,15 @@ const EdgeMappingModal = ({
     };
 
     // Pre-computed O(1) lookup Maps for mappings
-    const mappingsByOutput = useMemo(() => new Map(mappings.map(m => [m.sourceOutput, m])), [mappings]);
-    const mappingsByInput = useMemo(() => new Map(mappings.map(m => [m.targetInput, m])), [mappings]);
+    const mappingsByOutput = useMemo(() => new Map(mappings.map((m) => [m.sourceOutput, m])), [mappings]);
+    const mappingsByInput = useMemo(() => new Map(mappings.map((m) => [m.targetInput, m])), [mappings]);
 
     const isOutputMapped = (outputName) => mappingsByOutput.has(outputName);
     const isInputMapped = (inputName) => mappingsByInput.has(inputName);
 
     // O(1) lookup maps for outputs and inputs
-    const outputByName = useMemo(() => new Map((sourceIO?.outputs || []).map(o => [o.name, o])), [sourceIO]);
-    const inputByName = useMemo(() => new Map((targetIO?.inputs || []).map(i => [i.name, i])), [targetIO]);
+    const outputByName = useMemo(() => new Map((sourceIO?.outputs || []).map((o) => [o.name, o])), [sourceIO]);
+    const inputByName = useMemo(() => new Map((targetIO?.inputs || []).map((i) => [i.name, i])), [targetIO]);
 
     // Check type compatibility for a specific output-input pair
     const getMappingCompatibility = (outputName, inputName) => {
@@ -250,15 +256,19 @@ const EdgeMappingModal = ({
             input?.type,
             output?.extensions,
             input?.acceptedExtensions,
-            effectiveScattered
+            effectiveScattered,
         );
     };
 
     // Check if any current mappings have type issues
-    const hasIncompatibleMappings = useMemo(() => mappings.some(m => {
-        const { compatible } = getMappingCompatibility(m.sourceOutput, m.targetInput);
-        return !compatible;
-    }), [mappings, outputByName, inputByName, sourceIsScattered]);
+    const hasIncompatibleMappings = useMemo(
+        () =>
+            mappings.some((m) => {
+                const { compatible } = getMappingCompatibility(m.sourceOutput, m.targetInput);
+                return !compatible;
+            }),
+        [mappings, outputByName, inputByName, sourceIsScattered],
+    );
 
     // Collect unique scatter/gather notes from current mappings for banner display
     const { inheritNotes, gatherNotes } = useMemo(() => {
@@ -275,13 +285,7 @@ const EdgeMappingModal = ({
     if (!sourceNode || !targetNode) return null;
 
     return (
-        <Modal
-            show={show}
-            onHide={handleCancel}
-            centered
-            size="xl"
-            className="edge-mapping-modal"
-        >
+        <Modal show={show} onHide={handleCancel} centered size="xl" className="edge-mapping-modal">
             <Modal.Header>
                 <Modal.Title>
                     Connect: {sourceNode.label} → {targetNode.label}
@@ -318,19 +322,21 @@ const EdgeMappingModal = ({
                     {/* Outputs Column */}
                     <div className="io-column outputs-column">
                         <div className="column-header">
-                            {sourceIO.isDummy ? 'Provides' : 'Outputs'} ({sourceNode.label}{sourceIsScattered ? ' - scattered' : ''})
+                            {sourceIO.isDummy ? 'Provides' : 'Outputs'} ({sourceNode.label}
+                            {sourceIsScattered ? ' - scattered' : ''})
                             {sourceIO.isGeneric && <span className="generic-badge">generic</span>}
                         </div>
                         <div className="io-items-scroll scrollbar-thin" ref={outputsScrollRef}>
                             {sourceIO.outputs.map((output, idx) => {
                                 // Check if this output is mapped to an incompatible input
-                                const mapping = mappings.find(m => m.sourceOutput === output.name);
+                                const mapping = mappings.find((m) => m.sourceOutput === output.name);
                                 const compatibility = mapping
                                     ? getMappingCompatibility(output.name, mapping.targetInput)
                                     : { compatible: true };
 
                                 // Show group header when group changes (custom workflow nodes)
-                                const showGroupHeader = sourceIO.isCustomWorkflow &&
+                                const showGroupHeader =
+                                    sourceIO.isCustomWorkflow &&
                                     (idx === 0 || output.group !== sourceIO.outputs[idx - 1]?.group);
 
                                 return (
@@ -347,7 +353,7 @@ const EdgeMappingModal = ({
                                             </div>
                                         )}
                                         <div
-                                            ref={el => outputRefs.current[output.name] = el}
+                                            ref={(el) => (outputRefs.current[output.name] = el)}
                                             className={`io-item output-item ${
                                                 selectedOutput === output.name ? 'selected' : ''
                                             } ${isOutputMapped(output.name) ? 'mapped' : ''} ${
@@ -357,7 +363,18 @@ const EdgeMappingModal = ({
                                         >
                                             <div className="io-item-main">
                                                 <span className="io-name">{output.label}</span>
-                                                <span className="io-type" title={output.type + (output.extensions?.length ? ' (' + output.extensions.join(', ') + ')' : '') + (output.enumSymbols?.length ? ' (' + output.enumSymbols.join(', ') + ')' : '')}>
+                                                <span
+                                                    className="io-type"
+                                                    title={
+                                                        output.type +
+                                                        (output.extensions?.length
+                                                            ? ' (' + output.extensions.join(', ') + ')'
+                                                            : '') +
+                                                        (output.enumSymbols?.length
+                                                            ? ' (' + output.enumSymbols.join(', ') + ')'
+                                                            : '')
+                                                    }
+                                                >
                                                     {formatTypeHint(output.type, output.extensions)}
                                                 </span>
                                             </div>
@@ -365,7 +382,9 @@ const EdgeMappingModal = ({
                                                 <div className="io-enum-values">{output.description}</div>
                                             )}
                                             {output.enumSymbols?.length > 0 && (
-                                                <div className="io-enum-values">{output.enumSymbols.map(s => `'${s}'`).join(', ')}</div>
+                                                <div className="io-enum-values">
+                                                    {output.enumSymbols.map((s) => `'${s}'`).join(', ')}
+                                                </div>
                                             )}
                                         </div>
                                     </React.Fragment>
@@ -376,10 +395,8 @@ const EdgeMappingModal = ({
 
                     {/* Connection Lines SVG */}
                     <svg className="connection-lines">
-                        {linePositions.map(pos => {
-                            const mapping = mappings.find(
-                                m => `${m.sourceOutput}-${m.targetInput}` === pos.key
-                            );
+                        {linePositions.map((pos) => {
+                            const mapping = mappings.find((m) => `${m.sourceOutput}-${m.targetInput}` === pos.key);
                             const compatibility = mapping
                                 ? getMappingCompatibility(mapping.sourceOutput, mapping.targetInput)
                                 : { compatible: true };
@@ -410,27 +427,46 @@ const EdgeMappingModal = ({
                                 const foHeight = 22;
 
                                 return (
-                                    <g key={pos.key} className="offscreen-group" onClick={() => {
-                                        if (mapping) handleLineClick(mapping);
-                                    }}>
+                                    <g
+                                        key={pos.key}
+                                        className="offscreen-group"
+                                        onClick={() => {
+                                            if (mapping) handleLineClick(mapping);
+                                        }}
+                                    >
                                         <line
-                                            x1={visibleX} y1={visibleY}
-                                            x2={lineEndX} y2={clampY}
+                                            x1={visibleX}
+                                            y1={visibleY}
+                                            x2={lineEndX}
+                                            y2={clampY}
                                             className={`connection-line-offscreen ${isWarning ? 'warning-line-offscreen' : ''}`}
                                         />
                                         <line
-                                            x1={visibleX} y1={visibleY}
-                                            x2={lineEndX} y2={clampY}
+                                            x1={visibleX}
+                                            y1={visibleY}
+                                            x2={lineEndX}
+                                            y2={clampY}
                                             className="connection-line-hitarea"
                                         />
-                                        <circle cx={visibleX} cy={visibleY} r="3.5"
+                                        <circle
+                                            cx={visibleX}
+                                            cy={visibleY}
+                                            r="3.5"
                                             className={`connection-dot ${isWarning ? 'warning-dot' : ''}`}
                                         />
-                                        <circle cx={lineEndX} cy={clampY} r="2.5"
+                                        <circle
+                                            cx={lineEndX}
+                                            cy={clampY}
+                                            r="2.5"
                                             className={`connection-dot-junction ${isWarning ? 'warning-dot' : ''}`}
                                         />
                                         {foWidth > 0 && (
-                                            <foreignObject x={foX} y={clampY - foHeight / 2} width={foWidth} height={foHeight}>
+                                            <foreignObject
+                                                x={foX}
+                                                y={clampY - foHeight / 2}
+                                                width={foWidth}
+                                                height={foHeight}
+                                            >
                                                 <div
                                                     className={`offscreen-label ${isWarning ? 'offscreen-label-warning' : ''}`}
                                                     style={{ textAlign }}
@@ -447,21 +483,27 @@ const EdgeMappingModal = ({
                             const d = buildCurvePath(pos.x1, pos.y1, pos.x2, pos.y2);
 
                             return (
-                                <g key={pos.key} onClick={() => {
-                                    if (mapping) handleLineClick(mapping);
-                                }}>
+                                <g
+                                    key={pos.key}
+                                    onClick={() => {
+                                        if (mapping) handleLineClick(mapping);
+                                    }}
+                                >
                                     <path
                                         d={d}
                                         className={`connection-line ${!compatibility.compatible ? 'warning-line' : ''}`}
                                     />
-                                    <path
-                                        d={d}
-                                        className="connection-line-hitarea"
-                                    />
-                                    <circle cx={pos.x1} cy={pos.y1} r="3.5"
+                                    <path d={d} className="connection-line-hitarea" />
+                                    <circle
+                                        cx={pos.x1}
+                                        cy={pos.y1}
+                                        r="3.5"
                                         className={`connection-dot ${!compatibility.compatible ? 'warning-dot' : ''}`}
                                     />
-                                    <circle cx={pos.x2} cy={pos.y2} r="3.5"
+                                    <circle
+                                        cx={pos.x2}
+                                        cy={pos.y2}
+                                        r="3.5"
                                         className={`connection-dot ${!compatibility.compatible ? 'warning-dot' : ''}`}
                                     />
                                 </g>
@@ -478,7 +520,7 @@ const EdgeMappingModal = ({
                         <div className="io-items-scroll scrollbar-thin" ref={inputsScrollRef}>
                             {targetIO.inputs.map((input, idx, arr) => {
                                 // Check if this input is mapped from an incompatible output
-                                const mapping = mappings.find(m => m.targetInput === input.name);
+                                const mapping = mappings.find((m) => m.targetInput === input.name);
                                 const compatibility = mapping
                                     ? getMappingCompatibility(mapping.sourceOutput, input.name)
                                     : { compatible: true };
@@ -489,14 +531,15 @@ const EdgeMappingModal = ({
                                     : { compatible: true };
 
                                 // Show group header when group changes (custom workflow nodes)
-                                const showGroupHeader = targetIO.isCustomWorkflow &&
-                                    (idx === 0 || input.group !== arr[idx - 1]?.group);
+                                const showGroupHeader =
+                                    targetIO.isCustomWorkflow && (idx === 0 || input.group !== arr[idx - 1]?.group);
 
                                 // Show separator between required and optional inputs
                                 // Only within the same group (or when no groups)
-                                const sameGroup = !targetIO.isCustomWorkflow || (idx > 0 && input.group === arr[idx - 1]?.group);
-                                const showOptionalSeparator = sameGroup && !input.required
-                                    && idx > 0 && arr[idx - 1]?.required;
+                                const sameGroup =
+                                    !targetIO.isCustomWorkflow || (idx > 0 && input.group === arr[idx - 1]?.group);
+                                const showOptionalSeparator =
+                                    sameGroup && !input.required && idx > 0 && arr[idx - 1]?.required;
 
                                 return (
                                     <React.Fragment key={input.name}>
@@ -511,22 +554,33 @@ const EdgeMappingModal = ({
                                                 )}
                                             </div>
                                         )}
-                                        {showOptionalSeparator && (
-                                            <div className="io-section-separator">optional</div>
-                                        )}
+                                        {showOptionalSeparator && <div className="io-section-separator">optional</div>}
                                         <div
-                                            ref={el => inputRefs.current[input.name] = el}
+                                            ref={(el) => (inputRefs.current[input.name] = el)}
                                             className={`io-item input-item ${
                                                 isInputMapped(input.name) ? 'mapped' : ''
                                             } ${selectedOutput ? 'clickable' : ''} ${
                                                 !compatibility.compatible ? 'mismatch-warning' : ''
                                             } ${selectedOutput && !selectedCompatibility.compatible ? 'mismatch-warning-preview' : ''}`}
                                             onClick={() => handleInputClick(input.name)}
-                                            title={!selectedCompatibility.compatible ? selectedCompatibility.reason : ''}
+                                            title={
+                                                !selectedCompatibility.compatible ? selectedCompatibility.reason : ''
+                                            }
                                         >
                                             <div className="io-item-main">
                                                 <span className="io-name">{input.name}</span>
-                                                <span className="io-type" title={input.type + (input.acceptedExtensions?.length ? ' (' + input.acceptedExtensions.join(', ') + ')' : '') + (input.enumSymbols?.length ? ' (' + input.enumSymbols.join(', ') + ')' : '')}>
+                                                <span
+                                                    className="io-type"
+                                                    title={
+                                                        input.type +
+                                                        (input.acceptedExtensions?.length
+                                                            ? ' (' + input.acceptedExtensions.join(', ') + ')'
+                                                            : '') +
+                                                        (input.enumSymbols?.length
+                                                            ? ' (' + input.enumSymbols.join(', ') + ')'
+                                                            : '')
+                                                    }
+                                                >
                                                     {formatTypeHint(input.type, input.acceptedExtensions)}
                                                 </span>
                                             </div>
@@ -534,7 +588,9 @@ const EdgeMappingModal = ({
                                                 <div className="io-label">{input.label}</div>
                                             )}
                                             {input.enumSymbols?.length > 0 && (
-                                                <div className="io-enum-values">{input.enumSymbols.map(s => `'${s}'`).join(', ')}</div>
+                                                <div className="io-enum-values">
+                                                    {input.enumSymbols.map((s) => `'${s}'`).join(', ')}
+                                                </div>
                                             )}
                                         </div>
                                     </React.Fragment>
@@ -545,8 +601,7 @@ const EdgeMappingModal = ({
                 </div>
 
                 <div className="mapping-instructions">
-                    Click an output, then click an input to create a connection.
-                    Click on a line to remove it.
+                    Click an output, then click an input to create a connection. Click on a line to remove it.
                 </div>
             </Modal.Body>
             <Modal.Footer>

@@ -668,6 +668,8 @@ function WorkflowCanvas({
                                 }}
                             >
                                 <MiniMap
+                                    pannable
+                                    zoomable
                                     nodeColor="var(--color-accent)"
                                     maskColor="var(--minimap-mask)"
                                     style={{ backgroundColor: 'var(--minimap-bg)' }}

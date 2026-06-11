@@ -145,11 +145,16 @@
     margin: 0;
 }
 
+/* VS Code–style indent guides: a thin vertical line marks each level of the
+   modality → library → category → tool hierarchy. The border sits at the left
+   edge of the indent so children visibly hang off their parent. */
 .modality-content {
     display: flex;
     flex-direction: column;
     gap: 1px;
     padding: 2px 0 4px 14px;
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 7px;
 }
 
 .library-tools {
@@ -157,6 +162,8 @@
     flex-direction: column;
     gap: 0;
     padding: 2px 0 4px 14px;
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 7px;
 }
 
 .subsection {
@@ -188,6 +195,8 @@
    Workflows (whose subsection-tools have no .subsection parent). */
 .subsection > .subsection-tools {
     padding-left: 12px;
+    border-left: 1px solid var(--border-subtle);
+    margin-left: 6px;
 }
 
 /* ============================================================

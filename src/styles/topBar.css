@@ -81,6 +81,21 @@
     box-shadow: none;
 }
 
+/* Icon-only theme toggle — square hit target, centered glyph. Sits at the
+   leading edge of the right-side action cluster. */
+.top-bar-theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 4px;
+    margin-right: 2px;
+    color: var(--text-muted);
+}
+
+.top-bar-theme-toggle:hover {
+    color: var(--text-primary);
+}
+
 /* External-link anchors (Docs / GitHub / Issues) — strip every hover affordance
    except the text getting brighter (--text-muted → --text-primary, inherited
    from .top-bar-btn:hover above). No gray fill, no scale, no shadow. */

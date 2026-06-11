@@ -192,6 +192,108 @@
     --minimap-mask: rgba(0, 0, 0, 0.65);
 }
 
+/* ============================================================
+   Light theme — overrides only the color/surface tokens; typography,
+   spacing, radius and transitions are theme-agnostic and stay in :root.
+   Activated by `data-theme="light"` on <html>, set by the no-flash inline
+   script in index.html and toggled by the TopBar theme button. Every
+   component already reads these via var(), so no per-component CSS changes
+   are needed. (VS Code "Light Modern" palette.)
+   ============================================================ */
+:root[data-theme='light'] {
+    /* ── Background: Core surfaces ───────────────────────── */
+    --bg-base: #ffffff;
+    --bg-surface: #f3f3f3;
+    --bg-elevated: #ffffff;
+    --bg-overlay: #ffffff;
+    --bg-inset: #f8f8f8;
+    --bg-widget: #f3f3f3;
+
+    /* ── Background: Interactive ─────────────────────────── */
+    --bg-interactive: #e8e8e8;
+    --bg-hover: #e4e4e4;
+    --bg-active: #d6d6d6;
+    --bg-selected: #cfe3ff;
+
+    /* ── Background: IDE regions ─────────────────────────── */
+    --bg-topbar: #f8f8f8;
+    --bg-tabbar: #ececec;
+    --bg-tab-active: #ffffff;
+    --bg-tab-inactive: #ececec;
+    --bg-sidebar: #f3f3f3;
+    --bg-canvas: #f8f8f8;
+    --bg-preview: #ffffff;
+    --bg-utilitybar: #f3f3f3;
+    --bg-statusbar: #0078d4;
+    --bg-footer: #f3f3f3;
+
+    /* ── Background: Inputs & overlays ───────────────────── */
+    --bg-input: #ffffff;
+    --bg-input-hover: #f0f0f0;
+    --bg-scrim: rgba(0, 0, 0, 0.3);
+    --bg-tooltip: #ffffff;
+    --bg-dropdown: #ffffff;
+
+    /* ── Text: Hierarchy ─────────────────────────────────── */
+    --text-primary: #1f1f1f;
+    --text-secondary: #3b3b3b;
+    --text-muted: #6e6e6e;
+    --text-disabled: #a6a6a6;
+    --text-placeholder: #8a8a8a;
+    --text-inverse: #ffffff;
+    --text-on-accent: #ffffff;
+    --text-on-node: #333333;
+
+    /* ── Text: Links ─────────────────────────────────────── */
+    --text-link: #006ab1;
+    --text-link-hover: #0078d4;
+
+    /* ── Text: IDE regions ───────────────────────────────── */
+    --text-tab-active: #1f1f1f;
+    --text-tab-inactive: #6e6e6e;
+    --text-sidebar: #3b3b3b;
+    --text-sidebar-heading: #1f1f1f;
+    --text-statusbar: #ffffff;
+
+    /* ── Accent & semantic — keep hues; darken the pastel
+         "-text" variants that were tuned for a dark surface ─ */
+    --color-accent-muted: rgba(0, 120, 212, 0.12);
+    --color-success-text: #2e7d32;
+    --color-danger-text: #c0392b;
+
+    /* ── Borders — black alphas instead of white ─────────── */
+    --border-subtle: rgba(0, 0, 0, 0.08);
+    --border-default: rgba(0, 0, 0, 0.12);
+    --border-medium: rgba(0, 0, 0, 0.18);
+    --border-strong: rgba(0, 0, 0, 0.28);
+    --border-input: rgba(0, 0, 0, 0.15);
+    --border-input-hover: rgba(0, 0, 0, 0.3);
+    --border-panel: rgba(0, 0, 0, 0.1);
+    --border-resize: rgba(0, 0, 0, 0.08);
+
+    /* ── Shadows — softer on a light surface ─────────────── */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.18);
+    --shadow-modal: 0 3px 10px rgba(0, 0, 0, 0.15);
+    --shadow-dropdown: 0 4px 16px rgba(0, 0, 0, 0.15);
+    --shadow-inset-sm: inset 0 1px 3px rgba(0, 0, 0, 0.08);
+
+    /* ── Scrollbar ───────────────────────────────────────── */
+    --scrollbar-thumb: rgba(0, 0, 0, 0.2);
+    --scrollbar-thumb-hover: rgba(0, 0, 0, 0.35);
+
+    /* ── Minimap ─────────────────────────────────────────── */
+    --minimap-bg: #ececec;
+    --minimap-mask: rgba(0, 0, 0, 0.1);
+}
+
+/* Bootstrap's .btn-close ships a black icon — correct on a light modal, so
+   undo the dark-theme invert filter below when in light mode. */
+:root[data-theme='light'] .modal-content .btn-close {
+    filter: none;
+}
+
 /* ============================================
    Dark-theme overrides for Bootstrap modal close button.
    Bootstrap renders .btn-close with a hardcoded black SVG icon; we filter to

@@ -252,6 +252,42 @@
     position: relative;
 }
 
+/* Grouped mode: the first tab of each workflow cluster gets a gap + a brighter
+   left edge so groups read as distinct without boxing them in. No effect in
+   flat mode, where no tab carries this class. */
+.ide-tab--group-start {
+    margin-left: 10px;
+    border-left: 2px solid var(--border-medium);
+}
+
+/* Group-by-workflow toggle — sits between the pinned Manager tab and the
+   ordered tabs. Square icon button; tinted when active. */
+.ide-tab-group-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    height: 100%;
+    padding: 0 8px;
+    background: transparent;
+    border: none;
+    border-right: 1px solid var(--border-default);
+    color: var(--text-muted);
+    cursor: pointer;
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.ide-tab-group-toggle:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+}
+
+.ide-tab-group-toggle.active {
+    color: var(--color-accent);
+}
+
 .ide-tab:hover {
     background-color: var(--bg-hover);
     color: var(--text-primary);

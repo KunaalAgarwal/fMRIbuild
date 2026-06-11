@@ -86,6 +86,66 @@ function IDELayout({
     // 2px drop indicator should render.
     const [dropTarget, setDropTarget] = useState(null);
 
+    // Horizontal scrolling for the tab strip — vertical wheel is mapped onto
+    // horizontal scroll, and edge buttons appear when the tabs overflow. This
+    // operates on the scroll container itself, so it is independent of how the
+    // tabs are ordered and composes with the grouped-tabs view.
+    const tabsScrollRef = useRef(null);
+    const [tabOverflow, setTabOverflow] = useState({ left: false, right: false });
+
+    const updateTabOverflow = useCallback(() => {
+        const el = tabsScrollRef.current;
+        if (!el) return;
+        const maxScroll = el.scrollWidth - el.clientWidth;
+        const left = el.scrollLeft > 1;
+        const right = el.scrollLeft < maxScroll - 1;
+        setTabOverflow((prev) => (prev.left === left && prev.right === right ? prev : { left, right }));
+    }, []);
+
+    const scrollTabsBy = useCallback((direction) => {
+        const el = tabsScrollRef.current;
+        if (!el) return;
+        el.scrollBy({ left: direction * Math.max(160, el.clientWidth * 0.7), behavior: 'smooth' });
+    }, []);
+
+    // Map a vertical mouse wheel onto horizontal scroll. Attached natively as a
+    // non-passive listener because React's synthetic onWheel is passive, so
+    // preventDefault would otherwise be ignored. Trackpad horizontal gestures
+    // fall through to the browser's native handling.
+    useEffect(() => {
+        const el = tabsScrollRef.current;
+        if (!el) return;
+        const onWheel = (e) => {
+            if (el.scrollWidth <= el.clientWidth) return;
+            if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+                el.scrollLeft += e.deltaY;
+                e.preventDefault();
+            }
+        };
+        el.addEventListener('wheel', onWheel, { passive: false });
+        return () => el.removeEventListener('wheel', onWheel);
+    }, []);
+
+    // Keep the edge-button visibility in sync with scroll position and size.
+    useEffect(() => {
+        const el = tabsScrollRef.current;
+        if (!el) return;
+        updateTabOverflow();
+        el.addEventListener('scroll', updateTabOverflow, { passive: true });
+        const ro = new ResizeObserver(updateTabOverflow);
+        ro.observe(el);
+        return () => {
+            el.removeEventListener('scroll', updateTabOverflow);
+            ro.disconnect();
+        };
+    }, [updateTabOverflow]);
+
+    // Recompute when the set of tabs changes — content width can change without
+    // the container resizing.
+    useEffect(() => {
+        updateTabOverflow();
+    }, [tabOrder, auxTabs, workspaces, updateTabOverflow]);
+
     // Derive view modes from activeTabKey (single source of truth).
     const isManagerActive = activeTabKey === 'manager';
     const isAuxActive = typeof activeTabKey === 'string' && activeTabKey.startsWith('aux-');
@@ -581,7 +641,34 @@ function IDELayout({
                                     <Panel id="center">
                                         <div className="ide-center-column">
                                             <div className="ide-tab-bar">
-                                                <div className="ide-tabs-scroll" onDragOver={handleScrollAreaDragOver}>
+                                                {tabOverflow.left && (
+                                                    <button
+                                                        type="button"
+                                                        className="ide-tab-scroll-btn ide-tab-scroll-left"
+                                                        onClick={() => scrollTabsBy(-1)}
+                                                        title="Scroll tabs left"
+                                                        aria-label="Scroll tabs left"
+                                                    >
+                                                        <svg
+                                                            width="14"
+                                                            height="14"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <polyline points="15 18 9 12 15 6" />
+                                                        </svg>
+                                                    </button>
+                                                )}
+                                                <div
+                                                    className="ide-tabs-scroll"
+                                                    ref={tabsScrollRef}
+                                                    onDragOver={handleScrollAreaDragOver}
+                                                >
                                                     {/* Permanent Workflow Manager tab — non-closeable, leftmost.
                                                         Intentionally lacks drag handlers: it's pinned and never
                                                         reorderable, and never a drop target. */}
@@ -785,6 +872,29 @@ function IDELayout({
                                                         return null;
                                                     })}
                                                 </div>
+                                                {tabOverflow.right && (
+                                                    <button
+                                                        type="button"
+                                                        className="ide-tab-scroll-btn ide-tab-scroll-right"
+                                                        onClick={() => scrollTabsBy(1)}
+                                                        title="Scroll tabs right"
+                                                        aria-label="Scroll tabs right"
+                                                    >
+                                                        <svg
+                                                            width="14"
+                                                            height="14"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <polyline points="9 18 15 12 9 6" />
+                                                        </svg>
+                                                    </button>
+                                                )}
                                                 <button
                                                     className="ide-tab-add"
                                                     onClick={() => onNewWorkspace()}

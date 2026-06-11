@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import ThemeToggle from './ThemeToggle';
 import '../styles/topBar.css';
 
 /**
@@ -143,6 +144,7 @@ function TopBar({
             </div>
 
             <div className="top-bar-right">
+                <ThemeToggle />
                 <button
                     className="top-bar-btn top-bar-btn-action top-bar-btn-save-workflow"
                     onClick={onSaveAsWorkflow}

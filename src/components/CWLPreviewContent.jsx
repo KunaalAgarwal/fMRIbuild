@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import YAML from 'js-yaml';
 import { buildCWLWorkflowObject, buildJobTemplate } from '../hooks/buildWorkflow.js';
 import { useToast } from '../context/ToastContext.jsx';
+import MiniScrollMap from './MiniScrollMap.jsx';
 
 const SHEBANG = '#!/usr/bin/env cwl-runner\n\n';
 
@@ -49,6 +50,8 @@ function CWLPreviewContent({ getWorkflowData, pane = 'workflow', mode = 'panel' 
     const [copied, setCopied] = useState(false);
     const debounceRef = useRef(null);
     const copiedTimerRef = useRef(null);
+    // The scroll container — shared with the minimap so it can read/write scrollTop.
+    const scrollRef = useRef(null);
 
     useEffect(() => {
         if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -118,34 +121,37 @@ function CWLPreviewContent({ getWorkflowData, pane = 'workflow', mode = 'panel' 
     const containerClass = `cwl-preview-content${mode === 'tab' ? ' cwl-preview-content--tab' : ''}`;
 
     return (
-        <div className={containerClass}>
-            {error && (
-                <div className="cwl-error-banner">
-                    <span className="cwl-error-icon">!</span>
-                    <span>{error}</span>
-                </div>
-            )}
-            {showPlaceholder && !error && (
-                <div className="cwl-empty-message">Add a node to preview the generated CWL workflow.</div>
-            )}
-            {activeContent && (
-                <>
-                    <button
-                        className="cwl-content-copy-btn"
-                        onClick={handleCopy}
-                        disabled={!activeContent}
-                        title="Copy to clipboard"
-                    >
-                        {copied ? 'Copied!' : 'Copy'}
-                    </button>
-                    <div className="cwl-code-block">
-                        <pre className="cwl-line-gutter" aria-hidden="true">
-                            {lineNumbers}
-                        </pre>
-                        <pre className="cwl-code" dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+        <div className={`cwl-preview-host${mode === 'tab' ? ' cwl-preview-host--tab' : ''}`}>
+            <div className={containerClass} ref={scrollRef}>
+                {error && (
+                    <div className="cwl-error-banner">
+                        <span className="cwl-error-icon">!</span>
+                        <span>{error}</span>
                     </div>
-                </>
-            )}
+                )}
+                {showPlaceholder && !error && (
+                    <div className="cwl-empty-message">Add a node to preview the generated CWL workflow.</div>
+                )}
+                {activeContent && (
+                    <>
+                        <button
+                            className="cwl-content-copy-btn"
+                            onClick={handleCopy}
+                            disabled={!activeContent}
+                            title="Copy to clipboard"
+                        >
+                            {copied ? 'Copied!' : 'Copy'}
+                        </button>
+                        <div className="cwl-code-block">
+                            <pre className="cwl-line-gutter" aria-hidden="true">
+                                {lineNumbers}
+                            </pre>
+                            <pre className="cwl-code" dangerouslySetInnerHTML={{ __html: highlightedHtml }} />
+                        </div>
+                    </>
+                )}
+            </div>
+            {activeContent && !error && <MiniScrollMap html={highlightedHtml} scrollRef={scrollRef} />}
         </div>
     );
 }

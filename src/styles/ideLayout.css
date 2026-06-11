@@ -345,6 +345,41 @@
     box-shadow: none;
 }
 
+/* Tab-strip scroll buttons — shown at the edges of the bar only when the tabs
+   overflow. Full-height hit targets that read as fixed bar chrome beside the
+   scrolling strip. */
+.ide-tab-scroll-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 28px;
+    height: 100%;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition:
+        background-color var(--transition-fast),
+        color var(--transition-fast);
+}
+
+.ide-tab-scroll-btn:hover {
+    background-color: var(--bg-hover);
+    color: var(--text-primary);
+    transform: none;
+    box-shadow: none;
+}
+
+.ide-tab-scroll-left {
+    border-right: 1px solid var(--border-default);
+}
+
+.ide-tab-scroll-right {
+    border-left: 1px solid var(--border-default);
+}
+
 .ide-tab-dirty {
     color: var(--color-warning);
 }

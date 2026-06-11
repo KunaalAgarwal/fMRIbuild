@@ -6,11 +6,15 @@ const TOOLTIP_DELAY_MS = 250;
 
 function WorkflowMenuItem({ name, toolInfo, onDragStart, warningIcon }) {
     const [isHovered, setIsHovered] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
     const [tooltipPos, setTooltipPos] = useState({ top: 0, left: 0 });
     const itemRef = useRef(null);
     const tooltipTimer = useRef(null);
 
     const handleMouseEnter = () => {
+        // Don't arm the tooltip while this item is being dragged — it would
+        // cover the canvas drop target.
+        if (isDragging) return;
         if (itemRef.current) {
             const rect = itemRef.current.getBoundingClientRect();
             setTooltipPos({
@@ -44,12 +48,29 @@ function WorkflowMenuItem({ name, toolInfo, onDragStart, warningIcon }) {
         }
     };
 
+    const handleDragStart = (event) => {
+        // Hide any visible or pending tooltip the moment a drag begins, so it
+        // never sits between the cursor and the canvas drop target.
+        if (tooltipTimer.current) {
+            clearTimeout(tooltipTimer.current);
+            tooltipTimer.current = null;
+        }
+        setIsHovered(false);
+        setIsDragging(true);
+        onDragStart(event, name);
+    };
+
+    const handleDragEnd = () => {
+        setIsDragging(false);
+    };
+
     return (
         <div
             ref={itemRef}
             className="workflow-menu-item"
             draggable
-            onDragStart={(event) => onDragStart(event, name)}
+            onDragStart={handleDragStart}
+            onDragEnd={handleDragEnd}
             onMouseEnter={handleMouseEnter}
             onMouseLeave={handleMouseLeave}
             onDoubleClick={handleDoubleClick}

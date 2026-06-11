@@ -6,6 +6,7 @@ import {
     toolsByModality,
     modalityOrder,
     modalityDescriptions,
+    libraryDescriptions,
     libraryOrder,
     dummyNodes,
 } from '../utils/toolAnnotations';
@@ -646,14 +647,21 @@ function WorkflowMenu({ onEditWorkflow, onDeleteWorkflow }) {
 
                                                     return (
                                                         <div key={libraryKey} className="library-section">
-                                                            <div
-                                                                className="library-header"
-                                                                onClick={() => toggleSection(libraryKey)}
+                                                            <ModalityTooltip
+                                                                name={library}
+                                                                description={libraryDescriptions[library]}
                                                             >
-                                                                <Chevron expanded={isLibraryExpanded} />
-                                                                <span className="library-name">{library}</span>
-                                                                <span className="tool-count">{libraryToolCount}</span>
-                                                            </div>
+                                                                <div
+                                                                    className="library-header"
+                                                                    onClick={() => toggleSection(libraryKey)}
+                                                                >
+                                                                    <Chevron expanded={isLibraryExpanded} />
+                                                                    <span className="library-name">{library}</span>
+                                                                    <span className="tool-count">
+                                                                        {libraryToolCount}
+                                                                    </span>
+                                                                </div>
+                                                            </ModalityTooltip>
 
                                                             {isLibraryExpanded && (
                                                                 <div className="library-tools">

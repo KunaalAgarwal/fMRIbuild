@@ -9,6 +9,7 @@ import EdgeMappingModal from './EdgeMappingModal';
 import { useNodeLookup } from '../hooks/useNodeLookup.js';
 import { useBIDSHandler } from '../hooks/useBIDSHandler.js';
 import { useCanvasShortcuts } from '../hooks/useCanvasShortcuts.js';
+import { useCanvasHistory } from '../hooks/useCanvasHistory.js';
 import { useCanvasClipboard } from '../hooks/useCanvasClipboard.js';
 import { useFlowContexts } from '../hooks/useFlowContexts.js';
 import { useEdgeMapping } from '../hooks/useEdgeMapping.js';
@@ -59,6 +60,19 @@ function WorkflowCanvas({
         needsSyncRef.current = true;
     }, []);
 
+    // Undo/redo for canvas structure. record() fires at the same chokepoint that
+    // persists to the workspace, so programmatic loads (which don't markForSync)
+    // are never recorded; reset() re-baselines on workspace load. onRestore
+    // re-persists the restored snapshot.
+    const {
+        record: recordHistory,
+        reset: resetHistory,
+        undo: undoHistory,
+        redo: redoHistory,
+        canUndo,
+        canRedo,
+    } = useCanvasHistory({ setNodes, setEdges, onRestore: markForSync });
+
     useEffect(() => {
         if (needsSyncRef.current) {
             needsSyncRef.current = false;
@@ -66,6 +80,7 @@ function WorkflowCanvas({
                 const viewport = reactFlowInstance?.getViewport() || null;
                 updateCurrentWorkspaceItems({ nodes, edges, viewport });
             }
+            recordHistory(nodes, edges);
         }
         // Reason: reactFlowInstance is read at fire time only; we don't want to re-sync just because ReactFlow rebound the instance ref.
         // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -253,6 +268,9 @@ function WorkflowCanvas({
                 }));
                 setNodes(initialNodes);
                 setEdges(initialEdges);
+                // Re-baseline undo/redo to the freshly loaded content so history
+                // never carries over between workspaces (or across a reload).
+                resetHistory(initialNodes, initialEdges);
 
                 // Auto-center on all nodes when switching workspaces
                 if (workspaceSwitched && reactFlowInstance) {
@@ -599,10 +617,22 @@ function WorkflowCanvas({
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [clipboard, setNodes, setEdges, markForSync]);
 
+    // A node drag updates positions through ReactFlow's onNodesChange without
+    // marking sync; on drag stop we record the settled positions as one history
+    // entry (ReactFlow already coalesces the drag into a single stop) and mark
+    // for persistence. record() is signature-gated, so the later sync flush
+    // won't double-count it.
+    const handleNodeDragStop = useCallback(() => {
+        recordHistory(nodes, edges);
+        markForSync();
+    }, [nodes, edges, recordHistory, markForSync]);
+
     useCanvasShortcuts({
         onAutoLayout: handleAutoLayout,
         onCopy: handleCopy,
         onPaste: handlePaste,
+        onUndo: undoHistory,
+        onRedo: redoHistory,
     });
 
     // Provide complete workflow data for exporting.
@@ -652,6 +682,7 @@ function WorkflowCanvas({
                                 onEdgesChange={handleEdgesChange}
                                 onConnect={onConnect}
                                 onNodesDelete={onNodesDelete}
+                                onNodeDragStop={handleNodeDragStop}
                                 onSelectionChange={onSelectionChange}
                                 onEdgeDoubleClick={onEdgeDoubleClick}
                                 nodeTypes={nodeTypes}
@@ -680,6 +711,22 @@ function WorkflowCanvas({
                                         onClick={() => setToolsHidden((prev) => !prev)}
                                     >
                                         {toolsHidden ? 'Show tools' : 'Hide tools'}
+                                    </button>
+                                    <button
+                                        className="canvas-bottom-btn collapsible"
+                                        onClick={undoHistory}
+                                        disabled={!canUndo}
+                                        title="Undo (Ctrl/Cmd+Z)"
+                                    >
+                                        Undo
+                                    </button>
+                                    <button
+                                        className="canvas-bottom-btn collapsible"
+                                        onClick={redoHistory}
+                                        disabled={!canRedo}
+                                        title="Redo (Ctrl/Cmd+Shift+Z)"
+                                    >
+                                        Redo
                                     </button>
                                     <button
                                         className="canvas-bottom-btn collapsible"

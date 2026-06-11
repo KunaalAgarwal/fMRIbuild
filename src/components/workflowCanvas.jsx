@@ -22,6 +22,7 @@ import { useSidebar } from '../context/SidebarContext.jsx';
 import { useCustomWorkflowsContext } from '../context/CustomWorkflowsContext.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { layoutGraph } from '../utils/layoutGraph.js';
+import { dedupeLabels } from '../utils/dedupeLabels.js';
 
 // Define node types.
 const nodeTypes = { default: NodeComponent };
@@ -84,25 +85,12 @@ function WorkflowCanvas({
         if (labelKey === prevLabelKeyRef.current) return;
         prevLabelKeyRef.current = labelKey;
 
-        // Count occurrences of each label
-        const labelCounts = {};
-        for (const n of nodes) {
-            const label = n.data?.label || '';
-            labelCounts[label] = (labelCounts[label] || 0) + 1;
-        }
-
-        // Assign display labels only for duplicates
-        const labelSeq = {};
+        // Number duplicate labels (e.g. "flirt (1)", "flirt (2)") via the shared
+        // dedupe util — the same numbering the top-bar tabs use.
+        const displayMap = dedupeLabels(nodes.map((n) => ({ id: n.id, label: n.data?.label || '' })));
         let anyChange = false;
         const updated = nodes.map((n) => {
-            const label = n.data?.label || '';
-            let displayLabel;
-            if (labelCounts[label] > 1) {
-                labelSeq[label] = (labelSeq[label] || 0) + 1;
-                displayLabel = `${label} (${labelSeq[label]})`;
-            } else {
-                displayLabel = label;
-            }
+            const displayLabel = displayMap.get(n.id);
             if (n.data?.displayLabel !== displayLabel) {
                 anyChange = true;
                 return { ...n, data: { ...n.data, displayLabel } };

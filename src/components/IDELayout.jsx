@@ -7,6 +7,7 @@ import SidebarBidsContent from './SidebarBidsContent.jsx';
 import SidebarStagedChangesContent from './SidebarStagedChangesContent.jsx';
 import { useToast } from '../context/ToastContext.jsx';
 import { useSidebar } from '../context/SidebarContext.jsx';
+import { dedupeLabels } from '../utils/dedupeLabels.js';
 import '../styles/ideLayout.css';
 
 function IDELayout({
@@ -112,6 +113,15 @@ function IDELayout({
     // cwl/yml tabs already embed the workspace name in their base label and are
     // pass-through. Computed once per render to avoid O(n²) lookups in the tab
     // strip walk below.
+    // Workspace tab titles, with duplicate names disambiguated as "name (1)",
+    // "name (2)" — same numbering the canvas uses for duplicate nodes. Keyed by
+    // workspace id so it's stable as workspaces are added/renamed. Empty names
+    // fall back to the positional "Workspace N" (already unique).
+    const workspaceLabelMap = useMemo(
+        () => dedupeLabels(workspaces.map((w, i) => ({ id: w.id, label: w.name?.trim() || `Workspace ${i + 1}` }))),
+        [workspaces],
+    );
+
     const auxLabelMap = useMemo(() => {
         const wsById = new Map(workspaces.map((w) => [w.id, w]));
         const info = new Map(); // auxId -> { base, wsLabel, collides }
@@ -120,7 +130,9 @@ function IDELayout({
         for (const t of auxTabs) {
             const ws = wsById.get(t.workspaceId);
             if (!ws) continue;
-            const wsLabel = ws.name || 'workspace';
+            // Use the disambiguated workspace title so a CWL/YML tab traces back
+            // unambiguously to its source workspace even when names collide.
+            const wsLabel = workspaceLabelMap.get(t.workspaceId) || ws.name || 'workspace';
             let base;
             let collides = false;
             if (t.type === 'cwl') {
@@ -146,7 +158,7 @@ function IDELayout({
             out.set(id, collide ? `${v.wsLabel}/${v.base}` : v.base);
         }
         return out;
-    }, [auxTabs, workspaces]);
+    }, [auxTabs, workspaces, workspaceLabelMap]);
 
     // Per-workspace decoration kind for the tab strip:
     //   'workflow'    → WRKF (blue)
@@ -675,7 +687,9 @@ function IDELayout({
                                                                     ) : (
                                                                         <>
                                                                             <span className="ide-tab-label">
-                                                                                {ws.name || `Workspace ${i + 1}`}
+                                                                                {workspaceLabelMap.get(ws.id) ||
+                                                                                    ws.name ||
+                                                                                    `Workspace ${i + 1}`}
                                                                             </span>
                                                                             {status && (
                                                                                 <span className="ide-tab-badge">

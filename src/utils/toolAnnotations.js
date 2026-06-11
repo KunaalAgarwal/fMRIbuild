@@ -3596,6 +3596,31 @@ export const modalityDescriptions = {
         'Complete multi-step analysis pipelines that chain several operations internally. Each tool orchestrates preprocessing, registration, segmentation, or analysis stages as a single command.',
 };
 
+/**
+ * One-line descriptions for the software libraries shown as the middle tier of
+ * the tool menu (modality → library → category). Surfaced on hover, mirroring
+ * `modalityDescriptions`. Keys must match the library names in `libraryOrder`.
+ */
+export const libraryDescriptions = {
+    FSL: "FMRIB Software Library — Oxford's comprehensive toolset for structural, functional, and diffusion MRI: brain extraction, registration, segmentation, and GLM analysis.",
+    AFNI: 'Analysis of Functional NeuroImages — NIMH suite focused on functional MRI processing, statistics, and visualization.',
+    SPM: 'Statistical Parametric Mapping — MATLAB-based package for the analysis of brain imaging data sequences.',
+    FreeSurfer:
+        'Surface-based analysis suite for cortical reconstruction, parcellation, and morphometry from structural MRI.',
+    ANTs: 'Advanced Normalization Tools — state-of-the-art image registration, segmentation, and template construction.',
+    MRtrix3:
+        'Diffusion MRI toolkit for fiber orientation estimation, tractography, and structural connectivity.',
+    fMRIPrep:
+        'Robust, automated preprocessing pipeline for task-based and resting-state fMRI, combining tools across libraries.',
+    MRIQC: 'Automated extraction of image quality metrics for structural and functional MRI.',
+    'Connectome Workbench':
+        'HCP visualization and analysis suite for surface- and volume-based connectome data (CIFTI).',
+    AMICO: 'Accelerated Microstructure Imaging via Convex Optimization — fast fitting of advanced diffusion models (e.g. NODDI).',
+    dcm2niix: 'Converts DICOM and PAR/REC imaging data into the NIfTI format, with BIDS-compatible sidecars.',
+    'ICA-AROMA':
+        'ICA-based Automatic Removal Of Motion Artifacts — data-driven denoising of motion-related signal in fMRI.',
+};
+
 /** Parameters whose CLI position is fixed and should not be reordered by operation-order. */
 export const FIXED_POSITION_PARAMS = new Set(['input', 'output', 'odt', 'kernel_size']);
 

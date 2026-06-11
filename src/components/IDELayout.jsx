@@ -166,6 +166,42 @@ function IDELayout({
         return m;
     }, [workspaces]);
 
+    // Tab strip view mode: flat (user-ordered) vs. grouped (each workspace's
+    // aux tabs bunched right after it). Session-only — the stored tabOrder is
+    // never mutated, so toggling off restores the exact flat order.
+    const [tabsGrouped, setTabsGrouped] = useState(false);
+
+    // The order the tab strip actually renders. In flat mode it's tabOrder
+    // verbatim; in grouped mode each workspace key is followed by its aux tabs
+    // (matched via the aux tab's workspaceId), preserving relative order. Each
+    // entry carries `groupStart` so the first tab of a group gets a separator.
+    const tabRenderOrder = useMemo(() => {
+        if (!tabsGrouped) return tabOrder.map((key) => ({ key, groupStart: false }));
+        const auxWsById = new Map();
+        for (const t of auxTabs) auxWsById.set(`aux-${t.id}`, t.workspaceId);
+        const out = [];
+        const usedAux = new Set();
+        const seenWs = new Set();
+        for (const key of tabOrder) {
+            if (!key.startsWith('ws-')) continue;
+            const wsId = key.slice('ws-'.length);
+            if (seenWs.has(wsId)) continue;
+            seenWs.add(wsId);
+            out.push({ key, groupStart: true });
+            for (const ak of tabOrder) {
+                if (ak.startsWith('aux-') && auxWsById.get(ak) === wsId && !usedAux.has(ak)) {
+                    usedAux.add(ak);
+                    out.push({ key: ak, groupStart: false });
+                }
+            }
+        }
+        // Orphan aux tabs (their workspace tab isn't open) — each starts its own group.
+        for (const key of tabOrder) {
+            if (key.startsWith('aux-') && !usedAux.has(key)) out.push({ key, groupStart: true });
+        }
+        return out;
+    }, [tabsGrouped, tabOrder, auxTabs]);
+
     // The workspace currently "in focus" for the sidebar — the one whose
     // selected node should populate the Params tab. Manager mode has no
     // associated workspace, so the Params tab disables in that case.
@@ -599,10 +635,38 @@ function IDELayout({
                                                         </svg>
                                                         <span className="ide-tab-label">Workflow Manager</span>
                                                     </div>
-                                                    {/* Unified ordered walk: tabOrder interleaves workspace and aux
-                                                        tabs in user-set order. Sync effect in main.jsx keeps it in
-                                                        step with the live workspaces/auxTabs arrays. */}
-                                                    {tabOrder.map((key) => {
+                                                    {/* Group-by-workflow toggle. View-only — it reorders the strip
+                                                        for display without touching the stored tabOrder. */}
+                                                    <button
+                                                        type="button"
+                                                        className={`ide-tab-group-toggle${tabsGrouped ? ' active' : ''}`}
+                                                        onClick={() => setTabsGrouped((v) => !v)}
+                                                        title={tabsGrouped ? 'Ungroup tabs' : 'Group tabs by workflow'}
+                                                        aria-label={
+                                                            tabsGrouped ? 'Ungroup tabs' : 'Group tabs by workflow'
+                                                        }
+                                                        aria-pressed={tabsGrouped}
+                                                    >
+                                                        <svg
+                                                            width="14"
+                                                            height="14"
+                                                            viewBox="0 0 24 24"
+                                                            fill="none"
+                                                            stroke="currentColor"
+                                                            strokeWidth="2"
+                                                            strokeLinecap="round"
+                                                            strokeLinejoin="round"
+                                                            aria-hidden="true"
+                                                        >
+                                                            <rect x="3" y="4" width="18" height="6" rx="1" />
+                                                            <rect x="3" y="14" width="11" height="6" rx="1" />
+                                                        </svg>
+                                                    </button>
+                                                    {/* Unified ordered walk: tabRenderOrder is tabOrder in flat mode,
+                                                        or workspace-clustered in grouped mode. Sync effect in main.jsx
+                                                        keeps tabOrder in step with the live workspaces/auxTabs arrays. */}
+                                                    {tabRenderOrder.map(({ key, groupStart }) => {
+                                                        const groupClass = groupStart ? ' ide-tab--group-start' : '';
                                                         const dragClass =
                                                             key === draggedKey ? ' ide-tab--dragging' : '';
                                                         const dropClass =
@@ -633,7 +697,7 @@ function IDELayout({
                                                             return (
                                                                 <div
                                                                     key={key}
-                                                                    className={`ide-tab${isWorkspaceActive ? ' active' : ''}${status ? ' ide-tab-dirty' : ''}${dragClass}${dropClass}`}
+                                                                    className={`ide-tab${isWorkspaceActive ? ' active' : ''}${status ? ' ide-tab-dirty' : ''}${dragClass}${dropClass}${groupClass}`}
                                                                     draggable={editingTab !== i}
                                                                     onClick={() => {
                                                                         if (onActivateTab) onActivateTab(`ws-${ws.id}`);
@@ -729,7 +793,7 @@ function IDELayout({
                                                             return (
                                                                 <div
                                                                     key={key}
-                                                                    className={`ide-tab ide-tab-aux ide-tab-${t.type}${isActive ? ' active' : ''}${dragClass}${dropClass}`}
+                                                                    className={`ide-tab ide-tab-aux ide-tab-${t.type}${isActive ? ' active' : ''}${dragClass}${dropClass}${groupClass}`}
                                                                     draggable
                                                                     onClick={() =>
                                                                         onActivateTab && onActivateTab(`aux-${t.id}`)
